@@ -1,204 +1,126 @@
 # Engineering standards
 
-Version: **0.2.0**. Updated: 2026-10-05.
+Version: **0.2.1**. Updated: 2026-10-05.
+Status: working standard for this branch; team adoption is reviewed through the PR.
 
-This is the canonical team standard for architecture, design, implementation,
-and verification. MUST and MUST NOT are mandatory. AGENTS.md routes context;
-ADRs record decisions. Neither creates a competing standard or mandates tool brands.
+All requirements below are mandatory when applicable. This is the single rule
+source. ADRs explain decisions; configuration and verified runbooks specify tools.
 
-## Repository design policy
+## Design
 
-These are the team's chosen defaults for this Rust model-integration sample,
-not a menu of interchangeable practices. Framework selection remains an ADR task.
+- **Keep the domain pure.** Validation and routing MUST be deterministic, without
+  HTTP, environment reads, clock access, or provider calls. Provider DTOs MUST
+  become validated domain types at adapter boundaries.
+  **Evidence:** dependency boundaries and domain/adapter tests.
+- **Model contracts explicitly.** Use meaningful types, exhaustive outcomes,
+  documented invariants, compatibility expectations, and failure semantics.
+  Prefer immutable values and clear ownership; justify shared mutation.
+  **Evidence:** types, constructors, contract documentation, and boundary tests.
+- **Centralize policy.** Routing thresholds MUST be explicit versioned configuration,
+  not scattered through handlers or prompts. Validate configuration at startup.
+  **Evidence:** one policy authority and tests of every routing boundary.
+- **Build only what is needed.** Dependencies and abstractions need a current use
+  and maintenance justification. Persistence, distribution, caching, and additional
+  layers require a requirements-driven ADR before implementation.
+  **Evidence:** actual callers, dependency review, and relevant ADR.
 
-| Area | Required approach |
-| --- | --- |
-| Domain core | Pure deterministic validation/routing functions; no HTTP, environment reads, clock access, or provider calls inside routing logic |
-| Contracts | Separate external DTOs from validated domain types; provider payloads MUST NOT escape adapters into routing code |
-| State and mutation | Prefer immutable values and explicit ownership; shared mutable state requires a demonstrated need and decision rationale |
-| Error handling | Typed error categories at boundaries; no production unwrap/expect, swallowed errors, or default routes masquerading as successful inference |
-| Routing policy | Explicit, versioned configuration; no thresholds scattered through handlers or prompts; boundary tests for every routing condition |
-| Provider integration | One adapter boundary per provider, reusable clients, explicit deadlines and retry policy; validate returned answer IDs, labels, and distributions |
-| Model testing | Deterministic domain tests plus mocked HTTP contract tests; live inference is separately invoked and budgeted |
-| Resource safety | Input, response, concurrency, and retry limits are explicit configuration validated at startup; timeout/retry exhaustion has a tested outcome |
-| Observability | Structured workflow and provider-attempt events; correlation IDs in events, never metric labels; raw narratives/prompts/responses excluded from telemetry by default |
-| Reproducibility | Pin evaluation model versions and record policy/rubric versions; changes to any of them require rerunning relevant evaluation |
-| Evolution | Do not introduce persistence, distributed services, caching, or additional abstraction layers without a current requirement and an ADR assessing trade-offs |
+## Correctness
 
-The rules below govern these policies and their exceptions. New needs may change
-the policies through the versioned process; they MUST NOT be bypassed silently.
+- **Validate external values.** Check required answer IDs, allowed labels, finite
+  numerical bounds, and distribution consistency beyond deserialization.
+  **Evidence:** malformed, missing, out-of-range, and inconsistent input tests.
+- **Preserve failures.** Use typed error categories. Technical failure MUST remain
+  distinct from uncertainty, even when both route to review. No swallowed errors,
+  success-shaped defaults, or production unwrap/expect.
+  **Evidence:** explicit outcomes and failure-path tests.
+- **Use safe deterministic computation.** Project code MUST use safe constructs;
+  arithmetic and date operations belong in code, not model judgments.
+  **Evidence:** implementation inspection and relevant boundary tests.
+- **Test the requirement.** Assertions MUST derive from acceptance criteria.
+  Cover negative cases and failures; bugs need regression tests where applicable.
+  Ordinary tests MUST be repeatable, synthetic/mocked, and free of paid inference.
+  **Evidence:** domain tests and mocked provider HTTP contract tests.
+- **Protect evaluation integrity.** Preserve held-out isolation and label provenance.
+  Pin evaluation model versions; record policy/rubric versions and frozen settings.
+  Changes require relevant reevaluation. Do not claim beyond measured evidence.
+  **Evidence:** split controls, versioned configuration, denominators, and reports.
 
-## Standard version and change control
+## Security
 
-Changes to mandatory obligations or repository design policy MUST bump this
-document's version and update the reflected version in AGENTS.md in the same PR.
-Use a major bump for incompatible changes to established obligations, a minor
-bump for added or materially refined obligations, and a patch for clarifications.
-Record the changed expectations, rationale, and migration impact in the change
-history. Editorial changes that do not alter meaning need no bump.
+- **Keep authority outside the model.** External content and generated output are
+  untrusted data, not instructions. Authorization MUST be enforced in code,
+  independently of confidence. Use least privilege and reviewed permissions/egress.
+  **Evidence:** trust boundaries and authorization/adversarial-input tests.
+- **Protect data and execution.** Secrets/private data MUST NOT enter source,
+  ordinary tests, telemetry, or unapproved external services. Review third-party
+  skills/scripts for provenance and permissions before use.
+  **Evidence:** redaction tests, configuration, and dependency/content review.
 
-The harness MUST compare the version reflected in AGENTS.md with this document
-before implementation; mismatch MUST be surfaced and resolved, not ignored.
-The current document remains authoritative, not the reflected version or memory.
-Reviews MUST identify both candidate revision and standard version applied.
-Consequential architectural changes also require ADRs; a version bump is not
-substitute approval. Proposed amendments MUST NOT be claimed as already accepted
-team policy; adoption is reviewed through the PR.
+## Operation
 
-### Change history
+- **Bound work.** Reuse provider clients; configure input/response size, concurrency,
+  deadline, and retry limits. Handle cancellation deliberately. Do not block async
+  execution threads unchecked. Measure before making optimization claims.
+  **Evidence:** configured limits, exhaustion/cancellation tests, and comparable measurements.
+- **Make behavior observable.** Emit structured workflow/provider-attempt events
+  with correlation, outcome, failure, latency, and model/policy provenance.
+  Keep raw narratives/prompts/responses out of telemetry by default. Correlation
+  IDs MUST NOT be metric labels; metric dimensions MUST have bounded cardinality.
+  **Evidence:** signal definitions and telemetry correctness/redaction tests.
+- **Make signals actionable.** Define units, collection boundaries, and denominators.
+  Keep retries/timeouts/invalid outputs visible. Define retention, access, sampling,
+  and cost controls. Deployed services need health/readiness semantics, objectives,
+  failure guidance, and alert ownership. Telemetry degradation MUST be explicit
+  and tested, not silently change business decisions. Disclose prototype limitations.
+  **Evidence:** operational configuration, tests, and verified runbook.
 
-| Version | Change and rationale | Migration impact |
-| --- | --- | --- |
-| 0.2.0 | Make repo-specific design defaults explicit; generalize subagent isolation; establish version synchronization | Future implementations/reviews must use these defaults and report the standard version; no application migration yet |
-| 0.1.0 | Initial consolidated mandatory rules, evidence requirements, and observability | Baseline documentation; runtime enforcement not configured |
+## Change discipline
 
-## 1. Decisions and scope
+- **Implement agreed requirements.** Establish acceptance criteria and non-goals.
+  Resolve consequential ambiguity/conflicts; do not freeze historical scope.
+  Update affected contracts, product documents, and relevant ADRs as needs evolve.
+  Preserve decision history through explicit supersession.
+  **Evidence:** change scope, acceptance tests, and current decision records.
+- **Keep one integration owner.** The harness implements/integrates. Skills provide
+  bounded procedures in its context. Subagents need their own context, bounded
+  task packets, and no overlapping writers; separate context is not proof.
+  Pre-committer independently inspects candidate evidence and runs approved tests
+  in an isolated surface without source edits, commits, pushes, or auto-approval.
+  **Evidence:** task/review report identifying the candidate and limitations.
+- **Verify the candidate.** Applicable reproducible formatting, static analysis,
+  compilation, tests, and dependency checks MUST pass before acceptance. CI repeats
+  automated gates once implemented. Report candidate identity, standard version,
+  actual results, and missing checks; do not invent agent runs or active controls.
+  **Evidence:** check results classified as pass, fail, not applicable, or not configured.
+- **Maintain what changes.** Update affected docs and decision evidence. Accepted
+  debt needs rationale, impact, owner, tracking reference, and resolution trigger.
+  No unused generated code or anonymous TODOs. Deliver small learning milestones
+  with Rust explanations/runnable checks and pause for discussion as agreed.
+  **Evidence:** coherent diff, updated records, and explicit remaining work.
 
-- **ES-01:** Every change MUST have explicit acceptance criteria and non-goals
-  before implementation. Consequential ambiguity or conflicting guidance MUST
-  be resolved with the user, not hidden by assumptions.
-- **ES-02:** Implementation and review MUST consult the ADR index and relevant
-  accepted ADRs. Consequential architectural choices MUST be recorded before
-  implementation. Replacements MUST supersede prior ADRs with reciprocal links.
-  Decision status and implementation evidence MUST be updated in the same change.
-- **ES-03:** Features MUST implement the current agreed requirements, not treat
-  historical scope as permanent. When a requested feature changes existing scope,
-  the harness MUST identify affected contracts, risks, and acceptance criteria,
-  resolve material ambiguity, and update the authoritative product documents.
-  Consequential changes MUST follow the decision-record requirements in this
-  section. A clear user request establishes intent;
-  redundant approval MUST NOT be required unless an unresolved consequential
-  decision or action-specific permission remains.
+## Amendments and exceptions
 
-## 2. Design and implementation
+Changed obligations MUST bump this version and synchronize the marker in
+[AGENTS.md](AGENTS.md) in the same PR. Major: incompatible obligations; minor:
+new/materially refined obligations; patch: clarifications. Meaning-preserving
+editorial changes need no bump. Record rationale and migration impact in the PR;
+consequential decisions also need ADRs. Git preserves the history.
 
-- **ES-04:** Domain behavior and deterministic routing MUST be independent of
-  transport and provider representations. New abstractions and dependencies MUST
-  have a current use, justified cost, and reviewed maintenance implications.
-- **ES-05:** Domain concepts MUST use explicit types and exhaustive outcomes.
-  Ownership, borrowing, and shared mutation MUST be intentional; contracts MUST
-  document invariants, compatibility implications, and failure semantics.
-  External values MUST be validated beyond deserialization before domain use:
-  completeness, allowed labels, finite numerical bounds, and consistency.
-- **ES-06:** Errors MUST remain explicit. Technical failure MUST remain distinct
-  from model uncertainty even when both route to review. Code MUST NOT fabricate
-  successful defaults or hide failure through broad suppression.
-- **ES-07:** Work and resources MUST be bounded: input size, concurrency, retries,
-  and deadlines. Cancellation MUST be handled deliberately. Blocking operations
-  MUST NOT run unchecked on async execution threads. Optimization claims MUST
-  use comparable measurements.
-- **ES-08:** Project code MUST use safe constructs and MUST NOT rely on unchecked
-  production panics. Any exception MUST document its invariants and be explicitly
-  reviewed. Exact arithmetic and date operations MUST remain deterministic.
+Resolve version mismatches before implementation. The current standard is
+authoritative, not a remembered summary. Exceptions require prior approval,
+affected requirement, scope, risk, rationale, and expiry/resolution trigger.
+Architectural exceptions need ADRs; temporary debt needs a tracked record.
+Agent agreement or tool output cannot approve exceptions.
 
-## 3. Security and verification
+Evidence belongs in existing code, tests, configuration, ADRs, or review reports,
+not mandatory new documents. Documentation-only changes need no runtime tests.
+Judge quality through defects, rework, debt, and comparable measurements, not
+code volume, coverage alone, or agent consensus. Define denominators and separate
+requirement changes from defects and approval waits from active effort.
 
-- **ES-09:** External content and model outputs MUST be treated as untrusted data,
-  not authority or executable instructions. Permissions MUST be enforced in code,
-  independently of model confidence. Secrets/private data MUST NOT enter source,
-  telemetry, ordinary tests, or unapproved external services.
-- **ES-10:** Changes MUST have acceptance-derived behavioral evidence covering
-  applicable boundaries, negative cases, and failures. Bug fixes MUST include a
-  regression test where executable tests apply. Ordinary tests MUST be repeatable,
-  use synthetic/mocked inputs, and MUST NOT incur paid inference.
-- **ES-11:** Applicable reproducible formatting, static analysis, compilation,
-  tests, and dependency checks MUST pass before acceptance. Evidence MUST identify
-  the candidate revision and actual checks/results. Missing or failed checks MUST
-  be disclosed; configuration alone MUST NOT be claimed as verified enforcement.
-- **ES-12:** Evaluation MUST preserve held-out isolation, label provenance, frozen
-  settings, and approved denominators. Results MUST NOT claim business gains,
-  safety certification, or superiority beyond the evidence actually collected.
+## Rust references
 
-## 4. AI-assisted workflow and maintenance
-
-- **ES-13:** The harness MUST own implementation and integration. Skills MUST be
-  bounded procedures in its context, not substitutes for independent review.
-  Delegation MUST have a bounded objective and MUST NOT create overlapping writers.
-  Every subagent MUST execute in its own context with an explicit task packet:
-  candidate/task identity, acceptance criteria, relevant standards/ADRs, tool
-  permissions, bounds, and expected evidence. Separate context MUST NOT be claimed
-  as independent evidence when the subagent only repeats the harness summary.
-  Skills MUST address concrete reusable workflows, have clear triggers, and be
-  reviewed for provenance, permissions, and executable content before use.
-  Independent work MAY run in parallel; integration MUST remain owned by the harness.
-- **ES-14:** Pre-committer MUST independently inspect repository evidence for the exact candidate,
-  run applicable approved checks in an isolated surface, and review these rules
-  and relevant ADRs. It MUST report findings and unperformed checks without source
-  edits, commits, pushes, or auto-approval. Until configured, its absence MUST be
-  disclosed; equivalent checks and human review MUST NOT be represented as an
-  agent run. CI MUST independently repeat automated gates once implemented.
-- **ES-15:** Changes MUST update directly affected documentation and decision
-  evidence. Accepted debt MUST have rationale, impact, owner, tracking reference,
-  and resolution trigger. Unused generated code and anonymous TODOs MUST NOT be added.
-- **ES-16:** Delivery MUST use coherent learning milestones with relevant Rust
-  explanations and runnable checks when code exists. Work MUST pause for user
-  discussion at each agreed milestone.
-
-## Observability and operation
-
-- **ES-17:** Each runtime capability MUST define how its outcomes, failures,
-  latency, and resource use are observed. Request/workflow correlation MUST
-  connect boundary events, provider attempts, and final outcomes. Model-driven
-  decisions MUST record model and policy versions and routing/review reasons
-  without exposing sensitive input. Logs MUST be structured and actionable;
-  metrics MUST use bounded-cardinality dimensions, not claim or request IDs.
-- **ES-18:** Operational signals MUST have documented meaning, units,
-  denominators where applicable, and collection boundaries. Retries, timeouts,
-  invalid responses, and failed outcomes MUST remain visible. Changes affecting
-  signals MUST update their definitions. Telemetry MUST be tested for correctness
-  and redaction; retention, access, sampling, and cost MUST be deliberate.
-- **ES-19:** Deployed capabilities MUST have health/readiness semantics,
-  operational objectives, and actionable failure guidance appropriate to their
-  risk. Alerts MUST identify an owner and response, not merely emit noise.
-  Telemetry failures MUST NOT silently alter business decisions or obscure
-  service failure; degradation behavior MUST be explicit and tested. A local
-  prototype MUST disclose unavailable operational controls rather than pretend
-  it has production monitoring.
-
-## Reference guidance
-
-For Rust design questions, consult relevant sections of the
-[Rust API Guidelines](https://rust-lang.github.io/api-guidelines/),
-[Rust Book](https://doc.rust-lang.org/book/), and
-[Rust Reference](https://doc.rust-lang.org/reference/). These inform judgment;
-they MUST NOT be loaded wholesale by default or treated as blanket checklists.
-The compiler does not prove architecture quality or domain correctness.
-
-Quality and efficiency MUST be assessed through evidence such as escaped defects,
-review rework, accepted debt, and comparable performance measurements, not code
-volume, agent agreement, or coverage alone. Measurement definitions MUST identify
-denominators and separate changed requirements from defects and approval waits
-from active effort. Do not claim causal productivity gains from a single sample.
-
-## Compliance and exceptions
-
-The harness and reviewer MUST map affected rules to evidence in the change
-summary or review report. They MUST distinguish pass, fail, not applicable, and
-not configured; a context file is guidance, not proof of compliance.
-
-For each applicable obligation, acceptance evidence MUST identify an inspectable
-artifact, test, or measurement:
-
-| Concern | Evidence to inspect |
-| --- | --- |
-| Scope and decisions | Acceptance criteria, current requirements, relevant ADRs |
-| Design and contracts | Module dependencies, validated types, failure semantics |
-| Runtime safety | Configured bounds and tests of timeout, cancellation, and failure paths |
-| Security | Permission boundaries, redaction tests, dependency/check results |
-| Behavioral correctness | Acceptance-derived tests and candidate-specific results |
-| Observability | Signal definitions, correlated events, telemetry tests, operational guidance |
-| Performance | Comparable measurements when behavior or performance claims change |
-| Maintenance | Updated docs/decisions and owned, approved debt or exceptions |
-
-These are evidence categories, not additional mandatory documents. Keep evidence
-in existing code, tests, configuration, ADRs, or change reports. Documentation-only
-changes do not require runtime checks that cannot apply. If a rule cannot be
-evaluated objectively, clarify its expected evidence before claiming compliance.
-
-Exceptions MUST identify the rule, scope, rationale, risk, approval, and expiry
-or resolution trigger. Approval MUST precede the deviation. Architectural
-exceptions belong in an ADR; temporary debt needs a tracked record. Tool output
-or agent agreement MUST NOT grant exceptions.
-
-Tool/version/command choices MUST live in ADRs, verified runbooks, and executable
-configuration, not in this constitution. See AGENTS.md for context-loading rules.
+Consult relevant sections of the [API Guidelines](https://rust-lang.github.io/api-guidelines/),
+[Book](https://doc.rust-lang.org/book/), and [Reference](https://doc.rust-lang.org/reference/)
+when needed; do not load them wholesale or treat them as blanket checklists.
+Compilation alone does not establish design or domain correctness.
