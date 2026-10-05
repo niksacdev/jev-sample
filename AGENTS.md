@@ -1,5 +1,10 @@
 # Harness working agreement
 
+Engineering standard version reflected here: **0.2.0**.
+Read the [version and change-control policy](engineering-standards.md#standard-version-and-change-control).
+Compare this version with the current standard before implementation; resolve
+any mismatch. This is a synchronization marker, not a frozen ruleset.
+
 ## Required context
 
 Before implementation or review, read all of
@@ -15,7 +20,9 @@ For requested scope changes, follow
 [Decisions and scope](engineering-standards.md#1-decisions-and-scope)
 and update affected decisions/documents.
 The harness implements; skills provide procedures in its context; pre-committer
-is an independent test/review context. Do not create an implementation-owner agent.
+independently tests/reviews candidate evidence. All subagents have their own
+context and a bounded task packet; isolation alone does not prove review quality.
+Do not create an implementation-owner agent.
 
 ## Load only the supporting context needed
 
@@ -33,7 +40,8 @@ Preserve locked evaluation isolation; do not inspect held-out cases while tuning
 
 ## Before accepting a change
 
-State acceptance criteria and affected ES rule IDs; implement one coherent slice.
+State acceptance criteria, the standard version, and applicable obligations;
+implement one coherent slice.
 Run verified applicable checks on the actual candidate and report evidence,
 exceptions, and unavailable checks. Update affected docs and ADRs. Pause for user
 discussion at the milestone; do not silently advance to the next one.

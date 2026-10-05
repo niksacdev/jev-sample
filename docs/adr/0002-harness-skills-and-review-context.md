@@ -54,3 +54,9 @@ Report command results, finding locations/severity, decision deviations, and mis
 checks. Test artifacts are permitted in the isolated surface; source edits are not.
 Materialize staged candidates explicitly and rerun after changes.
 The profile and isolation mechanism remain to be implemented and verified.
+
+Clarification 2026-10-05: separate context is required for every subagent, not
+unique to pre-committer. Its distinguishing role is independently inspecting
+candidate evidence and executing checks, rather than merely repeating the
+implementer's summary. Standards and harness instructions now carry a synchronized
+version marker; reviews report the applied standard version.

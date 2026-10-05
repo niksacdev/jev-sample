@@ -1,8 +1,56 @@
 # Engineering standards
 
+Version: **0.2.0**. Updated: 2026-10-05.
+
 This is the canonical team standard for architecture, design, implementation,
 and verification. MUST and MUST NOT are mandatory. AGENTS.md routes context;
 ADRs record decisions. Neither creates a competing standard or mandates tool brands.
+
+## Repository design policy
+
+These are the team's chosen defaults for this Rust model-integration sample,
+not a menu of interchangeable practices. Framework selection remains an ADR task.
+
+| Area | Required approach |
+| --- | --- |
+| Domain core | Pure deterministic validation/routing functions; no HTTP, environment reads, clock access, or provider calls inside routing logic |
+| Contracts | Separate external DTOs from validated domain types; provider payloads MUST NOT escape adapters into routing code |
+| State and mutation | Prefer immutable values and explicit ownership; shared mutable state requires a demonstrated need and decision rationale |
+| Error handling | Typed error categories at boundaries; no production unwrap/expect, swallowed errors, or default routes masquerading as successful inference |
+| Routing policy | Explicit, versioned configuration; no thresholds scattered through handlers or prompts; boundary tests for every routing condition |
+| Provider integration | One adapter boundary per provider, reusable clients, explicit deadlines and retry policy; validate returned answer IDs, labels, and distributions |
+| Model testing | Deterministic domain tests plus mocked HTTP contract tests; live inference is separately invoked and budgeted |
+| Resource safety | Input, response, concurrency, and retry limits are explicit configuration validated at startup; timeout/retry exhaustion has a tested outcome |
+| Observability | Structured workflow and provider-attempt events; correlation IDs in events, never metric labels; raw narratives/prompts/responses excluded from telemetry by default |
+| Reproducibility | Pin evaluation model versions and record policy/rubric versions; changes to any of them require rerunning relevant evaluation |
+| Evolution | Do not introduce persistence, distributed services, caching, or additional abstraction layers without a current requirement and an ADR assessing trade-offs |
+
+The rules below govern these policies and their exceptions. New needs may change
+the policies through the versioned process; they MUST NOT be bypassed silently.
+
+## Standard version and change control
+
+Changes to mandatory obligations or repository design policy MUST bump this
+document's version and update the reflected version in AGENTS.md in the same PR.
+Use a major bump for incompatible changes to established obligations, a minor
+bump for added or materially refined obligations, and a patch for clarifications.
+Record the changed expectations, rationale, and migration impact in the change
+history. Editorial changes that do not alter meaning need no bump.
+
+The harness MUST compare the version reflected in AGENTS.md with this document
+before implementation; mismatch MUST be surfaced and resolved, not ignored.
+The current document remains authoritative, not the reflected version or memory.
+Reviews MUST identify both candidate revision and standard version applied.
+Consequential architectural changes also require ADRs; a version bump is not
+substitute approval. Proposed amendments MUST NOT be claimed as already accepted
+team policy; adoption is reviewed through the PR.
+
+### Change history
+
+| Version | Change and rationale | Migration impact |
+| --- | --- | --- |
+| 0.2.0 | Make repo-specific design defaults explicit; generalize subagent isolation; establish version synchronization | Future implementations/reviews must use these defaults and report the standard version; no application migration yet |
+| 0.1.0 | Initial consolidated mandatory rules, evidence requirements, and observability | Baseline documentation; runtime enforcement not configured |
 
 ## 1. Decisions and scope
 
@@ -66,10 +114,14 @@ ADRs record decisions. Neither creates a competing standard or mandates tool bra
 - **ES-13:** The harness MUST own implementation and integration. Skills MUST be
   bounded procedures in its context, not substitutes for independent review.
   Delegation MUST have a bounded objective and MUST NOT create overlapping writers.
+  Every subagent MUST execute in its own context with an explicit task packet:
+  candidate/task identity, acceptance criteria, relevant standards/ADRs, tool
+  permissions, bounds, and expected evidence. Separate context MUST NOT be claimed
+  as independent evidence when the subagent only repeats the harness summary.
   Skills MUST address concrete reusable workflows, have clear triggers, and be
   reviewed for provenance, permissions, and executable content before use.
   Independent work MAY run in parallel; integration MUST remain owned by the harness.
-- **ES-14:** Pre-committer MUST use separate context, inspect the exact candidate,
+- **ES-14:** Pre-committer MUST independently inspect repository evidence for the exact candidate,
   run applicable approved checks in an isolated surface, and review these rules
   and relevant ADRs. It MUST report findings and unperformed checks without source
   edits, commits, pushes, or auto-approval. Until configured, its absence MUST be
