@@ -20,11 +20,10 @@ is an independent test/review context. Do not create an implementation-owner age
 | Change | Read |
 | --- | --- |
 | Scope or user workflow | docs/product-scope.md |
-| Rust design or implementation | docs/rust-practices.md |
 | Provider integration | docs/jev-capabilities.md |
 | Model questions, thresholds, datasets, results | docs/metrics.md and docs/evaluation-design.md |
-| Agents, skills, review workflow | docs/ai-engineering-practices.md |
-| Tool selection/setup | docs/tooling-options.md; distinguish candidates from accepted ADRs |
+| Agents, skills, review workflow | Relevant ADRs and actual agent/skill configuration when present |
+| Tool selection/setup | Relevant ADRs, executable configuration, and verified runbooks when present |
 
 Do not load every supporting document, external reference, or skill by default.
 Links do not guarantee content was loaded: read applicable files explicitly.

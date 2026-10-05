@@ -1,8 +1,8 @@
 # Engineering standards
 
 This is the canonical team standard for architecture, design, implementation,
-and verification. MUST and MUST NOT are mandatory. Supporting practices explain
-these rules; they do not introduce competing standards or mandate tool brands.
+and verification. MUST and MUST NOT are mandatory. AGENTS.md routes context;
+ADRs record decisions. Neither creates a competing standard or mandates tool brands.
 
 ## 1. Decisions and scope
 
@@ -27,6 +27,8 @@ these rules; they do not introduce competing standards or mandate tool brands.
   transport and provider representations. New abstractions and dependencies MUST
   have a current use, justified cost, and reviewed maintenance implications.
 - **ES-05:** Domain concepts MUST use explicit types and exhaustive outcomes.
+  Ownership, borrowing, and shared mutation MUST be intentional; contracts MUST
+  document invariants, compatibility implications, and failure semantics.
   External values MUST be validated beyond deserialization before domain use:
   completeness, allowed labels, finite numerical bounds, and consistency.
 - **ES-06:** Errors MUST remain explicit. Technical failure MUST remain distinct
@@ -63,6 +65,9 @@ these rules; they do not introduce competing standards or mandate tool brands.
 - **ES-13:** The harness MUST own implementation and integration. Skills MUST be
   bounded procedures in its context, not substitutes for independent review.
   Delegation MUST have a bounded objective and MUST NOT create overlapping writers.
+  Skills MUST address concrete reusable workflows, have clear triggers, and be
+  reviewed for provenance, permissions, and executable content before use.
+  Independent work MAY run in parallel; integration MUST remain owned by the harness.
 - **ES-14:** Pre-committer MUST use separate context, inspect the exact candidate,
   run applicable approved checks in an isolated surface, and review these rules
   and relevant ADRs. It MUST report findings and unperformed checks without source
@@ -75,6 +80,21 @@ these rules; they do not introduce competing standards or mandate tool brands.
 - **ES-16:** Delivery MUST use coherent learning milestones with relevant Rust
   explanations and runnable checks when code exists. Work MUST pause for user
   discussion at each agreed milestone.
+
+## Reference guidance
+
+For Rust design questions, consult relevant sections of the
+[Rust API Guidelines](https://rust-lang.github.io/api-guidelines/),
+[Rust Book](https://doc.rust-lang.org/book/), and
+[Rust Reference](https://doc.rust-lang.org/reference/). These inform judgment;
+they MUST NOT be loaded wholesale by default or treated as blanket checklists.
+The compiler does not prove architecture quality or domain correctness.
+
+Quality and efficiency MUST be assessed through evidence such as escaped defects,
+review rework, accepted debt, and comparable performance measurements, not code
+volume, agent agreement, or coverage alone. Measurement definitions MUST identify
+denominators and separate changed requirements from defects and approval waits
+from active effort. Do not claim causal productivity gains from a single sample.
 
 ## Compliance and exceptions
 

@@ -1,7 +1,7 @@
 # ADR 0003: Separate engineering principles from tooling choices
 
 Date: 2026-10-05
-Status: Accepted
+Status: Superseded by [ADR 0004](0004-consolidate-engineering-guidance.md)
 
 ## Context
 
@@ -37,3 +37,7 @@ deliberate rationale, not incidental dependency changes.
 Rust principles now link to the Rust API Guidelines, Book, and Reference.
 Previous framework/tool candidates moved to tooling-options.md and remain
 provisional. No tooling has been installed or enforced.
+
+Update 2026-10-05: the principle/tool separation is retained, but separate practices
+documents and a permanent candidate catalog were rejected as redundant context.
+ADR 0004 records the replacement organization.

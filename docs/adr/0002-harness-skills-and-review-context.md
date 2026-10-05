@@ -44,5 +44,13 @@ Update 2026-10-05: root AGENTS.md and Copilot repository instructions now exist
 and reference the mandatory ES rules with selective supporting context.
 Automatic loading in each client is not yet verified. No agent profile, skills,
 hooks, or CI are configured. Validate context loading, isolated test execution, and failure
-reporting during quality-gate setup. See
-[engineering practices](../ai-engineering-practices.md).
+reporting during quality-gate setup.
+
+Update 2026-10-05: supplementary practices documents were consolidated under
+[ADR 0004](0004-consolidate-engineering-guidance.md). Preserve the review contract:
+provide the exact candidate, acceptance criteria, standards, relevant ADRs, verified
+commands, and known limitations. Review source evidence, not only the harness summary.
+Report command results, finding locations/severity, decision deviations, and missing
+checks. Test artifacts are permitted in the isolated surface; source edits are not.
+Materialize staged candidates explicitly and rerun after changes.
+The profile and isolation mechanism remain to be implemented and verified.

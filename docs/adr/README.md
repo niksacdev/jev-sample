@@ -7,7 +7,8 @@ Read relevant accepted records before changing their affected behavior.
 | --- | --- | --- |
 | [0001](0001-insurance-intake-scope.md) | Accepted | Synthetic insurance intake, not adjudication |
 | [0002](0002-harness-skills-and-review-context.md) | Accepted | Harness implementation, same-context skills, separate-context pre-committer |
-| [0003](0003-separate-principles-from-tools.md) | Accepted | Durable principles separate from replaceable tooling |
+| [0003](0003-separate-principles-from-tools.md) | Superseded by 0004 | Initial separation of principles and tool candidates |
+| [0004](0004-consolidate-engineering-guidance.md) | Accepted | One standard, one entry point, ADR memory, executable enforcement |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,
