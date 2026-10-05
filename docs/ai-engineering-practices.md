@@ -18,7 +18,8 @@ to one canonical engineering-standards.md and the approved product/evaluation do
 not duplicate large rule sets. Verify instruction loading in each actual client:
 discovery and precedence differ between tools.
 
-Record exact setup/check commands only after they work. Keep approved decisions
+Record exact setup/check commands in runbooks only after they work, not in the
+engineering constitution. Keep approved decisions
 distinct from proposals. Update instructions when behavior or tooling changes;
 stale instructions create repeated defects.
 
@@ -167,8 +168,9 @@ are established yet.
 
 ## Implementation sequence
 
-Start engineering standards and ADRs now; extend them with approved architecture
-and verified commands. Add concise agent instructions. Implement checks and CI
+Keep standards principle-based. Record approved architecture in ADRs and verified
+commands in runbooks and executable configuration. Add concise agent instructions.
+Implement checks and CI
 with the initial Cargo scaffold before its first behavioral slice is accepted.
 slice. Define pre-committer after its review contract is agreed; add skills only
 as their workflows become concrete. Codex hook support remains unverified.
