@@ -28,6 +28,67 @@ correctness, adequate tests, and reliable model behavior require separate contro
 Select versions and additional test helpers during implementation based on
 compatible maintained releases. Add dependencies only when used.
 
+## Supporting toolchain
+
+This is the proposed enforcement plan, not a claim that tools are installed or
+checks already run. Configure it during the quality-gates milestone.
+
+| Layer | Tools and policy | What it supports |
+| --- | --- | --- |
+| Reproducible builds | rustup; exact stable version in rust-toolchain.toml; committed Cargo.lock; CI uses --locked | Consistent compiler, formatter, lints, and dependency resolution |
+| Editor feedback | rust-analyzer with formatting and Clippy diagnostics | Fast type, ownership, and lint feedback while learning |
+| Compilation | cargo check; forbid unsafe code in project crates | Type/ownership enforcement and explicit project safety policy |
+| Formatting | cargo fmt --all -- --check | Consistent formatting without subjective review |
+| Linting | cargo clippy --workspace --all-targets --all-features --locked -- -D warnings | Compiler-supported correctness and maintainability checks |
+| Behavioral tests | cargo test --workspace --locked; documentation tests | Domain rules, API contracts, error paths, and executable examples |
+| Boundary properties | proptest, where invariant testing adds value | Threshold boundaries, probability validation, and routing invariants |
+| External service isolation | wiremock for HTTP adapter tests | Malformed responses, status codes, timeouts, retries, and no paid calls in ordinary tests |
+| Dependency policy | cargo-deny with reviewed advisory, license, source, and duplicate-version rules | Supply-chain and licensing controls, not proof that dependencies are secure |
+| Coverage diagnostics | cargo-llvm-cov when tests exist | Find untested branches; coverage is diagnostic, not a substitute for meaningful assertions |
+| Design review | coding-standards.md, human review, pre-committer agent | Module boundaries, domain modeling, complexity, scope, and test adequacy |
+
+Use the Clippy command above only while all feature combinations are compatible.
+If mutually exclusive features are introduced, document and test a feature matrix
+instead. Record each lint exception with a narrow scope and rationale. Do not
+enable every pedantic lint blindly or impose arbitrary coverage percentages.
+
+The unsafe-code restriction applies to our crates, not all transitive dependencies.
+Any exception requires explicit review. Dependency policy must account for the
+actual graph; do not globally suppress findings to obtain a green build.
+
+## Where checks run
+
+1. During editing, rust-analyzer supplies feedback; use focused Cargo tests for
+   the behavior being changed.
+2. Before a commit, a versioned Git hook invokes a deterministic check script.
+   Start with formatting, Clippy, and tests. It must check the candidate commit,
+   not accidentally certify unrelated unstaged changes; partial staging must be
+   handled explicitly or rejected with an actionable message.
+3. On pull requests, CI independently runs the same checks, dependency policy,
+   and applicable property/contract tests. Required branch checks must be enabled
+   separately before claiming merges are protected.
+4. Coverage reports run in CI as diagnostics. Add performance benchmarks,
+   fuzzing, or Miri only when concrete risks justify them; they are not default
+   dependencies for the first API slice.
+
+Git hooks can be bypassed, so CI is the authoritative automated gate.
+Hosted CI and branch protection still need configuration; documenting them does
+not enforce them. Any external AI review must respect repository access and
+data-handling constraints.
+
+## Pre-committer responsibilities
+
+The pre-committer agent reviews the candidate changes against coding-standards.md,
+reports actionable findings, and identifies checks it could not perform.
+It must not silently rewrite files, approve its own changes, fabricate successful
+checks, or hide failures.
+
+Keep deterministic checks independent of AI availability. Prefer an explicit
+agent review at milestone/PR boundaries over making every Git commit depend on
+an AI service. Decide any Codex hook integration after verifying supported hook
+events and failure behavior. Human review remains responsible for architectural
+judgment; no toolchain enforces all design principles automatically.
+
 ## Engineering practices
 
 - Separate domain judgments, routing policy, HTTP transport, and model adapters.
