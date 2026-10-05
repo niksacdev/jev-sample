@@ -8,8 +8,8 @@ Statuses describe decisions and work completed, not just document creation.
 | Verify Jev capabilities | Complete | Official documentation researched; no live inference performed |
 | Select business outcome | Complete | Synthetic auto-insurance claim-intake triage approved |
 | Define evaluation and product metrics | Complete | Hierarchy and initial scorecard targets approved |
-| Design fair comparison | In progress | Design proposed; awaiting approval |
-| Define Rust quality hypothesis | Pending | Separate compiler guarantees from architecture/testing quality; define measurable criteria |
+| Design fair comparison | Complete | Design approved; execution details remain to be resolved |
+| Define Rust quality hypothesis | In progress | Separate compiler guarantees from architecture/testing quality; define measurable criteria |
 | Agree architecture | Pending | Small typed backend and adapters; Axum/Tokio tentative |
 | Write coding standards | Pending | Create coding-standards.md for domain, design, errors, precision, tests, secrets, dependencies |
 | Set up pre-committer | Pending | Deterministic local/CI gates plus standards-aware agent; hook mechanism not yet selected |
@@ -31,5 +31,5 @@ Statuses describe decisions and work completed, not just document creation.
 
 ## Current pause point
 
-The comparison design is proposed, not approved. Discuss it before starting
-dataset generation or implementation.
+The comparison design is approved. Next, discuss the Rust quality hypothesis
+before selecting architecture or starting implementation.

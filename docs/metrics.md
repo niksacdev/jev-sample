@@ -70,6 +70,7 @@ versions and thresholds without sensitive narratives in telemetry.
 Failed gates require revision or narrower automation, not post-hoc target
 lowering. Insufficient sample size means insufficient evidence.
 
-Sample sizes, statistical confidence criteria, precise rubric, and measurement
-protocol remain proposals in [evaluation-design.md](evaluation-design.md).
+The comparison design, dataset sizes, and statistical confidence criteria are
+approved in [evaluation-design.md](evaluation-design.md). The precise rubric
+and execution settings still need to be resolved.
 No acceptable correctness degradation margin has been approved.

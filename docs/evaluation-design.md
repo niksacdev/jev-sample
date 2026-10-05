@@ -1,7 +1,8 @@
 # Model and workflow comparison design
 
-Status: proposed on 2026-10-05; awaiting user approval.
-This document does not authorize dataset generation, paid API calls, or implementation.
+Status: design approved on 2026-10-05. Execution details listed below remain
+to be resolved before running the experiment.
+This document does not authorize paid API calls.
 
 ## Providers and common task
 
@@ -58,7 +59,7 @@ Keep the locked test outside the implementation agent's prompt/rule-tuning
 context. Freeze prompts, rules, thresholds, model versions, and policy before
 running the held-out evaluation.
 
-## Proposed statistical interpretation
+## Approved statistical interpretation
 
 For routing precision and escalation recall, require the one-sided 95% exact
 binomial lower confidence bound to meet the approved target. Report point
@@ -101,7 +102,6 @@ throughput target. Offline results alone do not establish product gains.
 
 ## Decisions still needed
 
-- Approval or revision of this design.
 - Workflow mix, labeling rubric, reviewers, and label adjudication procedure.
 - LLM model and access, API budget, timeout/retry/concurrency settings.
 - Metric owners, measurement windows, and precise latency/failure reporting.
