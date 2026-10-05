@@ -10,9 +10,9 @@ Statuses describe decisions and work completed, not just document creation.
 | Define evaluation and product metrics | Complete | Hierarchy and initial scorecard targets approved |
 | Design fair comparison | Complete | Design approved; execution details remain to be resolved |
 | Define Rust implementation direction | Complete | Rust frameworks and practices; no Python comparison or superiority claim |
-| Agree architecture | Pending | Select a small typed backend and adapters; record framework choices in ADRs |
+| Agree architecture | Complete | [Approved single-package architecture](adr/0007-single-package-api-and-evaluation.md): shared library, Axum/Tokio HTTP server, evaluation CLI |
 | Establish engineering standards | In progress | Mandatory ES rules, ADR policy, and harness entrypoints exist; client loading and future check enforcement remain to verify |
-| Set up pre-committer | Pending | Deterministic local/CI gates, bounded review agent, and justified reusable skills; hooks not yet selected |
+| Set up pre-committer | In progress | Direct Cargo local hooks installed using external pre-commit; CI and isolated independent candidate review remain unconfigured |
 | Build first Rust learning slice | Pending | Minimal API, focused tests, explanations, runnable commands; pause for review |
 | Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with explicit failure handling |
 | Evaluate and document | Pending | Execute approved experiment; report evidence, limitations, and reproducible commands |
@@ -32,5 +32,6 @@ Statuses describe decisions and work completed, not just document creation.
 
 ## Current pause point
 
-The comparison design and Rust-first direction are approved. Next, agree on
-architecture before starting implementation.
+Architecture is approved and recorded. Next, configure CI and isolated independent
+candidate review before the first behavioral Rust slice. No API or provider
+behavior has been implemented.

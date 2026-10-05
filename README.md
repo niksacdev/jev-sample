@@ -13,6 +13,7 @@ domain behavior and provider integration have not started.
 - [Approved product scope](docs/product-scope.md)
 - [Approved metrics and targets](docs/metrics.md)
 - [Approved comparison design](docs/evaluation-design.md)
+- [Approved application architecture](docs/adr/0007-single-package-api-and-evaluation.md)
 - [Engineering standards](engineering-standards.md)
 - [Harness working agreement](AGENTS.md)
 - [Engineering learning loop](docs/engineering-maintenance.md)
