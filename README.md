@@ -12,6 +12,8 @@ not coverage or payout decisions. Implementation has not started.
 - [Approved comparison design](docs/evaluation-design.md)
 - [Rust implementation practices](docs/rust-practices.md)
 - [Proposed AI-native engineering workflow](docs/ai-engineering-practices.md)
+- [Engineering standards](engineering-standards.md)
+- [Architecture decision records](docs/adr/README.md)
 - [Milestone task list](docs/task-list.md)
 
 Documents distinguish approved decisions from proposals. Work pauses for discussion

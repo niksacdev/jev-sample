@@ -48,7 +48,7 @@ repository instructions, selective agents and skills, review, and debt controls.
 | External service isolation | wiremock for HTTP adapter tests | Malformed responses, status codes, timeouts, retries, and no paid calls in ordinary tests |
 | Dependency policy | cargo-deny with reviewed advisory, license, source, and duplicate-version rules | Supply-chain and licensing controls, not proof that dependencies are secure |
 | Coverage diagnostics | cargo-llvm-cov when tests exist | Find untested branches; coverage is diagnostic, not a substitute for meaningful assertions |
-| Design review | coding-standards.md, human review, pre-committer agent | Module boundaries, domain modeling, complexity, scope, and test adequacy |
+| Design review | engineering-standards.md, ADRs, human review, pre-committer agent | Module boundaries, domain modeling, complexity, scope, and test adequacy |
 
 Use the Clippy command above only while all feature combinations are compatible.
 If mutually exclusive features are introduced, document and test a feature matrix
@@ -81,7 +81,8 @@ data-handling constraints.
 
 ## Pre-committer responsibilities
 
-The pre-committer agent reviews the candidate changes against coding-standards.md,
+The pre-committer agent runs approved tests and reviews the candidate changes
+against engineering-standards.md and relevant ADRs in a separate context. It
 reports actionable findings, and identifies checks it could not perform.
 It must not silently rewrite files, approve its own changes, fabricate successful
 checks, or hide failures.
@@ -109,7 +110,8 @@ judgment; no toolchain enforces all design principles automatically.
 - Keep ordinary tests deterministic and independent of paid model calls.
 - Run formatting, Clippy, compilation, and tests locally and in CI.
 
-The future coding-standards.md will define the enforceable details. A pre-committer
+The engineering-standards.md defines shared principles; verified tool configuration
+will add enforceable details. A pre-committer
 agent complements deterministic checks; it does not replace them or guarantee
 design correctness.
 

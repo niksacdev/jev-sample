@@ -11,7 +11,7 @@ Statuses describe decisions and work completed, not just document creation.
 | Design fair comparison | Complete | Design approved; execution details remain to be resolved |
 | Define Rust implementation direction | Complete | Rust frameworks and practices; no Python comparison or superiority claim |
 | Agree architecture | Pending | Small typed backend and adapters; Axum/Tokio tentative |
-| Write coding standards | Pending | Canonical Rust/AI standards plus concise agent instructions; AI workflow proposal awaits approval |
+| Establish engineering standards | In progress | Initial architecture/design/coding principles and ADR policy recorded; architecture-specific rules and instructions remain |
 | Set up pre-committer | Pending | Deterministic local/CI gates, bounded review agent, and justified reusable skills; hooks not yet selected |
 | Build first Rust learning slice | Pending | Minimal API, focused tests, explanations, runnable commands; pause for review |
 | Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with explicit failure handling |
@@ -23,8 +23,9 @@ Statuses describe decisions and work completed, not just document creation.
 - Outcome selection precedes metric definition.
 - Metric definition precedes comparison design.
 - Comparison design and the Rust implementation direction precede architecture.
-- Architecture precedes coding standards.
-- Coding standards precede pre-committer setup.
+- Initial engineering standards and ADRs begin before architecture.
+- Approved architecture precedes architecture-specific standards and check configuration.
+- Engineering standards precede pre-committer setup.
 - Quality gates precede the first learning slice.
 - The first slice precedes provider integration.
 - Integration precedes evaluation.

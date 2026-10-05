@@ -1,6 +1,6 @@
 # AI-native engineering practices
 
-Status: proposed on 2026-10-05. This is a workflow design, not installed agent,
+Status: refined on 2026-10-05 with user-directed context boundaries. This is a workflow design, not installed agent,
 skill, hook, CI, or security configuration.
 
 ## Outcome
@@ -14,13 +14,18 @@ No agent or skill guarantees quality.
 
 Use a concise root AGENTS.md for shared working agreements and a thin
 .github/copilot-instructions.md for Copilot-specific discovery. Both should point
-to one canonical coding-standards.md and the approved product/evaluation documents,
+to one canonical engineering-standards.md and the approved product/evaluation documents,
 not duplicate large rule sets. Verify instruction loading in each actual client:
 discovery and precedence differ between tools.
 
 Record exact setup/check commands only after they work. Keep approved decisions
 distinct from proposals. Update instructions when behavior or tooling changes;
 stale instructions create repeated defects.
+
+Read the [ADR index](adr/README.md) and relevant accepted decisions before changes.
+Keep ADR status, links, and implementation evidence current in the same change.
+New decisions that replace accepted ones require a superseding ADR, not silent
+rewriting of the original rationale.
 
 ## Change workflow
 
@@ -44,11 +49,37 @@ stale instructions create repeated defects.
 
 | Role | When useful | Boundary |
 | --- | --- | --- |
-| Implementation owner | Each coherent change | Owns integration and validation; no overlapping writers |
-| pre-committer | Milestone/PR review against standards | Read-only findings; does not rewrite or certify checks it did not run |
-| Security specialist | Trust-boundary changes or explicit security review | Focus on evidence-backed risks; no vendor-system probing |
-| Performance specialist | Measured regressions or complex resource behavior | Requires benchmark evidence, not speculative optimization |
-| Research specialist | Substantial independent API/framework uncertainty | Return verified sources and bounded conclusions |
+| Harness | Each coherent change | Implements, integrates, invokes skills, and validates in its own context |
+| pre-committer agent | Milestone/PR validation and review | Separate context; runs approved tests and reviews engineering standards and ADRs; no source edits |
+
+There is no separate implementation-owner agent. A skill supplies a reusable
+procedure to the harness; it does not create an independent reviewer or context.
+AGENTS.md provides always-applicable entry guidance, while skills load specific
+procedures when relevant. Neither replaces executable checks.
+
+Security, performance, and research are workflow responsibilities, not standing
+agents. Start with ordinary CI and harness/pre-committer review. Use a specialist
+only for substantial bounded work needing distinct expertise/context.
+
+GitHub Agentic Workflows can later schedule contextual PR reviews. A workflow
+is orchestration, not a replacement for an agent: it runs an AI engine with
+separate context and permissions. Defer it until local review is validated and
+budget, triggers, least privilege, and allowed outputs are agreed. Do not duplicate
+local and hosted AI reviews on every change without demonstrated benefit.
+
+Pre-committer receives the exact candidate revision/diff, acceptance criteria,
+canonical standards, relevant ADRs, approved check commands, and known limitations.
+It reads repository evidence rather than trusting the implementer's summary.
+Run tests in an isolated checkout with synthetic fixtures, no production secrets,
+and bounded resources; repository test code is executable and not inherently safe.
+For local uncommitted work, materialize the candidate snapshot so results match
+what will be committed. Rerun when the candidate changes.
+
+Return revision identity, commands/results, findings with locations and severity,
+architecture/ADR deviations, and unperformed checks. Test artifacts are allowed
+in the isolated surface, but no source edits, commits, pushes, or auto-approval.
+The harness fixes findings and revalidates. Deterministic CI remains authoritative
+for automated gates, and human review remains responsible for acceptance.
 
 Do small lookups and simple edits directly. Delegate only work that benefits from
 separate context. Give each agent the objective, constraints, relevant files,
@@ -136,8 +167,9 @@ are established yet.
 
 ## Implementation sequence
 
-Confirm architecture, then author coding-standards.md and concise agent
-instructions. Implement deterministic checks and CI before the first application
+Start engineering standards and ADRs now; extend them with approved architecture
+and verified commands. Add concise agent instructions. Implement checks and CI
+with the initial Cargo scaffold before its first behavioral slice is accepted.
 slice. Define pre-committer after its review contract is agreed; add skills only
 as their workflows become concrete. Codex hook support remains unverified.
 
@@ -150,3 +182,4 @@ or safety. These recommendations apply that guidance to this project's scope.
 - [GitHub agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
 - [Codex AGENTS.md guidance](https://developers.openai.com/codex/guides/agents-md)
 - [OWASP prompt injection risks and mitigations](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)
+- [GitHub Agentic Workflows overview](https://github.github.com/gh-aw/introduction/overview/)
