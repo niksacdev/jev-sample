@@ -37,8 +37,8 @@ The YAML hooks invoke Cargo directly, without a custom runner:
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
-.venv-hooks/bin/pre-commit validate-config
-.venv-hooks/bin/pre-commit run --all-files
+pre-commit validate-config
+pre-commit run --all-files
 ```
 
 Hooks run for Rust sources, Cargo manifests/lockfiles, the pinned toolchain, and
@@ -47,8 +47,8 @@ individual changed files. Formatting checks do not rewrite code.
 Pre-commit temporarily stashes unstaged tracked changes during normal commits;
 checks must not rely on untracked/generated inputs. CI must check a clean candidate.
 
-Use the installed `.venv-hooks` manager or install pre-commit through its official
-instructions. Register the hook with `.venv-hooks/bin/pre-commit install`.
+Install pre-commit outside the repository through its official instructions
+(on macOS, `brew install pre-commit`). Register the hook with `pre-commit install`.
 This repository's worktrees share the registered hook; each checkout needs the
 configuration. Hooks are bypassable and do not replace CI or architectural review.
 

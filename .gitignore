@@ -1,5 +1,3 @@
-.venv-hooks/
-
 # Rust build and diagnostic artifacts; Cargo.lock remains tracked.
 target/
 coverage/
