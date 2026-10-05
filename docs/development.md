@@ -15,7 +15,8 @@ cargo clippy --version
 
 Use rust-analyzer in your editor if desired; it is not a project dependency.
 Axum/Tokio are selected for the HTTP server; wiremock is selected for provider
-HTTP tests. Dependencies will be added with their first actual callers.
+HTTP tests. Axum, Tokio, Serde, and the Tower test utilities are now used;
+wiremock will be added with the first provider adapter.
 
 ## Repository hygiene
 
@@ -24,7 +25,8 @@ target/coverage files and local .env files. Only sanitized .env.example content
 may be committed; ignore rules are not secret scanning.
 Never put API keys or real claim narratives in fixtures or telemetry.
 
-The minimal Cargo library scaffold exists with no domain behavior or dependencies.
+The library exposes an HTTP router and the `api` binary serves it locally.
+Domain behavior and provider adapters are not implemented.
 Configured lints forbid project unsafe code and reject unwrap/expect.
 The Rust CI workflow repeats checks; its hosted result must pass before the first
 behavioral slice is accepted. Use the [candidate-review runbook](candidate-review.md)
@@ -65,10 +67,43 @@ Provider tests will use real adapters against per-test local wiremock servers;
 inbound routes will use in-process Axum/Tower tests. Inject endpoints and dummy
 credentials explicitly. Ordinary tests require no real API keys or paid calls.
 These tests will run under `cargo test --workspace --locked` as code is added.
-No integration tests exist in the current behavior-free scaffold.
+Four integration tests cover health JSON, HEAD, unsupported POST, and unknown
+routes. They exercise the real router without opening sockets.
+
+## Run the first API slice
+
+```sh
+cargo run --bin api --locked
+```
+
+In another terminal:
+
+```sh
+curl -i http://127.0.0.1:3000/health
+cargo test --test health --locked
+```
+
+Expect HTTP 200, `content-type: application/json`, and `{"status":"ok"}`.
+`GET /health` means the process can serve this route; it does not claim provider
+readiness, successful triage, or deployment readiness. HEAD returns the same
+status/content type with no body; POST returns 405; unknown routes return 404.
+No authentication, claim input, provider calls, or readiness endpoint exists yet.
+
+The prototype binds only `127.0.0.1:3000`; an occupied port causes a visible
+startup error and nonzero exit, never a silent fallback. Stop with Ctrl+C.
+Startup diagnostics go to stderr; workflow telemetry, graceful request draining,
+connection/deadline controls, alerts, and telemetry retention are not implemented.
+Do not expose or deploy this local learning slice as a production service.
+
+`Router` lets the same API run in-process in tests and on a socket in the binary.
+`Json<Health>` serializes a typed response; `#[derive(Serialize)]` generates that
+serialization. `async` allows I/O to yield to Tokio. `?` propagates failures instead
+of panicking; tests also return `Result`, so setup failures fail visibly without
+using unwrap. Tower's `oneshot` sends a request through the router, not a fake
+health handler.
 
 ## Next milestone
 
 Architecture is approved in [the application ADR](adr/0007-single-package-api-and-evaluation.md).
-Verify hosted CI and independent candidate review before accepting the first API
-slice. Specify detailed API/provider contracts with each implementation slice.
+Pause after validating this health slice. Next define typed intake/routing
+contracts and deterministic fixtures before provider integration.

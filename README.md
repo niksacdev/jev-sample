@@ -6,8 +6,12 @@ Rust based sample to demonstrate use of Jev model in FSI applications
 ## Project decisions
 
 This sample explores synthetic auto-insurance claim-intake analysis and triage,
-not coverage or payout decisions. A minimal Cargo library scaffold exists;
-domain behavior and provider integration have not started.
+not coverage or payout decisions. A local Axum health API and integration tests
+exist; domain behavior and provider integration have not started.
+
+Run `cargo run --bin api --locked`, then
+`curl -i http://127.0.0.1:3000/health`. See the development guide for the exact
+contract, Rust explanations, tests, and prototype limitations.
 
 - [Jev capabilities and limitations](docs/jev-capabilities.md)
 - [Approved product scope](docs/product-scope.md)

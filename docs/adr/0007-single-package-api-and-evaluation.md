@@ -62,3 +62,10 @@ integration. Ordinary tests remain synthetic/mocked and require no paid inferenc
 
 Acceptance for this milestone is an approved decision, recorded boundaries, and
 an updated task list. No runtime architecture has been implemented yet.
+
+Implementation update 2026-10-05: CI and isolated review were configured in
+[ADR 0009](0009-ci-and-independent-candidate-review.md) and exercised on e2278bf.
+The next candidate implements the local Axum health router/API binary and four
+in-process integration tests. The original future-work statements above describe
+the architecture-approval milestone, not the current implementation status.
+Domain/routing, provider adapters, and the evaluation CLI remain unimplemented.

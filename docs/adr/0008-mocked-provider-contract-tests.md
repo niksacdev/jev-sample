@@ -68,3 +68,6 @@ Implement the first inbound integration tests with the API slice and provider
 mock tests with each adapter, before accepting those respective milestones.
 Independent review and CI must execute them with
 `cargo test --workspace --locked`.
+
+Implementation update 2026-10-05: the health API now has four in-process
+Axum/Tower integration tests. Provider adapters and wiremock tests remain pending.
