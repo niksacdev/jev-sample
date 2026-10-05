@@ -15,6 +15,7 @@ contract, Rust explanations, tests, and prototype limitations.
 
 - [Jev capabilities and limitations](docs/jev-capabilities.md)
 - [Approved product scope](docs/product-scope.md)
+- [Product discovery draft and clickable mockup](docs/product-spec.md)
 - [Approved metrics and targets](docs/metrics.md)
 - [Approved comparison design](docs/evaluation-design.md)
 - [Approved application architecture](docs/adr/0007-single-package-api-and-evaluation.md)

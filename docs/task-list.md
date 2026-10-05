@@ -14,6 +14,8 @@ Statuses describe decisions and work completed, not just document creation.
 | Establish engineering standards | Complete | Standard 0.4.0 and linked ADR/harness guidance established; native discovery and automatic learning remain limitations |
 | Set up pre-committer | Complete | Local hooks and hosted CI verified; isolated explicit-profile review exercised; native discovery and branch protection remain unconfigured |
 | Build first Rust learning slice | Complete | Health API and four Axum/Tower tests; real HTTP, Git hooks, isolated review, and hosted CI passed for b47cb77 |
+| Formulate persona workflow and design | In progress | Analyst persona, value map, mockup, proposed system dependencies/contracts/data model and production sequences await review before implementation |
+| Model Rust API and agent contracts | Pending | After design approval, compile-checked types, JSON examples, boundary/control mapping and contract tests; no business execution |
 | Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with wiremock HTTP contract/failure tests |
 | Evaluate and document | Pending | Execute approved experiment; report evidence, limitations, and reproducible commands |
 
@@ -28,6 +30,8 @@ Statuses describe decisions and work completed, not just document creation.
 - Engineering standards precede pre-committer setup.
 - Quality gates precede the first learning slice.
 - The first slice precedes provider integration.
+- Product and system design approval precedes Rust API/agent contract modeling.
+- Reviewed contract modeling precedes further workflow/provider implementation.
 - Integration precedes evaluation.
 
 ## Current pause point
@@ -39,4 +43,6 @@ b47cb77. Independent review verified tree 6f1ad2df3c857640df02e80e16a3454242b494
 under standard 0.4.0; its stale ADR finding was corrected before acceptance.
 A deliberate wrong JSON response failed the contract test and was restored.
 The real HTTP checks returned 200/404/405 and duplicate binding failed visibly.
-Pause before typed claim/routing implementation. No provider behavior exists.
+Pause backend implementation for [product discovery](product-spec.md).
+Review the analyst problem, mockup, and unresolved automation policy before
+typed claim/routing contracts. No provider behavior exists.

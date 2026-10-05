@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intake analyst workbench - discovery mockup</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 16px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+header { background: var(--cp-surface); border-bottom: 1px solid var(--cp-border); padding: 24px 32px; }
+main { max-width: 1200px; margin: auto; padding: 24px; }
+h1 { font-size: 28px; margin: 0; } h2 { font-size: 20px; margin-top: 0; } h3 { font-size: 16px; }
+p { margin: 8px 0 16px; }
+.muted, small { color: var(--cp-text-muted); }
+.banner { padding: 12px 16px; background: var(--cp-accent-soft); border-left: 4px solid var(--cp-accent); margin-bottom: 24px; }
+.controls, .grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+.card { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+select, button { font: inherit; border-radius: 0.625rem; padding: 10px 12px; }
+select { width: 100%; color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border-strong); }
+button { cursor: pointer; background: var(--cp-accent); color: var(--cp-accent-fg); border: 1px solid var(--cp-accent); margin-top: 16px; }
+button:hover { background: var(--cp-accent-hover); }
+:focus-visible { outline: 3px solid var(--cp-link); outline-offset: 3px; }
+blockquote { margin: 12px 0; border-left: 3px solid var(--cp-border-strong); padding: 8px 16px; background: var(--cp-surface-soft); }
+.badge { display: inline-block; padding: 4px 12px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface-soft); }
+.review { border-left: 4px solid var(--cp-warning); padding-left: 16px; }
+.failure { border-left: 4px solid var(--cp-danger); padding-left: 16px; }
+#record { padding: 12px; background: var(--cp-surface-soft); min-height: 48px; }
+details { margin-top: 16px; } summary { cursor: pointer; color: var(--cp-link); }
+@media(max-width: 760px) { .grid, .controls { grid-template-columns: 1fr; } header { padding: 24px; } }
+</style>
+</head>
+<body>
+<header>
+<span class="badge">Product discovery / synthetic only</span>
+<h1>Route the intake. Keep the uncertainty visible.</h1>
+<p class="muted">An analyst workbench, not an insurance decision engine.</p>
+</header>
+<main>
+<div class="banner">Clickable design mockup. Suggestions are hand-authored, not Jev outputs. No backend, real queue updates, or measured savings.</div>
+<section class="card">
+<h2>Customer job</h2>
+<p>"Help me choose the right handling queue and notice urgent or unclear information without making me redo the assessment."</p>
+<div class="controls">
+<div><label for="scenario">Explore a scenario</label>
+<select id="scenario"><option value="glass">Clear glass incident</option><option value="urgent">Collision with urgent cue</option><option value="mixed">Mixed / unclear incident</option><option value="failure">Assessment service failure</option></select></div>
+<div><label for="mode">Workflow</label>
+<select id="mode"><option value="assisted">Assisted triage</option><option value="manual">Manual triage baseline</option></select></div>
+</div>
+</section>
+<div class="grid">
+<section class="card">
+<h2>1. Read the original intake</h2>
+<span id="case-id" class="badge"></span>
+<blockquote id="narrative"></blockquote>
+<p class="muted">Only the supplied narrative is available. No policy, coverage, or claimant history is inferred.</p>
+<h3 id="assessment-heading">2. Inspect the assessment</h3>
+<div id="assessment" aria-live="polite"></div>
+</section>
+<section class="card">
+<h2>3. Choose the next handling action</h2>
+<p class="muted">Analyst-owned disposition. Suggestions can be corrected; no action is automatic in this mockup.</p>
+<form id="decision">
+<label for="category">Incident category</label>
+<select id="category" required>
+<option value="">Choose category</option><option>Collision</option><option>Theft</option><option>Glass damage</option><option>Weather damage</option><option>Other / unclear</option>
+</select>
+<label for="attention">Attention</label>
+<select id="attention"><option>Standard handling</option><option>Expedited human review</option></select>
+<label for="review">Review disposition</label>
+<select id="review"><option>Information sufficient for proposed route</option><option>Human review / clarification needed</option></select>
+<button type="submit">Record draft disposition</button>
+</form>
+<h3>Recorded locally for this session</h3>
+<div id="record" role="status">No disposition recorded. Nothing is sent to an insurer.</div>
+<p class="muted">Urgency requests human attention, not emergency dispatch. This screen cannot decide coverage or payment.</p>
+</section>
+</div>
+<section class="card">
+<h2>What customer value are we testing?</h2>
+<p>Less reading and correction effort per correctly routed claim, without missing urgency or hiding ambiguity. Fast inference alone is not success.</p>
+<details><summary>Where Jev, Rust, and an LLM fit</summary>
+<p>Jev is a candidate for bounded category, urgency, and review-required judgments. A structured-output LLM and deterministic rules must be compared on the same task. Rust validates results and applies routing policy. No provider is proven better by this mockup.</p>
+<p>Generation, coverage/payout decisions, and exact arithmetic are not Jev's role here. No fabricated confidence numbers or generated advice are displayed.</p></details>
+<details><summary>Questions for analyst design review</summary>
+<p>Is the next action clear? Can you challenge a wrong suggestion? Does the assessment save reading time or add verification work? Which missing fields or queue names would prevent this from fitting your actual job?</p>
+<p>The assisted review flow does not yet settle the automatic-routing policy in the evaluation plan. Resolve that before API contracts.</p></details>
+</section>
+</main>
+<script>
+const cases = {
+  glass: { id: "SYN-001", narrative: "A stone hit my windshield while I was driving yesterday. The glass is cracked. No one was hurt and the car is parked at home.", category: "Glass damage", attention: "Standard handling", review: "Information sufficient for proposed route", heading: "Suggested route: glass damage", cue: "The glass is cracked.", reason: "A narrow incident cue is present. Review the original text before recording the disposition.", state: "" },
+  urgent: { id: "SYN-002", narrative: "Another car hit us. My passenger says their neck hurts and we are still beside the road.", category: "Collision", attention: "Expedited human review", review: "Human review / clarification needed", heading: "Urgent cue: expedited human review", cue: "My passenger says their neck hurts and we are still beside the road.", reason: "Bring this intake to human attention. This mockup does not assess medical severity or initiate assistance.", state: "review" },
+  mixed: { id: "SYN-003", narrative: "My car was gone this morning. A neighbor says it might have been towed after last night's storm. I also found broken glass where I parked.", category: "Other / unclear", attention: "Standard handling", review: "Human review / clarification needed", heading: "Hold for clarification: incident unclear", cue: "It might have been towed after last night's storm.", reason: "Theft, towing, and damage are not resolved by this narrative. No automatic route is proposed.", state: "review" },
+  failure: { id: "SYN-004", narrative: "A branch fell onto my parked car during the storm. There is a dent in the roof and no one was inside.", category: "", attention: "Standard handling", review: "Human review / clarification needed", heading: "Assessment unavailable: technical failure", cue: "", reason: "Simulated service timeout. No model assessment exists. Read the intake and record a manual disposition; this remains a technical failure, not low confidence.", state: "failure" }
+};
+const byId = id => document.getElementById(id);
+const records = new Map();
+function render() {
+  const key = byId("scenario").value;
+  const item = cases[key];
+  const assisted = byId("mode").value === "assisted";
+  byId("case-id").textContent = item.id;
+  byId("narrative").textContent = item.narrative;
+  byId("assessment-heading").textContent = assisted ? "2. Inspect the assessment" : "2. Assess the intake manually";
+  const panel = byId("assessment");
+  panel.replaceChildren();
+  panel.className = assisted ? item.state : "";
+  const title = document.createElement("h3");
+  title.textContent = assisted ? item.heading : "No assessment shown in the baseline";
+  panel.append(title);
+  if (assisted && item.cue) {
+    const cue = document.createElement("blockquote");
+    cue.textContent = item.cue;
+    panel.append(cue);
+  }
+  const reason = document.createElement("p");
+  reason.textContent = assisted ? item.reason : "Choose category, attention, and review disposition using only the original narrative.";
+  panel.append(reason);
+  byId("category").value = assisted ? item.category : "";
+  byId("attention").value = assisted ? item.attention : "Standard handling";
+  byId("review").value = assisted ? item.review : "Human review / clarification needed";
+  byId("record").textContent = records.get(key) || "No disposition recorded. Nothing is sent to an insurer.";
+}
+byId("scenario").addEventListener("change", render);
+byId("mode").addEventListener("change", render);
+byId("decision").addEventListener("submit", event => {
+  event.preventDefault();
+  const key = byId("scenario").value;
+  const record = `${cases[key].id}: ${byId("category").value}; ${byId("attention").value}; ${byId("review").value}. Recorded as a design exercise only.`;
+  records.set(key, record);
+  byId("record").textContent = record;
+});
+render();
+</script>
+</body>
+</html>
