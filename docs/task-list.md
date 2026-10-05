@@ -9,7 +9,7 @@ Statuses describe decisions and work completed, not just document creation.
 | Select business outcome | Complete | Synthetic auto-insurance claim-intake triage approved |
 | Define evaluation and product metrics | Complete | Hierarchy and initial scorecard targets approved |
 | Design fair comparison | Complete | Design approved; execution details remain to be resolved |
-| Define Rust quality hypothesis | In progress | Separate compiler guarantees from architecture/testing quality; define measurable criteria |
+| Define Rust implementation direction | Complete | Rust frameworks and practices; no Python comparison or superiority claim |
 | Agree architecture | Pending | Small typed backend and adapters; Axum/Tokio tentative |
 | Write coding standards | Pending | Create coding-standards.md for domain, design, errors, precision, tests, secrets, dependencies |
 | Set up pre-committer | Pending | Deterministic local/CI gates plus standards-aware agent; hook mechanism not yet selected |
@@ -22,7 +22,7 @@ Statuses describe decisions and work completed, not just document creation.
 - Capability verification precedes outcome selection.
 - Outcome selection precedes metric definition.
 - Metric definition precedes comparison design.
-- Comparison design and the Rust hypothesis precede architecture.
+- Comparison design and the Rust implementation direction precede architecture.
 - Architecture precedes coding standards.
 - Coding standards precede pre-committer setup.
 - Quality gates precede the first learning slice.
@@ -31,5 +31,5 @@ Statuses describe decisions and work completed, not just document creation.
 
 ## Current pause point
 
-The comparison design is approved. Next, discuss the Rust quality hypothesis
-before selecting architecture or starting implementation.
+The comparison design and Rust-first direction are approved. Next, agree on
+architecture before starting implementation.
