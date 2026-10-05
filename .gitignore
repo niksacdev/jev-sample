@@ -1,0 +1,15 @@
+.venv-hooks/
+
+# Rust build and diagnostic artifacts; Cargo.lock remains tracked.
+target/
+coverage/
+*.profraw
+*.profdata
+
+# Local credentials and configuration; sanitized examples may be tracked.
+.env
+.env.*
+!.env.example
+
+# OS artifacts.
+.DS_Store

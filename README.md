@@ -1,6 +1,8 @@
 # jev-sample
 Rust based sample to demonstrate use of Jev model in FSI applications
 
+[Development setup](docs/development.md)
+
 ## Project decisions
 
 This sample explores synthetic auto-insurance claim-intake analysis and triage,
@@ -12,6 +14,7 @@ not coverage or payout decisions. Implementation has not started.
 - [Approved comparison design](docs/evaluation-design.md)
 - [Engineering standards](engineering-standards.md)
 - [Harness working agreement](AGENTS.md)
+- [Engineering learning loop](docs/engineering-maintenance.md)
 - [Architecture decision records](docs/adr/README.md)
 - [Milestone task list](docs/task-list.md)
 

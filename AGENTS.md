@@ -1,6 +1,6 @@
 # Harness working agreement
 
-Standard version reflected here: **0.3.0**.
+Standard version reflected here: **0.4.0**.
 
 ## Read before implementation or review
 
@@ -18,6 +18,8 @@ Links do not automatically load their targets.
 | Provider integration | [Jev capabilities](docs/jev-capabilities.md) |
 | Questions, thresholds, datasets, results | [Metrics](docs/metrics.md), [evaluation design](docs/evaluation-design.md) |
 | Agents, skills, tools | Relevant ADRs and actual profiles/configuration/runbooks |
+| Local environment | [Development setup](docs/development.md) |
+| Mistakes or stale guidance | [Engineering learning loop](docs/engineering-maintenance.md) and maintainer profile |
 
 Requirements may evolve; follow the standard's
 [change discipline](engineering-standards.md#change-discipline), not historical
@@ -35,6 +37,9 @@ If no milestone is agreed, finish the requested coherent task and stop; do not
 infer permission to begin another task, merge, or deploy. Follow the standard's
 [delivery policies](engineering-standards.md#delivery) for commits, PRs, and releases.
 
-No Cargo project, runbook, pre-committer profile, or CI exists yet. Do not claim
-they ran or invent verified commands. Update this setup note when controls exist.
+The maintainer profile and learning skill exist; automatic hook integration is
+pending. Read the learning-loop guide for the intended contract and limitations. Native agent
+discovery and live CLI analysis are not yet verified. No Cargo project,
+independent pre-committer review profile, or CI exists yet. Do not claim they ran.
+Update this setup note when controls exist.
 Documentation-only changes need no application tests unless documentation tests exist.
