@@ -1,0 +1,36 @@
+name: Rust quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Rust checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Load pinned toolchain
+        run: rustup show active-toolchain
+      - name: Formatting
+        run: cargo fmt --all -- --check
+      - name: Static analysis
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Tests
+        run: cargo test --workspace --locked
+      - name: Install dependency checker
+        run: cargo install cargo-audit --version 0.22.2 --locked
+      - name: Dependency advisories
+        run: cargo audit --deny warnings

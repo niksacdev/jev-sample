@@ -26,7 +26,9 @@ Never put API keys or real claim narratives in fixtures or telemetry.
 
 The minimal Cargo library scaffold exists with no domain behavior or dependencies.
 Configured lints forbid project unsafe code and reject unwrap/expect.
-Independent CI is required before the first behavioral slice is accepted.
+The Rust CI workflow repeats checks; its hosted result must pass before the first
+behavioral slice is accepted. Use the [candidate-review runbook](candidate-review.md)
+for independent review and dependency-advisory checks.
 Feature combinations and dependency
 policy will be defined against the actual project rather than guessed now.
 
@@ -68,5 +70,5 @@ No integration tests exist in the current behavior-free scaffold.
 ## Next milestone
 
 Architecture is approved in [the application ADR](adr/0007-single-package-api-and-evaluation.md).
-Configure CI and isolated independent candidate review before accepting the first
-API slice. Specify detailed API/provider contracts with each implementation slice.
+Verify hosted CI and independent candidate review before accepting the first API
+slice. Specify detailed API/provider contracts with each implementation slice.

@@ -41,6 +41,8 @@ The maintainer profile and learning skill exist; automatic hook integration is
 pending. Read the learning-loop guide for the intended contract and limitations. Native agent
 discovery and live CLI analysis are not yet verified. The minimal Cargo scaffold
 and direct-Cargo hook configuration exist; use docs/development.md for commands.
-Independent pre-committer review and CI remain unconfigured.
+The [candidate-review runbook](docs/candidate-review.md), pre-committer profile,
+and Rust CI workflow are configured. Native profile discovery and hosted CI
+execution require verification; branch protection is not configured by these files.
 Update this setup note when controls exist.
 Documentation-only changes need no application tests unless documentation tests exist.

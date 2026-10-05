@@ -38,5 +38,6 @@ Human review decides whether a proposal is useful. The harness applies accepted
 changes as a separate candidate, synchronizes standard versions and affected ADRs,
 and reruns applicable checks. Later reviews assess whether the correction helped.
 
-Git hooks remain bypassable; independent CI and pre-committer code review are
-separate controls still to be configured. No hosted or Codex hook exists.
+Git hooks remain bypassable. Rust CI and explicit separate-context pre-committer
+review are configured in the [candidate-review runbook](candidate-review.md);
+they do not automate learning analysis. No hosted AI or Codex hook exists.

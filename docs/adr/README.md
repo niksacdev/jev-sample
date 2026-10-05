@@ -13,6 +13,7 @@ Read relevant accepted records before changing their affected behavior.
 | [0006](0006-direct-cargo-commit-checks.md) | Accepted | Direct Cargo checks through YAML-configured pre-commit |
 | [0007](0007-single-package-api-and-evaluation.md) | Accepted | One library workflow shared by Axum/Tokio HTTP and evaluation CLI |
 | [0008](0008-mocked-provider-contract-tests.md) | Accepted | Wiremock provider contracts and in-process HTTP integration tests |
+| [0009](0009-ci-and-independent-candidate-review.md) | Accepted | GitHub CI, advisory checks, and isolated separate-context review |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,
