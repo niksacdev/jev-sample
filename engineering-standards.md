@@ -17,7 +17,8 @@ ADRs record decisions. Neither creates a competing standard or mandates tool bra
   historical scope as permanent. When a requested feature changes existing scope,
   the harness MUST identify affected contracts, risks, and acceptance criteria,
   resolve material ambiguity, and update the authoritative product documents.
-  Consequential changes MUST follow ES-02. A clear user request establishes intent;
+  Consequential changes MUST follow the decision-record requirements in this
+  section. A clear user request establishes intent;
   redundant approval MUST NOT be required unless an unresolved consequential
   decision or action-specific permission remains.
 
@@ -81,6 +82,27 @@ ADRs record decisions. Neither creates a competing standard or mandates tool bra
   explanations and runnable checks when code exists. Work MUST pause for user
   discussion at each agreed milestone.
 
+## Observability and operation
+
+- **ES-17:** Each runtime capability MUST define how its outcomes, failures,
+  latency, and resource use are observed. Request/workflow correlation MUST
+  connect boundary events, provider attempts, and final outcomes. Model-driven
+  decisions MUST record model and policy versions and routing/review reasons
+  without exposing sensitive input. Logs MUST be structured and actionable;
+  metrics MUST use bounded-cardinality dimensions, not claim or request IDs.
+- **ES-18:** Operational signals MUST have documented meaning, units,
+  denominators where applicable, and collection boundaries. Retries, timeouts,
+  invalid responses, and failed outcomes MUST remain visible. Changes affecting
+  signals MUST update their definitions. Telemetry MUST be tested for correctness
+  and redaction; retention, access, sampling, and cost MUST be deliberate.
+- **ES-19:** Deployed capabilities MUST have health/readiness semantics,
+  operational objectives, and actionable failure guidance appropriate to their
+  risk. Alerts MUST identify an owner and response, not merely emit noise.
+  Telemetry failures MUST NOT silently alter business decisions or obscure
+  service failure; degradation behavior MUST be explicit and tested. A local
+  prototype MUST disclose unavailable operational controls rather than pretend
+  it has production monitoring.
+
 ## Reference guidance
 
 For Rust design questions, consult relevant sections of the
@@ -101,6 +123,25 @@ from active effort. Do not claim causal productivity gains from a single sample.
 The harness and reviewer MUST map affected rules to evidence in the change
 summary or review report. They MUST distinguish pass, fail, not applicable, and
 not configured; a context file is guidance, not proof of compliance.
+
+For each applicable obligation, acceptance evidence MUST identify an inspectable
+artifact, test, or measurement:
+
+| Concern | Evidence to inspect |
+| --- | --- |
+| Scope and decisions | Acceptance criteria, current requirements, relevant ADRs |
+| Design and contracts | Module dependencies, validated types, failure semantics |
+| Runtime safety | Configured bounds and tests of timeout, cancellation, and failure paths |
+| Security | Permission boundaries, redaction tests, dependency/check results |
+| Behavioral correctness | Acceptance-derived tests and candidate-specific results |
+| Observability | Signal definitions, correlated events, telemetry tests, operational guidance |
+| Performance | Comparable measurements when behavior or performance claims change |
+| Maintenance | Updated docs/decisions and owned, approved debt or exceptions |
+
+These are evidence categories, not additional mandatory documents. Keep evidence
+in existing code, tests, configuration, ADRs, or change reports. Documentation-only
+changes do not require runtime checks that cannot apply. If a rule cannot be
+evaluated objectively, clarify its expected evidence before claiming compliance.
 
 Exceptions MUST identify the rule, scope, rationale, risk, approval, and expiry
 or resolution trigger. Approval MUST precede the deviation. Architectural

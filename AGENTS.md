@@ -11,7 +11,9 @@ After context compaction, reread these before continuing implementation.
 
 This repository is Rust-first. Read docs/product-scope.md for current product
 boundaries; those are evolving requirements, not permanent engineering rules.
-For requested scope changes, follow ES-03 and update affected decisions/documents.
+For requested scope changes, follow
+[Decisions and scope](engineering-standards.md#1-decisions-and-scope)
+and update affected decisions/documents.
 The harness implements; skills provide procedures in its context; pre-committer
 is an independent test/review context. Do not create an implementation-owner agent.
 
