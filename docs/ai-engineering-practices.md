@@ -20,7 +20,7 @@ discovery and precedence differ between tools.
 
 These entrypoint files now exist. They require full loading of the compact
 canonical standard and selective loading of supporting context. This document
-is explanatory guidance; mandatory requirements are ES-01 through ES-16.
+is explanatory guidance; engineering-standards.md defines all current mandatory requirements.
 Automatic loading in each client remains to be verified.
 
 Record exact setup/check commands in runbooks only after they work, not in the

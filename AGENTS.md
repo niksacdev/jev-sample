@@ -5,7 +5,8 @@
 Before implementation or review, read all of
 [engineering-standards.md](engineering-standards.md), then the
 [ADR index](docs/adr/README.md) and ADRs relevant to the change.
-Treat ES-01 through ES-16 as mandatory. Do not rely on a remembered summary.
+Follow all mandatory requirements in the current standard, including additions
+and revisions. Do not rely on a remembered summary or a fixed list of rule IDs.
 After context compaction, reread these before continuing implementation.
 
 This repository is Rust-first. Read docs/product-scope.md for current product
