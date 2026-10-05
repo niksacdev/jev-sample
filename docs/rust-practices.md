@@ -33,6 +33,9 @@ compatible maintained releases. Add dependencies only when used.
 This is the proposed enforcement plan, not a claim that tools are installed or
 checks already run. Configure it during the quality-gates milestone.
 
+The complementary [AI-native workflow](ai-engineering-practices.md) covers
+repository instructions, selective agents and skills, review, and debt controls.
+
 | Layer | Tools and policy | What it supports |
 | --- | --- | --- |
 | Reproducible builds | rustup; exact stable version in rust-toolchain.toml; committed Cargo.lock; CI uses --locked | Consistent compiler, formatter, lints, and dependency resolution |

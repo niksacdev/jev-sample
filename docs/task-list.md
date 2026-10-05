@@ -11,8 +11,8 @@ Statuses describe decisions and work completed, not just document creation.
 | Design fair comparison | Complete | Design approved; execution details remain to be resolved |
 | Define Rust implementation direction | Complete | Rust frameworks and practices; no Python comparison or superiority claim |
 | Agree architecture | Pending | Small typed backend and adapters; Axum/Tokio tentative |
-| Write coding standards | Pending | Create coding-standards.md for domain, design, errors, precision, tests, secrets, dependencies |
-| Set up pre-committer | Pending | Deterministic local/CI gates plus standards-aware agent; hook mechanism not yet selected |
+| Write coding standards | Pending | Canonical Rust/AI standards plus concise agent instructions; AI workflow proposal awaits approval |
+| Set up pre-committer | Pending | Deterministic local/CI gates, bounded review agent, and justified reusable skills; hooks not yet selected |
 | Build first Rust learning slice | Pending | Minimal API, focused tests, explanations, runnable commands; pause for review |
 | Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with explicit failure handling |
 | Evaluate and document | Pending | Execute approved experiment; report evidence, limitations, and reproducible commands |
