@@ -1,6 +1,6 @@
 # Engineering standards
 
-Version: **0.2.1**. Updated: 2026-10-05.
+Version: **0.3.0**. Updated: 2026-10-05.
 Status: working standard for this branch; team adoption is reviewed through the PR.
 
 All requirements below are mandatory when applicable. This is the single rule
@@ -97,6 +97,31 @@ source. ADRs explain decisions; configuration and verified runbooks specify tool
   No unused generated code or anonymous TODOs. Deliver small learning milestones
   with Rust explanations/runnable checks and pause for discussion as agreed.
   **Evidence:** coherent diff, updated records, and explicit remaining work.
+
+## Delivery
+
+- **Commit coherent candidates.** Commits MUST contain only intended, reviewed
+  changes and describe their purpose accurately. Verify the staged diff; do not
+  include unrelated user work, secrets, or transient artifacts. Commit/push only
+  within the user's requested or established delivery scope. Do not amend,
+  rewrite shared history, or bypass checks without explicit authorization.
+  **Evidence:** staged diff, applicable check results, and meaningful commit history.
+- **Use PRs as acceptance boundaries.** PRs MUST state purpose, scope, validation,
+  limitations, and relevant decisions/standard version. Required checks and
+  unresolved review findings MUST be visible; no self-approved exceptions or
+  merges. Opening a PR does not authorize merging it. Merge requires explicit
+  authority and satisfaction of configured protections; disclose absent controls.
+  **Evidence:** candidate-specific checks, review resolution, and merge authority.
+- **Deploy identified releases, not working trees.** Deployment MUST target an
+  identified revision/artifact and named environment with authorization covering
+  that action. Before promotion, verify applicable gates, configuration/secrets,
+  operational readiness, and rollback/recovery plan. Destructive migrations or
+  irreversible effects need explicit approval. Verify health after deployment
+  and report the release, outcome, and any recovery performed; a successful
+  deployment command alone is not success. PR approval/merge is not production
+  deployment authorization unless an approved release policy explicitly says so.
+  **Evidence:** release identity, authorization, readiness checks, recovery plan,
+  and post-deployment observations.
 
 ## Amendments and exceptions
 

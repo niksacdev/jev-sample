@@ -1,6 +1,6 @@
 # Harness working agreement
 
-Standard version reflected here: **0.2.1**.
+Standard version reflected here: **0.3.0**.
 
 ## Read before implementation or review
 
@@ -31,6 +31,9 @@ candidate using actual executable checks and verified runbooks. Review against
 applicable standard requirements and report candidate/version, evidence,
 exceptions, and missing checks. Update affected docs and ADRs.
 Pause for user discussion at the agreed milestone.
+If no milestone is agreed, finish the requested coherent task and stop; do not
+infer permission to begin another task, merge, or deploy. Follow the standard's
+[delivery policies](engineering-standards.md#delivery) for commits, PRs, and releases.
 
 No Cargo project, runbook, pre-committer profile, or CI exists yet. Do not claim
 they ran or invent verified commands. Update this setup note when controls exist.
