@@ -8,8 +8,9 @@ Before implementation or review, read all of
 Treat ES-01 through ES-16 as mandatory. Do not rely on a remembered summary.
 After context compaction, reread these before continuing implementation.
 
-This repository is a Rust-first synthetic insurance intake sample. No coverage,
-liability, fraud accusation, payment, or emergency-action decisions are permitted.
+This repository is Rust-first. Read docs/product-scope.md for current product
+boundaries; those are evolving requirements, not permanent engineering rules.
+For requested scope changes, follow ES-03 and update affected decisions/documents.
 The harness implements; skills provide procedures in its context; pre-committer
 is an independent test/review context. Do not create an implementation-owner agent.
 

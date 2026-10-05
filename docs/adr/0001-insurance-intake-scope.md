@@ -32,3 +32,8 @@ Scope, metric hierarchy/targets, and evaluation design are user-approved; see
 [product scope](../product-scope.md), [metrics](../metrics.md), and
 [evaluation design](../evaluation-design.md). No model evaluation or backend
 implementation has occurred. Framework selection remains an architecture task.
+
+Clarification 2026-10-05: this records the initial approved scope, not an immutable
+feature restriction. New user requirements may evolve the product. Update product
+documents and supersede this ADR when a consequential scope decision replaces it,
+following ES-02 and ES-03 rather than requiring redundant approval of clear intent.

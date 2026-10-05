@@ -13,9 +13,13 @@ these rules; they do not introduce competing standards or mandate tool brands.
   accepted ADRs. Consequential architectural choices MUST be recorded before
   implementation. Replacements MUST supersede prior ADRs with reciprocal links.
   Decision status and implementation evidence MUST be updated in the same change.
-- **ES-03:** This sample MUST remain synthetic insurance intake/triage. It MUST
-  NOT decide coverage, liability, fraud accusations, payments, or emergency actions.
-  A change to that boundary requires explicit approval and a new decision record.
+- **ES-03:** Features MUST implement the current agreed requirements, not treat
+  historical scope as permanent. When a requested feature changes existing scope,
+  the harness MUST identify affected contracts, risks, and acceptance criteria,
+  resolve material ambiguity, and update the authoritative product documents.
+  Consequential changes MUST follow ES-02. A clear user request establishes intent;
+  redundant approval MUST NOT be required unless an unresolved consequential
+  decision or action-specific permission remains.
 
 ## 2. Design and implementation
 
