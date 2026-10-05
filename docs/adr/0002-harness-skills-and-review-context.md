@@ -40,7 +40,9 @@ ADRs stay fresh via dated evidence or explicit supersession, not erased rational
 
 ## Verification and follow-up
 
-No agent profile, skills, instruction entrypoints, hooks, or CI are configured
-yet. Validate actual context loading, isolated test execution, and failure
+Update 2026-10-05: root AGENTS.md and Copilot repository instructions now exist
+and reference the mandatory ES rules with selective supporting context.
+Automatic loading in each client is not yet verified. No agent profile, skills,
+hooks, or CI are configured. Validate context loading, isolated test execution, and failure
 reporting during quality-gate setup. See
 [engineering practices](../ai-engineering-practices.md).

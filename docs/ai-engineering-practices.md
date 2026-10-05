@@ -18,6 +18,11 @@ to one canonical engineering-standards.md and the approved product/evaluation do
 not duplicate large rule sets. Verify instruction loading in each actual client:
 discovery and precedence differ between tools.
 
+These entrypoint files now exist. They require full loading of the compact
+canonical standard and selective loading of supporting context. This document
+is explanatory guidance; mandatory requirements are ES-01 through ES-16.
+Automatic loading in each client remains to be verified.
+
 Record exact setup/check commands in runbooks only after they work, not in the
 engineering constitution. Keep approved decisions
 distinct from proposals. Update instructions when behavior or tooling changes;
@@ -169,7 +174,7 @@ are established yet.
 ## Implementation sequence
 
 Keep standards principle-based. Record approved architecture in ADRs and verified
-commands in runbooks and executable configuration. Add concise agent instructions.
+commands in runbooks and executable configuration. Maintain the concise agent instructions.
 Implement checks and CI
 with the initial Cargo scaffold before its first behavioral slice is accepted.
 slice. Define pre-committer after its review contract is agreed; add skills only

@@ -11,7 +11,7 @@ Statuses describe decisions and work completed, not just document creation.
 | Design fair comparison | Complete | Design approved; execution details remain to be resolved |
 | Define Rust implementation direction | Complete | Rust frameworks and practices; no Python comparison or superiority claim |
 | Agree architecture | Pending | Small typed backend and adapters; Axum/Tokio tentative |
-| Establish engineering standards | In progress | Initial architecture/design/coding principles and ADR policy recorded; architecture-specific rules and instructions remain |
+| Establish engineering standards | In progress | Mandatory ES rules, ADR policy, and harness entrypoints exist; client loading and future check enforcement remain to verify |
 | Set up pre-committer | Pending | Deterministic local/CI gates, bounded review agent, and justified reusable skills; hooks not yet selected |
 | Build first Rust learning slice | Pending | Minimal API, focused tests, explanations, runnable commands; pause for review |
 | Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with explicit failure handling |

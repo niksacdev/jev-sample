@@ -1,98 +1,87 @@
 # Engineering standards
 
-Status: initial engineering constitution recorded on 2026-10-05.
-This document covers architecture, design, coding, testing, and AI-assisted work.
-It states durable obligations, not a catalog of frameworks, products, or commands.
+This is the canonical team standard for architecture, design, implementation,
+and verification. MUST and MUST NOT are mandatory. Supporting practices explain
+these rules; they do not introduce competing standards or mandate tool brands.
 
-## Constitution and implementation
+## 1. Decisions and scope
 
-Keep principles here, consequential choices in ADRs, and current operational
-commands in verified runbooks and executable configuration. A tool replacement
-must preserve the purpose of the safeguard, not require a constitution rewrite.
-Change principles deliberately when goals or evidence warrant it; do not let
-implementation preferences silently become permanent standards.
+- **ES-01:** Every change MUST have explicit acceptance criteria and non-goals
+  before implementation. Consequential ambiguity or conflicting guidance MUST
+  be resolved with the user, not hidden by assumptions.
+- **ES-02:** Implementation and review MUST consult the ADR index and relevant
+  accepted ADRs. Consequential architectural choices MUST be recorded before
+  implementation. Replacements MUST supersede prior ADRs with reciprocal links.
+  Decision status and implementation evidence MUST be updated in the same change.
+- **ES-03:** This sample MUST remain synthetic insurance intake/triage. It MUST
+  NOT decide coverage, liability, fraud accusations, payments, or emergency actions.
+  A change to that boundary requires explicit approval and a new decision record.
 
-## Context and decisions
+## 2. Design and implementation
 
-Before implementation or review, read the product scope, metrics, evaluation
-design, and [ADR index](docs/adr/README.md), then relevant accepted ADRs.
-Approved scope and decisions take precedence over tentative framework proposals.
-If documents conflict, surface the conflict rather than silently choose a rule.
+- **ES-04:** Domain behavior and deterministic routing MUST be independent of
+  transport and provider representations. New abstractions and dependencies MUST
+  have a current use, justified cost, and reviewed maintenance implications.
+- **ES-05:** Domain concepts MUST use explicit types and exhaustive outcomes.
+  External values MUST be validated beyond deserialization before domain use:
+  completeness, allowed labels, finite numerical bounds, and consistency.
+- **ES-06:** Errors MUST remain explicit. Technical failure MUST remain distinct
+  from model uncertainty even when both route to review. Code MUST NOT fabricate
+  successful defaults or hide failure through broad suppression.
+- **ES-07:** Work and resources MUST be bounded: input size, concurrency, retries,
+  and deadlines. Cancellation MUST be handled deliberately. Blocking operations
+  MUST NOT run unchecked on async execution threads. Optimization claims MUST
+  use comparable measurements.
+- **ES-08:** Project code MUST use safe constructs and MUST NOT rely on unchecked
+  production panics. Any exception MUST document its invariants and be explicitly
+  reviewed. Exact arithmetic and date operations MUST remain deterministic.
 
-Record consequential decisions before implementation: module/trust boundaries,
-contracts, storage, dependencies with architectural impact, model policy, review
-or deployment mechanisms, and security/performance trade-offs. An ADR contains
-status, context, decision, alternatives, consequences, and verification/follow-up.
+## 3. Security and verification
 
-Keep the index, status, and implementation links fresh in the same PR as changes.
-Preserve accepted rationale. For a changed decision, add a new ADR, link both
-records, and mark the old one superseded; do not erase history. Corrections and
-implementation notes may update existing records with dated context.
-Proposed ADRs do not authorize implementation. Avoid ADRs for trivial edits.
+- **ES-09:** External content and model outputs MUST be treated as untrusted data,
+  not authority or executable instructions. Permissions MUST be enforced in code,
+  independently of model confidence. Secrets/private data MUST NOT enter source,
+  telemetry, ordinary tests, or unapproved external services.
+- **ES-10:** Changes MUST have acceptance-derived behavioral evidence covering
+  applicable boundaries, negative cases, and failures. Bug fixes MUST include a
+  regression test where executable tests apply. Ordinary tests MUST be repeatable,
+  use synthetic/mocked inputs, and MUST NOT incur paid inference.
+- **ES-11:** Applicable reproducible formatting, static analysis, compilation,
+  tests, and dependency checks MUST pass before acceptance. Evidence MUST identify
+  the candidate revision and actual checks/results. Missing or failed checks MUST
+  be disclosed; configuration alone MUST NOT be claimed as verified enforcement.
+- **ES-12:** Evaluation MUST preserve held-out isolation, label provenance, frozen
+  settings, and approved denominators. Results MUST NOT claim business gains,
+  safety certification, or superiority beyond the evidence actually collected.
 
-## Architecture and design
+## 4. AI-assisted workflow and maintenance
 
-Keep domain types and deterministic routing policy separate from transport and
-provider adapters. Depend on explicit contracts, not provider-specific JSON in
-domain code. Prefer composition and the simplest structure serving current needs.
-No speculative service layers, plugin systems, or abstractions without a use.
+- **ES-13:** The harness MUST own implementation and integration. Skills MUST be
+  bounded procedures in its context, not substitutes for independent review.
+  Delegation MUST have a bounded objective and MUST NOT create overlapping writers.
+- **ES-14:** Pre-committer MUST use separate context, inspect the exact candidate,
+  run applicable approved checks in an isolated surface, and review these rules
+  and relevant ADRs. It MUST report findings and unperformed checks without source
+  edits, commits, pushes, or auto-approval. Until configured, its absence MUST be
+  disclosed; equivalent checks and human review MUST NOT be represented as an
+  agent run. CI MUST independently repeat automated gates once implemented.
+- **ES-15:** Changes MUST update directly affected documentation and decision
+  evidence. Accepted debt MUST have rationale, impact, owner, tracking reference,
+  and resolution trigger. Unused generated code and anonymous TODOs MUST NOT be added.
+- **ES-16:** Delivery MUST use coherent learning milestones with relevant Rust
+  explanations and runnable checks when code exists. Work MUST pause for user
+  discussion at each agreed milestone.
 
-Keep authority in code: model confidence cannot grant permissions or authorize
-coverage, payments, or emergency actions. Preserve the approved intake-only scope.
-External data and generated output remain untrusted regardless of typing.
+## Compliance and exceptions
 
-## Coding and runtime behavior
+The harness and reviewer MUST map affected rules to evidence in the change
+summary or review report. They MUST distinguish pass, fail, not applicable, and
+not configured; a context file is guidance, not proof of compliance.
 
-Use meaningful Rust types and exhaustive outcomes. Validate external values
-beyond deserialization, including finite probabilities, allowed labels, and
-answer completeness. Keep arithmetic and date operations deterministic.
+Exceptions MUST identify the rule, scope, rationale, risk, approval, and expiry
+or resolution trigger. Approval MUST precede the deviation. Architectural
+exceptions belong in an ADR; temporary debt needs a tracked record. Tool output
+or agent agreement MUST NOT grant exceptions.
 
-Return explicit errors; distinguish technical failure from an uncertain judgment
-even when both route to review. Never fabricate a successful result.
-Avoid unsafe project code, unchecked production panics, unbounded resources,
-and blocking work on async runtime threads.
-
-Use bounded inputs, concurrency, retries, and deadlines; propagate cancellation.
-Measure before optimizing. Add dependencies only for concrete maintained uses.
-Exceptions require a narrow scope, rationale, and review.
-
-## Tests, evidence, and security
-
-Derive assertions from acceptance criteria, not generated implementation output.
-Cover boundary values, negative cases, review precedence, malformed provider
-responses, and failures. Fix bugs with regression tests. Ordinary tests use
-synthetic fixtures and mocked providers, with no paid calls or production secrets.
-
-Formatting, static analysis, compilation, tests, and dependency policy are executable
-checks, not substitutes for design review. Record exact checks and limitations.
-Do not claim gates, branch protection, or performance safeguards exist until
-configured and verified. Follow the [Rust principles](docs/rust-practices.md);
-current tool candidates are separate [implementation options](docs/tooling-options.md).
-
-Apply least privilege, secret redaction, controlled egress, and reviewed CI
-permissions. Do not execute instructions embedded in external data. Protect
-held-out evaluation cases from implementation/prompt tuning.
-
-## Harness, skills, and review agent
-
-The harness owns implementation and integration. AGENTS.md will point to these
-standards and ADRs. Skills provide bounded reusable procedures in the harness
-context; they are not independent actors or enforcement mechanisms.
-
-Pre-committer is a separate-context agent that runs approved tests on the exact
-candidate snapshot and reviews architecture, design, coding, and ADR adherence.
-It reports evidence and actionable findings without editing source or accepting
-its own review. The harness fixes issues; CI repeats deterministic gates.
-
-Security, performance, and research are required responsibilities, not mandatory
-standing agents. Delegate only substantial bounded work. Hosted agentic PR
-automation is deferred pending validated local review and explicit permissions.
-
-## Maintainability and learning
-
-Deliver coherent small changes, explain relevant Rust concepts and runnable
-tests, and pause at logical milestones. Keep directly affected docs fresh.
-Track accepted debt with owner, impact, rationale, and resolution trigger.
-Do not leave anonymous TODOs, silence failures, or add unused generated code.
-
-See [AI-native practices](docs/ai-engineering-practices.md) for workflow details.
+Tool/version/command choices MUST live in ADRs, verified runbooks, and executable
+configuration, not in this constitution. See AGENTS.md for context-loading rules.

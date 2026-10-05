@@ -14,6 +14,7 @@ not coverage or payout decisions. Implementation has not started.
 - [Provisional implementation and tooling options](docs/tooling-options.md)
 - [Proposed AI-native engineering workflow](docs/ai-engineering-practices.md)
 - [Engineering standards](engineering-standards.md)
+- [Harness working agreement](AGENTS.md)
 - [Architecture decision records](docs/adr/README.md)
 - [Milestone task list](docs/task-list.md)
 
