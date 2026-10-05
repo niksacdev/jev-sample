@@ -2,7 +2,8 @@
 
 Status: integration pending. The user approved automatic analysis that generates
 a separate proposed patch, with human review before adoption. No active hook or
-Rust orchestration tool implements this yet.
+Rust orchestration tool implements AI analysis yet. Direct Cargo hooks are
+configured separately; see [development setup](development.md).
 
 ## Implementation boundary
 
@@ -11,9 +12,8 @@ registration. Declare Rust formatting, linting, and test commands directly in
 that configuration once the Cargo project exists. Any custom orchestration must
 be Rust, not a Python runner or a second application toolchain.
 
-The temporary Python implementation, tests, dependency manifest, and hook
-configuration were removed. A local ignored `.venv-hooks` installation of
-pre-commit 4.5.1 exists from that attempt; no hook was registered.
+The temporary Python implementation, tests, and dependency manifest were removed.
+The new YAML configuration invokes Cargo directly with no custom checker.
 
 ## Required behavior
 

@@ -6,7 +6,8 @@ Rust based sample to demonstrate use of Jev model in FSI applications
 ## Project decisions
 
 This sample explores synthetic auto-insurance claim-intake analysis and triage,
-not coverage or payout decisions. Implementation has not started.
+not coverage or payout decisions. A minimal Cargo library scaffold exists;
+domain behavior and provider integration have not started.
 
 - [Jev capabilities and limitations](docs/jev-capabilities.md)
 - [Approved product scope](docs/product-scope.md)

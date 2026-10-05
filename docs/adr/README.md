@@ -10,6 +10,7 @@ Read relevant accepted records before changing their affected behavior.
 | [0003](0003-separate-principles-from-tools.md) | Superseded by 0004 | Initial separation of principles and tool candidates |
 | [0004](0004-consolidate-engineering-guidance.md) | Accepted | One standard, one entry point, ADR memory, executable enforcement |
 | [0005](0005-evidence-driven-instruction-maintenance.md) | Accepted | Explicit evidence-driven maintenance with human adoption |
+| [0006](0006-direct-cargo-commit-checks.md) | Accepted | Direct Cargo checks through YAML-configured pre-commit |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,

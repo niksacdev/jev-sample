@@ -39,7 +39,8 @@ infer permission to begin another task, merge, or deploy. Follow the standard's
 
 The maintainer profile and learning skill exist; automatic hook integration is
 pending. Read the learning-loop guide for the intended contract and limitations. Native agent
-discovery and live CLI analysis are not yet verified. No Cargo project,
-independent pre-committer review profile, or CI exists yet. Do not claim they ran.
+discovery and live CLI analysis are not yet verified. The minimal Cargo scaffold
+and direct-Cargo hook configuration exist; use docs/development.md for commands.
+Independent pre-committer review and CI remain unconfigured.
 Update this setup note when controls exist.
 Documentation-only changes need no application tests unless documentation tests exist.

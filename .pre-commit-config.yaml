@@ -1,0 +1,26 @@
+minimum_pre_commit_version: '3.2.0'
+fail_fast: true
+repos:
+  - repo: local
+    hooks:
+      - id: rust-format
+        name: Rust formatting
+        entry: cargo fmt --all -- --check
+        language: system
+        pass_filenames: false
+        files: '(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$|\.rs$|^\.pre-commit-config\.yaml$'
+        stages: [pre-commit]
+      - id: rust-clippy
+        name: Rust linting
+        entry: cargo clippy --workspace --all-targets --locked -- -D warnings
+        language: system
+        pass_filenames: false
+        files: '(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$|\.rs$|^\.pre-commit-config\.yaml$'
+        stages: [pre-commit]
+      - id: rust-tests
+        name: Rust tests
+        entry: cargo test --workspace --locked
+        language: system
+        pass_filenames: false
+        files: '(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$|\.rs$|^\.pre-commit-config\.yaml$'
+        stages: [pre-commit]
