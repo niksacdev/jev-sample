@@ -49,4 +49,6 @@ logical milestone for discussion.
 
 Rust's compiler helps with type and memory safety, but does not establish good
 architecture, sufficient tests, correct domain logic, or reliable model outputs.
-The Rust quality hypothesis will be bounded and evaluated separately.
+The project will use established Rust frameworks and practices, without a Python
+comparison or a language-superiority claim. See
+[engineering standards](../engineering-standards.md).

@@ -9,7 +9,10 @@ not coverage or payout decisions. Implementation has not started.
 - [Jev capabilities and limitations](docs/jev-capabilities.md)
 - [Approved product scope](docs/product-scope.md)
 - [Approved metrics and targets](docs/metrics.md)
-- [Proposed comparison design](docs/evaluation-design.md)
+- [Approved comparison design](docs/evaluation-design.md)
+- [Engineering standards](engineering-standards.md)
+- [Harness working agreement](AGENTS.md)
+- [Architecture decision records](docs/adr/README.md)
 - [Milestone task list](docs/task-list.md)
 
 Documents distinguish approved decisions from proposals. Work pauses for discussion
