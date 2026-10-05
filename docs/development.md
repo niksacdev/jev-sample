@@ -14,11 +14,12 @@ cargo clippy --version
 ```
 
 Use rust-analyzer in your editor if desired; it is not a project dependency.
-No framework or application dependencies are selected yet.
+Axum/Tokio are selected for the HTTP server; wiremock is selected for provider
+HTTP tests. Dependencies will be added with their first actual callers.
 
 ## Repository hygiene
 
-Track Cargo.lock when the application Cargo project is created. Ignore generated
+Track the existing Cargo.lock. Ignore generated
 target/coverage files and local .env files. Only sanitized .env.example content
 may be committed; ignore rules are not secret scanning.
 Never put API keys or real claim narratives in fixtures or telemetry.
@@ -55,7 +56,17 @@ configuration. Hooks are bypassable and do not replace CI or architectural revie
 The [engineering learning loop](engineering-maintenance.md) is not wired into
 these hooks. No custom Python runner or AI analysis runs during commits.
 
+## Integration tests
+
+Follow the [mocked contract testing decision](adr/0008-mocked-provider-contract-tests.md).
+Provider tests will use real adapters against per-test local wiremock servers;
+inbound routes will use in-process Axum/Tower tests. Inject endpoints and dummy
+credentials explicitly. Ordinary tests require no real API keys or paid calls.
+These tests will run under `cargo test --workspace --locked` as code is added.
+No integration tests exist in the current behavior-free scaffold.
+
 ## Next milestone
 
-Agree the backend boundaries, API contracts, provider adapters, and first learning
-slice. Record selected architecture/frameworks in ADRs before implementation.
+Architecture is approved in [the application ADR](adr/0007-single-package-api-and-evaluation.md).
+Configure CI and isolated independent candidate review before accepting the first
+API slice. Specify detailed API/provider contracts with each implementation slice.

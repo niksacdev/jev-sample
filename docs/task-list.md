@@ -13,8 +13,8 @@ Statuses describe decisions and work completed, not just document creation.
 | Agree architecture | Complete | [Approved single-package architecture](adr/0007-single-package-api-and-evaluation.md): shared library, Axum/Tokio HTTP server, evaluation CLI |
 | Establish engineering standards | In progress | Mandatory ES rules, ADR policy, and harness entrypoints exist; client loading and future check enforcement remain to verify |
 | Set up pre-committer | In progress | Direct Cargo local hooks installed using external pre-commit; CI and isolated independent candidate review remain unconfigured |
-| Build first Rust learning slice | Pending | Minimal API, focused tests, explanations, runnable commands; pause for review |
-| Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with explicit failure handling |
+| Build first Rust learning slice | Pending | Minimal API with in-process Axum/Tower integration tests, explanations, runnable commands; pause for review |
+| Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with wiremock HTTP contract/failure tests |
 | Evaluate and document | Pending | Execute approved experiment; report evidence, limitations, and reproducible commands |
 
 ## Prerequisites
