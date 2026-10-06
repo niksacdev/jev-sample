@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+rust=false
+frontend=false
+
+case "${1:-}" in
+    --all-files) rust=true; frontend=true ;;
+    "")
+        paths=$(mktemp)
+        trap 'rm -f "$paths"' EXIT
+        git diff --cached --name-only --no-renames -z > "$paths"
+        while IFS= read -r -d '' path; do
+            case "$path" in
+                *.rs|Cargo.toml|Cargo.lock|*/Cargo.toml|*/Cargo.lock|rust-toolchain.toml|*/rust-toolchain.toml|config/*.json|web/src/contracts.ts)
+                    rust=true ;;
+            esac
+            case "$path" in web/*) frontend=true ;; esac
+            case "$path" in
+                .githooks/*|tests/git-hooks.sh)
+                    rust=true; frontend=true ;;
+            esac
+        done < "$paths"
+        ;;
+    *) echo "Usage: .githooks/pre-commit [--all-files]" >&2; exit 2 ;;
+esac
+
+if ! "$rust" && ! "$frontend"; then
+    exit 0
+fi
+
+# Do not validate unstaged code as if it were the commit candidate.
+if ! git diff --quiet --; then
+    echo "Checks blocked: tracked files have unstaged changes. Stage or stash them, then retry." >&2
+    exit 1
+fi
+
+if "$rust"; then
+    echo "Running Rust formatting, linting and tests"
+    cargo fmt --all -- --check
+    cargo clippy --workspace --all-targets --locked -- -D warnings
+    cargo test --workspace --locked
+fi
+if "$frontend"; then
+    echo "Running frontend type check, build and tests"
+    npm run build --prefix web
+    npm test --prefix web
+fi

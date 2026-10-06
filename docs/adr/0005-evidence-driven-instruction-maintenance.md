@@ -11,8 +11,9 @@ proposals based on repository findings and supplied session evidence.
 
 ## Decision
 
-Use the language-agnostic pre-commit manager and YAML configuration for staged checks and a
-fresh-context learning skill. Retain a read/search-only engineering-maintainer
+The hook-manager portion of this decision is superseded by
+[ADR 0012](0012-native-git-quality-hook.md). Use Git hooks for staged checks and a
+fresh-context learning skill for analysis. Retain a read/search-only engineering-maintainer
 profile for richer PR-review packets. Both assess evidence against existing instructions/checks
 and proposes scoped corrections or returns no change. It cannot edit or adopt.
 The harness applies human-accepted proposals as separately reviewable changes.
@@ -35,7 +36,7 @@ automatic policy adoption. Updated obligations bump standard/AGENTS versions.
 ## Verification and follow-up
 
 Update 2026-10-05: user chose automatic generation of separate proposed patches,
-with human adoption. The Python staged-snapshot runner and its tests were rejected
+with human adoption. The initial staged-snapshot runner and its tests were rejected
 and removed: custom implementation must be Rust. Automatic hook integration is
 pending. The profile contract passed a manually instructed separate-context
 synthetic smoke review; native discovery and live CLI behavior remain unverified.

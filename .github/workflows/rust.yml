@@ -26,6 +26,8 @@ jobs:
         run: rustup show active-toolchain
       - name: Formatting
         run: cargo fmt --all -- --check
+      - name: Native Git hook regression checks
+        run: bash tests/git-hooks.sh
       - name: Static analysis
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Tests

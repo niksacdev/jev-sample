@@ -38,31 +38,35 @@ policy will be defined against the actual project rather than guessed now.
 
 ## Hooks and learning
 
-The YAML hooks invoke Cargo directly, without a custom runner:
+The repository-managed native Git hook invokes Cargo and npm directly. It needs
+only Bash, Git and the existing Rust/Node toolchains.
+Install it explicitly from this checkout:
 
 ```sh
-cargo fmt --all -- --check
-cargo clippy --workspace --all-targets --locked -- -D warnings
-cargo test --workspace --locked
-pre-commit validate-config
-pre-commit run --all-files
+git config --local core.hooksPath .githooks
+.githooks/pre-commit --all-files
+bash tests/git-hooks.sh
 ```
 
 Hooks run for Rust sources, Cargo manifests/lockfiles, the pinned toolchain, and
-hook configuration. `pass_filenames: false` checks the project rather than
-individual changed files. Formatting checks do not rewrite code.
+configuration JSON. Generated frontend contracts trigger both sets of checks;
+hook/checker changes also trigger both. Checks cover the project, not individual
+changed files. Formatting checks do not rewrite code.
 Frontend file changes also run the strict TypeScript build and component tests;
 install declared dependencies with `npm ci --prefix web` first.
-Pre-commit temporarily stashes unstaged tracked changes during normal commits;
-checks must not rely on untracked/generated inputs. CI must check a clean candidate.
+If checks are needed, the hook rejects unstaged tracked changes: stage or stash
+them explicitly before committing. It does not stash or modify your files.
+Checks must not rely on untracked/generated inputs. CI checks a clean candidate.
 
-Install pre-commit outside the repository through its official instructions
-(on macOS, `brew install pre-commit`). Register the hook with `pre-commit install`.
-This repository's worktrees share the registered hook; each checkout needs the
-configuration. Hooks are bypassable and do not replace CI or architectural review.
+The local Git setting is shared with this repository's other worktrees unless
+worktree-specific configuration is enabled. Each checkout using it must contain
+the executable `.githooks/pre-commit`. Git uses this directory instead of its
+default hooks directory.
+Hooks are bypassable and do not replace CI or architectural review.
 
 The [engineering learning loop](engineering-maintenance.md) is not wired into
-these hooks. No custom Python runner or AI analysis runs during commits.
+these hooks. Local hooks run deterministic checks; AI review/learning automation
+remains a separate pending integration.
 
 ## Integration tests
 

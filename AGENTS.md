@@ -40,7 +40,7 @@ infer permission to begin another task, merge, or deploy. Follow the standard's
 The maintainer profile and learning skill exist; automatic hook integration is
 pending. Read the learning-loop guide for the intended contract and limitations. Native agent
 discovery and live CLI analysis are not yet verified. The minimal Cargo scaffold
-and direct-Cargo hook configuration exist; use docs/development.md for commands.
+and native Git Cargo/npm hook exist; use docs/development.md for commands.
 The local health API, servicing coordinator, Jev adapter, React UI and mocked
 contract tests exist. See README for runnable commands and limitations.
 No consequential claim workflow, MCP, login or durable storage exists yet.
