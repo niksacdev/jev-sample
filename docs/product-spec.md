@@ -1,6 +1,8 @@
 # Intake analyst workbench: product discovery draft
 
 Status: Proposed, not approved for contract implementation.
+Direction update: autonomous-first intake-to-handoff requested by the user;
+human intervention by exception, with continuous state/lineage/artifact access.
 Date: 2026-10-05.
 Primary persona approved: insurance intake analyst.
 Design: [interactive mockup](design/intake-workbench.html).
@@ -57,15 +59,21 @@ rejected handoff and a stale concurrent edit in these stories.
 For every transition review actor, input, output, owner, recovery action, and
 measurement. An analyst clicking "record" is not yet a completed customer outcome.
 
-The current mockup shows assessment and draft disposition only. Arrival,
-assignment, clarification, durable recording, handoff, and outcome tracking are
-design gaps, not implemented features. Extend it after approving the workflow
-and dependency boundaries; do not treat this specification as research validation.
+The updated mockup simulates submission, validation, assessment, policy checking,
+recording, pending handoff and acknowledgement. Routine processing advances
+automatically. Urgent attention, conflicting information and technical failures
+pause with an owner and required action; a scripted intervention resumes the run.
+Every transition exposes lineage and expandable input/assessment/exception/
+disposition/handoff artifacts. These are observable audit facts, not private
+model reasoning. Persistence, authorization and tool execution are simulated,
+not implemented. No arbitrary-input interpretation or live model is provided.
 
-The intended experience is agentic: the analyst states a task, supplies
-clarification, and reviews proposed actions through an orchestration agent.
+The intended experience is agentic: the customer submits an intake; an agent
+progresses permitted workflow without routine analyst confirmation. Customers or
+operators intervene only when required by an explicit exception. Operators can
+inspect current state, source revisions, tool outcomes and artifacts at all stages.
 Structured assessment/action cards and recorded state remain visible alongside
-conversation. The current mockup does not yet represent that conversation.
+conversation. The mockup includes scripted customer status updates, not an open-ended chat.
 The agent must not claim completion from its own prose or act beyond delegated
 authority. The [agent/MCP design](system-design.md#agent-and-mcp-boundaries)
 proposes identity, tool, confirmation, and message boundaries for review.
@@ -73,9 +81,10 @@ proposes identity, tool, confirmation, and message boundaries for review.
 ## Mockup journey and decisions to review
 
 The mockup contains synthetic scenarios, not model output or evaluation data.
-Switch between manual and assisted views of the same narrative. Choose a routing
-category, standard/expedited attention, and human-review disposition; record the
-decision locally. No real queue is updated. Recorded decisions are inspectable.
+Submit a selected synthetic customer narrative and observe autonomous progress.
+Resolve the scripted exception when one appears, then inspect resumed processing
+and acknowledged handoff. No real queue is updated. Switching cases resets the
+simulation and cancels its pending timer; nothing persists across reloads.
 
 | State | Intended experience | Value or safeguard |
 | --- | --- | --- |
@@ -89,11 +98,11 @@ The source cue in the mockup is hand-authored. Whether production supports
 validated evidence spans remains undecided; do not ask a model to invent
 explanations or treat these excerpts as a promised API field.
 
-The review-based mockup deliberately does not execute automatic routing.
-Our approved experiment includes automatic-route precision/coverage targets.
-Whether the eventual workbench supervises an automatic queue, suggests every
-route, or supports both needs explicit approval; clicks in this mockup do not
-resolve that product-policy decision.
+Autonomous-first operation is the requested product direction. The exact action
+allowlist, predelegated scopes, automation eligibility and exception thresholds
+still need approval and evidence. Routine autonomy is not authority for coverage,
+settlement, payment, or emergency actions. The approved automatic-route quality
+and coverage targets remain experiment gates, not proven deployment eligibility.
 
 ## Model role: why Jev is plausible, not yet proven
 

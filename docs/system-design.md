@@ -25,8 +25,9 @@ not selected. Jev is a bounded assessment dependency, not the conversation or
 workflow authority. Agent requests do not replace deterministic authorization,
 validated workflow transitions, or explicit analyst consent.
 
-Proposed first product mode: analyst-assisted dispositions, not automatic routing.
-Automatic routing remains undecided. Model comparison stays in the isolated
+User-directed product mode: autonomous intake-to-handoff, human intervention by
+exception, continuously inspectable state/lineage/artifacts. Exact delegated
+actions, thresholds and deployment authority remain undecided. Model comparison stays in the isolated
 evaluation runner; production does not send each intake to all three providers.
 Use synthetic inputs until data rights, classification, residency, retention,
 vendor terms, and account permissions are reviewed.
@@ -77,7 +78,8 @@ Concrete named owners and SLAs are review prerequisites for deployment.
 ## Agent and MCP boundaries
 
 The analyst describes a task, reviews proposed next actions, supplies clarification,
-and confirms consequential changes through an agentic workbench. Structured
+and resolves exceptions through an agentic workbench. Routine permitted actions
+do not require per-step human confirmation. Structured
 cards remain authoritative views of persisted state; chat text is not a receipt
 for recording or delivery. The orchestration agent can select approved tools and
 explain their results, but cannot invent assessment results, authorize itself,
@@ -106,9 +108,9 @@ permission. Minimize narrative-bearing resources; no unrestricted SQL,
 filesystem, arbitrary URL fetch, or generic "execute" tool.
 
 Read tools and write tools have separate scopes. Proposed initial authority:
-agent may retrieve authorized intake and request assessment; recording a
-disposition or sending a clarification/handoff requires analyst confirmation.
-This is a proposal, not approved behavior. Approval binds the authenticated
+agent may retrieve authorized intake and request assessment; routine recording and permitted handoff may execute under predelegated,
+server-enforced authority. Exceptions outside those bounds pause for the
+appropriate human. Actual action scopes and messaging permission remain proposals. Approval binds the authenticated
 actor to the exact resource revision, structured action and payload digest,
 expiry, and one-time intent ID. Changing arguments after confirmation requires
 new confirmation. The server validates the approval, not an LLM-generated
@@ -224,9 +226,9 @@ sequenceDiagram
     API-->>MCP: Assessment ID and structured state
     MCP-->>Agent: Typed result, not disposition authority
     Agent-->>Analyst: Assessment card and proposed next action
-    Analyst->>Agent: Confirm or edit exact disposition
-    Agent->>MCP: Record intent with bound approval reference
-    MCP->>API: Authorize confirmed versioned command
+    Note over Agent,Analyst: Human intervenes only if policy blocks routine action
+    Agent->>MCP: Record intent with scoped delegation or exception approval
+    MCP->>API: Authorize versioned command and delegated bounds
     API-->>MCP: Durable disposition + pending handoff
     MCP-->>Agent: Structured recorded result
     Agent-->>Analyst: Recorded; delivery still pending
@@ -298,7 +300,7 @@ read status. Persist key/request identity/result atomically; define expiry befor
 implementation. Durable decisions require expected-version checks even with
 idempotency. No unchecked overwrite or exactly-once-delivery claim.
 
-## Successful assisted journey
+## Successful autonomous journey
 
 ```mermaid
 sequenceDiagram
@@ -323,8 +325,8 @@ sequenceDiagram
     W->>DB: Persist judgments and attempts
     UI->>API: Read assessment status
     API-->>UI: Judgments, review state, provenance
-    Analyst->>UI: Inspect/correct disposition
-    UI->>API: Record (expected version, revision, key)
+    Note over Analyst,UI: Observe state and artifacts without blocking processing
+    UI->>API: Agent records permitted disposition (version, revision, key)
     API->>DB: Atomically persist disposition + handoff work
     API-->>UI: Recorded, handoff pending
     W->>Q: Handoff with stable delivery identity
@@ -432,7 +434,7 @@ is ready. Define graceful draining and unfinished-work recovery before deploymen
 | Durable workflow | Crash/retry, duplicate, stale-write and rejected/unknown handoff integration tests |
 | Production release | Environment-specific infrastructure/security/dependency ADRs, operational limits and recovery evidence, named authorization |
 
-Decisions to resolve first: assisted versus automatic product mode; actual
+Decisions to resolve first: autonomous action bounds and exception policy; actual
 receiving queue and acknowledgement contract; intake source and required fields;
 clarification ownership/channel; queue/reason taxonomy; data classification and
 retention; synchronous versus proposed durable asynchronous assessment tradeoff.
