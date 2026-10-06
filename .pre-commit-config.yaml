@@ -24,3 +24,17 @@ repos:
         pass_filenames: false
         files: '(^|/)(Cargo\.toml|Cargo\.lock|rust-toolchain\.toml)$|\.rs$|^\.pre-commit-config\.yaml$'
         stages: [pre-commit]
+      - id: frontend-build
+        name: Frontend type check and build
+        entry: npm run build --prefix web
+        language: system
+        pass_filenames: false
+        files: '^web/|^\.pre-commit-config\.yaml$'
+        stages: [pre-commit]
+      - id: frontend-tests
+        name: Frontend tests
+        entry: npm test --prefix web
+        language: system
+        pass_filenames: false
+        files: '^web/|^\.pre-commit-config\.yaml$'
+        stages: [pre-commit]

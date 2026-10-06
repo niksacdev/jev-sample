@@ -22,8 +22,11 @@ The architecture must support three experiences:
 | Employee workbench | Resolve assigned exceptions using customer context, source evidence, current guidelines and verified authority |
 | Operator dashboard | Inspect fleet/run states, dependencies and lineage; coordinate authorized recovery; measure quality and economics |
 
-The backend currently implements only a local Axum health endpoint and four
-route tests. The HTML design simulates workflows; it is not an agent runtime.
+The executable sample implements a React UI, local Rust servicing coordinator,
+keyword/Jev intent assessment, review-only task planning and process-local
+operator inspection. See [ADR 0010](adr/0010-react-ui-and-rust-agent-boundary.md)
+for implemented boundaries and [README](../README.md) for runnable commands.
+The original HTML design still simulates full claims workflows.
 This target architecture is not deployment authorization or approval of
 autonomous financial decisions. Supported claim types, jurisdiction, legal
 authority and action limits must be agreed before implementation.
@@ -121,6 +124,16 @@ queue/outbox is the proposed initial scheduling mechanism; add a broker or
 separate service only for demonstrated scale/isolation requirements.
 Domain code imports no transport, database or provider SDKs.
 
+### Browser and agent execution boundary
+
+The approved frontend is TypeScript/React. It submits customer messages and typed
+employee/operator commands to the Rust API and renders role-scoped results.
+It does not select models, construct provider questions, hold provider credentials,
+or invoke Jev/MCP servers directly. Rust coordinates agent tasks and calls Jev.
+Model allocation and deterministic tool selection are server-side decisions.
+Provider provenance is exposed only through the operator inspection projection;
+customer responses describe work and outcomes without provider-specific fields.
+
 ### Customer and policy MCP boundaries
 
 Expose customer context and policy capabilities through separate logical MCP
@@ -171,7 +184,7 @@ distributions. Preserve provider-specific uncertainty without pretending that
 Jev probabilities and LLM self-reported confidence are equivalent.
 Pin provider/model/prompt/rubric/policy versions.
 
-The existing rules/Jev/structured-LLM comparison is an intake component benchmark.
+The existing rules/Jev/structured-LLM comparison design is an intake component benchmark.
 It does not evaluate coverage, valuations, payment authority or end-to-end claims.
 Use separate full-journey evaluation and measure orchestration latency/cost.
 Ordinary tests use synthetic fixtures and mocks, never paid inference.

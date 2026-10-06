@@ -16,7 +16,7 @@ cargo clippy --version
 Use rust-analyzer in your editor if desired; it is not a project dependency.
 Axum/Tokio are selected for the HTTP server; wiremock is selected for provider
 HTTP tests. Axum, Tokio, Serde, and the Tower test utilities are now used;
-wiremock will be added with the first provider adapter.
+wiremock now exercises the Jev HTTP adapter with dummy keys and local responses.
 
 ## Repository hygiene
 
@@ -26,7 +26,9 @@ may be committed; ignore rules are not secret scanning.
 Never put API keys or real claim narratives in fixtures or telemetry.
 
 The library exposes an HTTP router and the `api` binary serves it locally.
-Domain behavior and provider adapters are not implemented.
+The serving application now delegates synthetic servicing messages to a bounded
+Rust coordinator and keyword/Jev assessment adapter. See the root README for the
+React UI and opt-in Jev commands. No consequential actions are implemented.
 Configured lints forbid project unsafe code and reject unwrap/expect.
 The Rust CI workflow repeats checks; its hosted result must pass before the first
 behavioral slice is accepted. Use the [candidate-review runbook](candidate-review.md)
@@ -49,6 +51,8 @@ pre-commit run --all-files
 Hooks run for Rust sources, Cargo manifests/lockfiles, the pinned toolchain, and
 hook configuration. `pass_filenames: false` checks the project rather than
 individual changed files. Formatting checks do not rewrite code.
+Frontend file changes also run the strict TypeScript build and component tests;
+install declared dependencies with `npm ci --prefix web` first.
 Pre-commit temporarily stashes unstaged tracked changes during normal commits;
 checks must not rely on untracked/generated inputs. CI must check a clean candidate.
 
@@ -63,8 +67,8 @@ these hooks. No custom Python runner or AI analysis runs during commits.
 ## Integration tests
 
 Follow the [mocked contract testing decision](adr/0008-mocked-provider-contract-tests.md).
-Provider tests will use real adapters against per-test local wiremock servers;
-inbound routes will use in-process Axum/Tower tests. Inject endpoints and dummy
+Provider tests use real adapters against per-test local wiremock servers;
+inbound routes use in-process Axum/Tower tests. Inject endpoints and dummy
 credentials explicitly. Ordinary tests require no real API keys or paid calls.
 These tests will run under `cargo test --workspace --locked` as code is added.
 Four integration tests cover health JSON, HEAD, unsupported POST, and unknown
@@ -87,7 +91,8 @@ Expect HTTP 200, `content-type: application/json`, and `{"status":"ok"}`.
 `GET /health` means the process can serve this route; it does not claim provider
 readiness, successful triage, or deployment readiness. HEAD returns the same
 status/content type with no body; POST returns 405; unknown routes return 404.
-No authentication, claim input, provider calls, or readiness endpoint exists yet.
+No authentication, consequential claims execution or readiness endpoint exists.
+Provider calls are opt-in from the server; health remains process liveness only.
 
 The prototype binds only `127.0.0.1:3000`; an occupied port causes a visible
 startup error and nonzero exit, never a silent fallback. Stop with Ctrl+C.

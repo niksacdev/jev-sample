@@ -41,8 +41,9 @@ The maintainer profile and learning skill exist; automatic hook integration is
 pending. Read the learning-loop guide for the intended contract and limitations. Native agent
 discovery and live CLI analysis are not yet verified. The minimal Cargo scaffold
 and direct-Cargo hook configuration exist; use docs/development.md for commands.
-The local health API and in-process contract tests now exist; no claim workflow
-or provider adapters exist yet.
+The local health API, servicing coordinator, Jev adapter, React UI and mocked
+contract tests exist. See README for runnable commands and limitations.
+No consequential claim workflow, MCP, login or durable storage exists yet.
 The [candidate-review runbook](docs/candidate-review.md), pre-committer profile,
 and Rust CI workflow are configured. Hosted CI passed for quality-gate commit
 e2278bf; each changed candidate needs its own checks. Native profile discovery

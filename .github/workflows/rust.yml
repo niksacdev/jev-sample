@@ -34,3 +34,26 @@ jobs:
         run: cargo install cargo-audit --version 0.22.2 --locked
       - name: Dependency advisories
         run: cargo audit --deny warnings
+  frontend:
+    name: Frontend checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24.1.0"
+      - name: Install declared packages
+        run: npm ci --prefix web --no-fund
+      - name: Type check and build
+        run: npm run build --prefix web
+      - name: Component tests
+        run: npm test --prefix web
+      - name: Dependency advisories
+        run: npm audit --prefix web
+      - name: Install test browser
+        run: cd web && PLAYWRIGHT_SKIP_BROWSER_GC=1 npx --no-install playwright install --with-deps chromium
+      - name: Browser-to-Rust integration
+        run: npm run e2e --prefix web

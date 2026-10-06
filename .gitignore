@@ -1,5 +1,8 @@
 # Rust build and diagnostic artifacts; Cargo.lock remains tracked.
 target/
+web/node_modules/
+web/dist/
+web/artifacts/
 coverage/
 *.profraw
 *.profdata
