@@ -7,6 +7,12 @@ No accepted architecture ADR or deployed authority is superseded by a mockup.
 
 ## Full-claims extension to review before contracts
 
+Use [persona journeys and the coverage matrix](persona-journeys.md#architecture-and-contract-coverage-matrix)
+as the acceptance input. For each scenario, specify authorized actors, states,
+commands/results, source artifacts, external dependencies and recovery. Do not
+approve architecture from the routine sequence alone; cover rejected offers,
+stale decisions, uncertain payment, reopening and operator recovery.
+
 Rue orchestrates logical servicing, evidence, policy, assessment, resolution and
 payment agents. Require bounded task envelopes, actor/delegation scope, input
 artifact IDs/revisions, requested operation, deadlines, idempotency, permitted

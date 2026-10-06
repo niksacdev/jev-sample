@@ -8,6 +8,11 @@ of end-to-end claims quality. Backend implementation remains health-only.
 
 ## Current end-to-end vision
 
+The [persona journey specifications](persona-journeys.md) define customer,
+employee and operator flows, acceptance conditions, exception ownership and
+architecture/contract coverage. They are the scenario input for further design,
+not a claim that every branch in the mockup is complete.
+
 The mockup now has three distinct persona screens sharing one simulated case:
 customer chat/progress with customer clarification and offer response; employee
 exception chat with synthetic customer/policy context and versioned demo guidelines;
