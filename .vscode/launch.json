@@ -1,0 +1,118 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug unit tests in library 'jev_sample'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test"
+                ]
+            }
+        },
+        {
+            "name": "Debug executable 'api'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=api",
+                    "--locked"
+                ],
+                "filter": {
+                    "name": "api",
+                    "kind": "bin"
+                }
+            },
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "REASSURE_ASSESSOR": "rules"
+            },
+            "args": []
+        },
+        {
+            "name": "Debug unit tests in executable 'api'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--bin=api"
+                ]
+            }
+        },
+        {
+            "name": "Debug executable 'export-contracts'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=export-contracts",
+                    "--locked"
+                ]
+            },
+            "args": []
+        },
+        {
+            "name": "Debug unit tests in executable 'export-contracts'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--bin=export-contracts"
+                ]
+            }
+        },
+        {
+            "name": "Debug integration test 'health'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--test=health"
+                ]
+            }
+        },
+        {
+            "name": "Debug integration test 'servicing'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--test=servicing"
+                ]
+            }
+        },
+        {
+            "name": "Debug integration test 'telemetry'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--test=telemetry"
+                ]
+            }
+        },
+        {
+            "name": "Debug integration test 'workflow'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--test=workflow"
+                ]
+            }
+        }
+    ]
+}
