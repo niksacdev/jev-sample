@@ -76,6 +76,9 @@ live in Playwright's external cache; screenshots/results are ignored artifacts.
 after changing it; a Rust test rejects stale TypeScript bindings.
 Read the Rust backend in this order:
 
+[Sequence diagrams and type walkthrough](docs/development.md#implemented-servicing-flow-and-types)
+trace startup, successful requests, adapter conversion, failures and inspection.
+
 | File | Responsibility |
 | --- | --- |
 | `src/domain.rs` | Validated message/probability/assessment values and distinct keyword versus probabilistic evidence |
