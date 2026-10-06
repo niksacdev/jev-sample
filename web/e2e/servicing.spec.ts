@@ -5,8 +5,9 @@ test("real customer message reaches Rust and operator sees the same run", async 
   await expect(page.getByRole("button", { name: "Send to Rue" })).toBeDisabled();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Send to Rue" }).click();
-  await expect(page.getByRole("status")).toContainText("I have prepared the servicing tasks");
-  await expect(page.getByRole("status")).toContainText("no payment was made");
+  await expect(page.getByRole("status")).toContainText("I've organized your request");
+  await expect(page.getByRole("status")).not.toContainText("experimental slice");
+  await expect(page.getByText("You're trying a preview", { exact: false })).toBeVisible();
   await expect(page.getByRole("status").getByText("Review required", { exact: true })).toHaveCount(4);
   await expect(page.locator("body")).not.toContainText("jev-");
   await page.getByRole("button", { name: "Employee", exact: true }).click();

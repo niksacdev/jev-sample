@@ -51,6 +51,9 @@ metadata history is capped at 100 runs and lost on restart, and MCP, RAG,
 durable claims workflows and real customer systems are not implemented.
 The full-claims [design mockup](docs/design/intake-workbench.html) remains a
 separate simulation, not a representation of completed backend capabilities.
+The UI keeps preview disclosure in Rue's welcome and expandable preview details,
+not repeated in every status message. Natural servicing copy does not imply
+that prepared tasks have been executed or assigned to an employee.
 
 ## Checks and Rust learning
 

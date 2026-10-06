@@ -60,26 +60,26 @@ export default function App() {
   return <div className="shell">
     <header>
       <div className="brand"><span className="mark">R</span><div><strong>Reassure</strong><small>A little less unsure.</small></div></div>
-      <span className="workspace">Synthetic learning workspace</span>
+      <span className="workspace">Your insurance, a little clearer.</span>
     </header>
     <nav aria-label="Persona views">{(["Customer", "Employee", "Operator"] as const).map(value =>
       <button key={value} aria-pressed={persona === value} onClick={() => setPersona(value)}>{value}</button>
     )}</nav>
     <main>
-      <div className="notice"><strong>Local experiment, not a live insurer.</strong> Persona tabs are not login or access controls. No claims, policy changes, customer updates or payments are executed. History is lost on server restart.</div>
+      <details className="notice"><summary>About this preview</summary><p>This is a local sample using fictional customer information. Requests are assessed and prepared for review; claims, policy changes, customer updates and payments are not executed. Persona tabs are shared views, not login or access controls. History clears when the server restarts.</p></details>
       {persona === "Customer" && <div className="layout">
         <section className="card conversation">
           <p className="eyebrow">Your servicing companion</p>
           <h1>A clearer next step.<br /><span>Less back and forth.</span></h1>
-          <div className="bubble rue"><strong>Rue</strong><p>Tell me what you need. I'll assess your request and prepare the servicing tasks. This first slice stops before execution or human assignment.</p></div>
+          <div className="bubble rue"><strong>Rue</strong><p>Hi, I'm Rue. Tell me what happened or what you need help with, and I'll organize the next steps for you.</p><small>You're trying a preview with fictional information. No policy or financial changes will be made.</small></div>
           {submitted && <div className="bubble customer"><strong>You</strong><p>{submitted}</p></div>}
           {busy && <div role="status" className="bubble rue">Your request is with the servicing agent...</div>}
           {reply && <div role="status" className="bubble rue"><strong>Rue</strong><p>{reply.reply}</p><Tasks tasks={reply.tasks} /></div>}
           {failure && <div role="alert" className="error">{failure} If the browser timed out, inspect the operator view before submitting again; the server may have completed the run.</div>}
           <div className="story-buttons">{stories.map(story => <button key={story.name} disabled={busy} onClick={() => { setMessage(story.message); setConsent(false); }}>{story.name}</button>)}</div>
-          <label htmlFor="message">Synthetic customer message</label>
+          <label htmlFor="message">How can I help?</label>
           <textarea id="message" value={message} disabled={busy} maxLength={4000} rows={4} onChange={event => { setMessage(event.target.value); setConsent(false); }} />
-          <label className="consent"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} />This is synthetic data. I approve sending this message to the configured server-side inference service, if enabled.</label>
+          <label className="consent"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} />I'm using fictional information and agree to its processing by the configured AI service.</label>
           <button className="primary" disabled={busy || !consent || !message.trim()} onClick={() => void submit()}>{busy ? "Agent is assessing..." : "Send to Rue"}</button>
         </section>
         <aside>
@@ -87,27 +87,28 @@ export default function App() {
             <ol className="progress">
               <li data-active={Boolean(submitted)}>Request received</li>
               <li data-active={busy || Boolean(reply)}>Agent assessment {busy && "(running)"}</li>
-              <li data-active={Boolean(reply)}>Tasks prepared for review</li>
-              <li>Execution <small>Not implemented in this slice</small></li>
+              <li data-active={Boolean(reply)}>{reply?.state === "clarification_required" ? "More information needed" : "Next steps prepared"}</li>
+              <li>{reply?.state === "clarification_required" ? "Awaiting your clarification" : "Awaiting review"}</li>
             </ol>
             {reply && <small>Reference: {reply.run_id} / {reply.state.replaceAll("_", " ")}</small>}
             {failure && <p className="error">Assessment did not return a usable result.</p>}
           </section>
-          <section className="card"><h3>Your details stay out of the model configuration.</h3><p className="muted">The application decides which capabilities to use. No coverage or financial authority comes from this assessment.</p></section>
+          <section className="card"><h3>Let's untangle it together.</h3><p className="muted">One message can cover a claim, a policy question or a change of details. Your next steps stay together here.</p></section>
         </aside>
       </div>}
       {persona === "Employee" && <section className="card">
-        <p className="eyebrow">Employee workbench / review projection</p><h1>Prepared work, not assigned decisions.</h1>
-        <p className="muted">This slice exposes prepared tasks only. Customer identity, policy MCP context, guidelines, employee chat and authorized intervention come next. No employee action buttons are simulated.</p>
-        <button onClick={() => void refresh()}>Refresh prepared work</button>
+        <p className="eyebrow">Employee workbench</p><h1>Every request. A clearer next step.</h1>
+        <p className="muted">Review the servicing needs identified from each customer request.</p>
+        <button onClick={() => void refresh()}>Refresh requests</button>
         {inspectFailure && <p role="alert" className="error">{inspectFailure}</p>}
-        {!runs.length && !inspectFailure && <p>No runs to inspect yet. Submit a synthetic customer request.</p>}
+        {!runs.length && !inspectFailure && <p>No requests yet. New customer requests will appear here.</p>}
         {runs.map(run => <article className="run" key={run.run_id}><h3>{run.run_id} / {run.state.replaceAll("_", " ")}</h3><Tasks tasks={run.tasks} />{run.failure_code && <p className="error">Assessment failed; no tasks were authorized.</p>}</article>)}
       </section>}
       {persona === "Operator" && <section className="card">
         <p className="eyebrow">Operator / under the hood</p><h1>Inspect execution. Not just promises.</h1>
         <div className="metrics"><div><strong>{runs.length}</strong><small>Observed runs</small></div><div><strong>{runs.filter(run => run.state === "failed").length}</strong><small>Technical failures</small></div><div><strong>Unmeasured</strong><small>Quality, value & savings</small></div></div>
-        <p className="muted">One servicing coordinator, not a deployed fleet. Signals are judgments, not correctness guarantees. A keyword match has no probability. Only metadata is retained; source narratives are not stored.</p>
+        <p className="muted">Track servicing assessments, processing time and outcomes.</p>
+        <details><summary>How to read these metrics</summary><p>Signals are judgments, not correctness guarantees. Keyword matches have no probability. This workspace runs one servicing coordinator and retains metadata only, not source narratives. Quality and savings have not been measured.</p></details>
         <button onClick={() => void refresh()}>Refresh run inspection</button>
         {inspectFailure && <p role="alert" className="error">{inspectFailure}</p>}
         {!runs.length && !inspectFailure && <p>No observed runs yet.</p>}
@@ -121,6 +122,6 @@ export default function App() {
         </article>)}
       </section>}
     </main>
-    <footer>Reassure / Synthetic-only prototype / Server-owned decisions</footer>
+    <footer>Reassure / A little less unsure.</footer>
   </div>;
 }

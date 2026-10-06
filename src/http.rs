@@ -169,9 +169,9 @@ async fn message(
                 run_id: run_id.clone(),
                 state: run.state,
                 reply: if run.tasks.is_empty() {
-                    "I could not identify a supported servicing request. Please clarify what help you need. This sample cannot execute policy or financial actions."
+                    "I'd like to understand a little more. Please clarify whether you need help with a claim, your policy, contact details or a premium payment."
                 } else {
-                    "I have prepared the servicing tasks below. They require review before any action. This experimental slice stops here: no claim was filed, no policy was changed, and no payment was made."
+                    "I've organized your request into the next steps below. They're ready for review, and you can follow their status here."
                 }.into(),
                 tasks: run.tasks.clone(),
             };
