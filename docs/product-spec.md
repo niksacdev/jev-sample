@@ -145,7 +145,7 @@ Only exact selected synthetic stories have scripted assessments. Changed text
 is preserved as input and pauses for a human rather than inventing a judgment.
 No real specialist is contacted. Changing the story resets the local simulation.
 The agent must not claim completion from its own prose or act beyond delegated
-authority. The [agent/MCP design](system-design.md#agent-and-mcp-boundaries)
+authority. The [agent/MCP design](system-design.md#7-public-api-mcp-and-delegated-task-contracts)
 proposes identity, tool, confirmation, and message boundaries for review.
 
 ## Mockup journey and decisions to review
