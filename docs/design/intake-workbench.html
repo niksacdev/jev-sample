@@ -136,8 +136,8 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 <span class="badge">Fictional insurer / design demo</span>
 </header>
 <main>
-<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>Tell us what happened.<br>We'll take the next step.</h1><p class="muted">Your servicing agent gets the intake moving. You can follow every step.</p></div>
-<div class="banner">Scripted prototype, not live AI. Use synthetic data only. No actual messages, queue updates, coverage decisions, or payments.</div>
+<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>One conversation.<br>Your whole claim journey.</h1><p class="muted">Rue coordinates your agent team from first report to resolution. Follow the work, see the evidence, and know when a person is needed.</p></div>
+<div class="banner">End-to-end vision / scripted simulation. Synthetic policy, evidence, decisions and payment receipts; no live AI or real financial actions. Production authority and financial controls are not yet approved.</div>
 <div class="demo-control"><label for="scenario">Try a demo story</label>
 <select id="scenario"><option value="glass">Clear glass incident</option><option value="urgent">Collision with urgent cue</option><option value="mixed">Mixed / unclear incident</option><option value="failure">Assessment service failure</option></select></div>
 <div class="workspace">
@@ -152,15 +152,15 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 </section>
 <aside>
 <section class="card">
-<div class="progress-head"><h2>Your intake journey</h2><span id="case-id" class="badge"></span></div>
+<div class="progress-head"><h2>Your claim journey</h2><span id="case-id" class="badge"></span></div>
 <ol id="progress" aria-label="Intake progress"></ol>
 <div class="state-box"><h3 id="assessment-heading" role="status">Ready when you are</h3><div id="assessment"></div></div>
 <h3>Next action</h3>
 <div id="exception" role="status">No intervention requested.</div>
 <button id="resolve" type="button" hidden>Resolve exception and resume agent</button>
-<h3>Handoff receipt</h3>
+<h3>Claim outcome &amp; receipts</h3>
 <div id="record" role="status">No disposition yet.</div>
-<p class="muted"><small>Intake progress is not a claim approval or settlement. Urgency requests specialist attention, not emergency dispatch.</small></p>
+<p class="muted"><small>All outcomes here are fictional. Urgency requests specialist attention, not emergency dispatch. Human approval appears when the simulated authority policy requires it.</small></p>
 </section>
 <section class="card"><details class="inspection"><summary>Under the hood: lineage &amp; artifacts</summary>
 <p class="muted"><small>Design-review view. Production access must be role-scoped; customers do not receive unrestricted internal audit data.</small></p>
@@ -169,8 +169,9 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 </aside>
 </div>
 <section class="card">
-<h2>What customer value are we testing?</h2>
-<p>Fewer routine human touches per correctly completed handoff, without hidden failures or missed urgent cases. Exception resolution and oversight effort count too. Fast inference alone is not success.</p>
+<h2>Your agent team, one accountable journey</h2>
+<p>Rue coordinates servicing, evidence, policy, loss assessment, resolution and payment agents. Each has a scoped responsibility and produces inspectable artifacts. These are proposed roles, not six deployed services.</p>
+<p>The value hypothesis is less customer chasing, less repeated evidence gathering and fewer routine human touches through claim resolution. Correct outcomes, disputes, exception effort and payment accuracy matter—not just completion speed.</p>
 <details><summary>Where Jev, Rust, and an LLM fit</summary>
 <p>Jev is a candidate for bounded category, urgency, and review-required judgments. A structured-output LLM and deterministic rules must be compared on the same task. Rust validates results and applies routing policy. No provider is proven better by this mockup.</p>
 <p>Generation, coverage/payout decisions, and exact arithmetic are not Jev's role here. No fabricated confidence numbers or generated advice are displayed.</p></details>
@@ -188,8 +189,9 @@ const cases = {
 };
 const byId = id => document.getElementById(id);
 let timer = null, active = null, step = 0, sequence = 0, paused = false;
-const steps = ["received", "validated", "assessing", "policy_checked", "disposition_recorded", "handoff_pending", "handoff_accepted"];
-const stageLabels = ["Intake received", "Details checked", "Incident assessed", "Next action checked", "Disposition recorded", "Team handoff", "Handoff accepted"];
+const steps = ["received", "validated", "assessing", "policy_checked", "disposition_recorded", "handoff_pending", "handoff_accepted", "evidence_gathered", "coverage_reviewed", "loss_assessed", "resolution_ready", "settlement_authorized", "payment_confirmed", "claim_closed"];
+const stageLabels = ["Claim reported", "Details checked", "Incident understood", "Exception checks", "Claim registered", "Agent team assigned", "Case ownership accepted", "Evidence assembled", "Policy & coverage review", "Loss assessment", "Resolution proposed", "Authority & customer acceptance", "Payment / service confirmation", "Claim closed"];
+let financialGate = false;
 function chat(text, sender = "Rue / agent") {
   const bubble = document.createElement("div");
   bubble.className = `message ${sender === "You" ? "customer" : sender.includes("specialist") ? "human" : ""}`;
@@ -227,7 +229,7 @@ function event(state, actor, input, output, control) {
   artifact(id, {state, actor, input, output, control, time:new Date().toISOString(), simulated:true});
 }
 function reset() {
-  clearTimeout(timer); active = null; step = 0; sequence = 0; paused = false;
+  clearTimeout(timer); active = null; step = 0; sequence = 0; paused = false; financialGate = false;
   const item = cases[byId("scenario").value];
   byId("case-id").textContent = item.id;
   byId("narrative").textContent = item.narrative;
@@ -239,7 +241,7 @@ function reset() {
   byId("resolve").hidden = true; byId("submit").disabled = false;
   byId("query").disabled = false;
   progress();
-  chat("Hi, I'm Rue. Tell me what happened and I'll review your intake, check the next action, and arrange a handoff. If this needs a person, I'll tell you and bring them in. This demo does not decide coverage.");
+  chat("Hi, I'm Rue, your claim-servicing agent. Tell me what happened. I'll coordinate the specialist agents, gather evidence, track policy review and resolution, and keep you updated through closure. If a decision needs a person, I'll bring them in. Everything in this demo is fictional.");
 }
 function advance() {
   if (!active || paused) return;
@@ -289,7 +291,42 @@ function advance() {
     artifact("handoff-1",{disposition:"disposition-1",status:"accepted",destination:active.key==="urgent"?"specialist review":"incident handling queue",acknowledgement:"synthetic-ack"});
     event(state,"receiving queue","handoff-1","synthetic-ack","completion requires acknowledgement");
     byId("record").textContent = "Intake handed off and receiving ownership acknowledged (simulated). Claim is NOT settled.";
-    chat("The receiving team has acknowledged your intake in this simulation. The intake handoff is complete; your claim has not been approved or settled. Your receipt and journey remain available.");
+    chat("Your case team has accepted ownership. I'll stay with you while the evidence, policy, assessment and resolution agents continue the work. This handoff is not claim completion.");
+  } else if (state === "evidence_gathered") {
+    artifact("evidence-pack",{parent:"input-r1",clarification:active.key==="mixed"?"input-r2":null,documents:["synthetic incident statement","synthetic inspection record"],status:"fixture_complete",model_role:"document extraction LLM proposed; no inference"});
+    event(state,"evidence agent","input revision + approved document source","evidence-pack","authorized retrieval; provenance required");
+    chat("The evidence agent has assembled the demo incident and inspection records. You can inspect their sources in the artifact drawer.");
+  } else if (state === "coverage_reviewed") {
+    artifact("coverage-review",{inputs:["evidence-pack","fictional-policy-v1"],result:active.key==="mixed"?"no payable loss in this fixture":"eligible under fictional policy",limitations:"scripted determination, not Jev output or actual advice",authority:"demo-only"});
+    event(state,"policy agent","evidence-pack + fictional-policy-v1","coverage-review","policy source and decision authority required");
+    chat(active.key==="mixed"?"The clarified towing scenario has no payable loss under this fictional policy. I'll prepare a reasoned outcome for human review; the agent does not silently deny a real claim.":"The policy agent has reviewed the fictional terms and evidence. The demo scenario can proceed to loss assessment.");
+  } else if (state === "loss_assessed") {
+    artifact("loss-assessment",{inputs:["coverage-review","evidence-pack"],amount:active.key==="mixed"?0:400,currency:"USD",basis:"invented fixture estimate",calculation_owner:"deterministic calculation, not model arithmetic"});
+    event(state,"assessment agent","coverage-review + evidence-pack","loss-assessment","inspection evidence and deterministic amounts");
+    chat(active.key==="mixed"?"No payment is proposed in this fixture. A human must review the explanation before the customer is asked to acknowledge receipt.":"The assessment agent has prepared a fictional $400 resolution from the demo inspection record. This is not a real valuation.");
+  } else if (state === "resolution_ready") {
+    artifact("resolution-proposal",{inputs:["coverage-review","loss-assessment"],outcome:active.key==="mixed"?"no_payment_proposed":"payment_proposed",requires:["authorized human decision","customer response"],status:"not_authorized"});
+    event(state,"resolution agent","coverage-review + loss-assessment","resolution-proposal","outside currently approved financial authority");
+    financialGate = true; paused = true;
+    byId("exception").textContent = "Resolution needs authorized human review and a separate customer response. No payment or closure yet.";
+    byId("resolve").textContent = "Demo: authorized reviewer signs decision";
+    byId("resolve").hidden = false;
+    event("awaiting_intervention","authority control","resolution-proposal","financial-review","no agent self-approval");
+    chat("I'm bringing a human into this scenario to review the proposed outcome. After their decision, I'll ask for your response before continuing. No actual reviewer or payment service has been contacted.");
+    return;
+  } else if (state === "settlement_authorized") {
+    event(state,"resolution tool","human-decision + customer-response","authorized-resolution","separate actor records and exact proposal version");
+    artifact("authorized-resolution",{proposal:"resolution-proposal",human:"human-decision",customer:"customer-response",payment_permitted:active.key!=="mixed",simulated:true});
+  } else if (state === "payment_confirmed") {
+    artifact("payment-receipt",{resolution:"authorized-resolution",status:active.key==="mixed"?"not_applicable":"confirmed",amount:active.key==="mixed"?0:400,currency:"USD",provider:"fictional payment service",reference:"DEMO-ONLY"});
+    event(state,"payment agent","authorized-resolution","payment-receipt","confirmed external receipt or explicit no-payment outcome");
+    chat(active.key==="mixed"?"The reviewed no-payment outcome has been explained and acknowledged in this simulation. No funds were transferred.":"The fictional payment service returned a confirmation for the demo $400 payment. A request alone would not count as a completed payment.");
+  } else if (state === "claim_closed") {
+    artifact("closure-record",{inputs:["authorized-resolution","payment-receipt"],status:"closed_in_simulation",reopen_channel:"request review through Rue",outcome:active.key==="mixed"?"reviewed_no_payment":"fictional_payment_confirmed"});
+    event(state,"servicing agent","authorized-resolution + payment-receipt","closure-record","outcome explained; no unresolved simulated work");
+    byId("record").textContent = active.key==="mixed"?"Simulation complete: reviewed no-payment outcome. Explanation and review channel available.":"Simulation complete: fictional $400 payment confirmed and claim closed. No real money moved.";
+    byId("exception").textContent = "No open simulated exceptions. You can request further review; closure does not remove history.";
+    chat("The demo claim journey is complete. Your decision explanation, receipts and full history remain available. If you disagree or have new evidence, you can ask for review rather than starting from scratch.");
     return;
   }
   timer = setTimeout(advance, 1400);
@@ -309,6 +346,22 @@ byId("chat-form").addEventListener("submit", e => {
 });
 byId("resolve").addEventListener("click", () => {
   if (!active || !paused) return;
+  if (financialGate === true) {
+    artifact("human-decision",{proposal:"resolution-proposal",actor:"authorized claims reviewer / simulated",result:"signed fixture outcome",version:1});
+    event("human_review_recorded","authorized reviewer","resolution-proposal","human-decision","distinct from customer acceptance");
+    chat("I've reviewed and signed the fictional outcome. Rue will now ask for the customer's response.", "Claims specialist / simulated");
+    financialGate = "customer";
+    byId("resolve").textContent = active.key==="mixed"?"Demo customer: acknowledge explanation":"Demo customer: accept fictional $400 offer";
+    byId("exception").textContent = "Human review complete. Waiting for customer response; financial workflow remains paused.";
+    return;
+  }
+  if (financialGate === "customer") {
+    artifact("customer-response",{proposal:"resolution-proposal",actor:"customer / simulated",response:active.key==="mixed"?"explanation_received_not_waiver":"offer_accepted",version:1});
+    chat(active.key==="mixed"?"I've received the explanation. I understand I can ask for review.":"I accept this fictional offer.", "You");
+    financialGate = false; paused = false; byId("resolve").hidden = true;
+    byId("exception").textContent = "Required demo human and customer records are present. Agent resuming.";
+    advance(); return;
+  }
   event("intervention_recorded","design reviewer simulating required human","exception-1","resolution-1","bound to paused case; no real approval");
   if (active.key === "mixed") {
     active.category = "other";

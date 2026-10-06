@@ -1,6 +1,41 @@
 # Intake workbench: first-level system design
 
 Status: Proposed for review, not an implementation or deployment authorization.
+Scope update: the user now requests end-to-end claims servicing. The intake-only
+reference below is a component design, not a complete architecture for that vision.
+No accepted architecture ADR or deployed authority is superseded by a mockup.
+
+## Full-claims extension to review before contracts
+
+Rue orchestrates logical servicing, evidence, policy, assessment, resolution and
+payment agents. Require bounded task envelopes, actor/delegation scope, input
+artifact IDs/revisions, requested operation, deadlines, idempotency, permitted
+tools and typed outcome references across each boundary. MCP remains the tool
+protocol; agent-to-agent transport must be selected separately, not presumed.
+All agents share server-enforced state/authority, not unrestricted credentials.
+
+Additional dependencies: versioned authoritative policy/endorsements; authorized
+document/inspection sources; claim decision/valuation authority; repair/provider
+services if chosen; payment ledger and processor; dispute/review channel.
+Do not call actual payment tools from the mockup.
+Policy evaluation and consequential decisions require approved rules, source
+provenance and authorized judgement; LLM text cannot establish entitlement.
+
+Additional entities/contracts: evidence bundle/source revision, policy snapshot,
+coverage determination with reasons/authority, loss assessment with deterministic
+amounts/currency, versioned resolution offer, reviewer decision, customer response,
+payment instruction and reconciliation receipt, closure/reopening record.
+Customer acceptance and authorized insurer decision are separate records.
+Payment timeout means unknown outcome requiring reconciliation, not safe blind retry.
+No-payment outcomes have explanation and review rights; acknowledgement is not waiver.
+
+Proposed sequence: customer report -> servicing delegation -> evidence bundle ->
+policy determination -> loss assessment -> resolution proposal -> applicable
+authority/exception gates -> customer response where needed -> idempotent authorized
+payment/service instruction -> external confirmation/reconciliation -> explained
+closure. Exceptions retain an owner and resume token tied to exact revisions.
+Full-claims ADRs, data/privacy review, operational controls and new evaluation
+criteria are prerequisites to wiring this extension. Current API is health-only.
 Date: 2026-10-05.
 Companion: [product problem, journey, and value map](product-spec.md).
 

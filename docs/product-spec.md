@@ -1,6 +1,48 @@
-# Intake analyst workbench: product discovery draft
+# Reassure: end-to-end autonomous claims vision
 
 Status: Proposed, not approved for contract implementation.
+Scope update 2026-10-05: the user requested the complete claims journey, not
+intake-to-handoff alone. This supersedes the draft's intake-only product framing.
+The earlier intake evaluation remains a bounded component experiment, not proof
+of end-to-end claims quality. Backend implementation remains health-only.
+
+## Current end-to-end vision
+
+The customer reports a claim to Rue, the servicing orchestrator. Scoped evidence,
+policy, loss assessment, resolution and payment agents progress work using
+appropriate models and deterministic controls. They are proposed logical roles,
+not a requirement for six services or unrestricted peer delegation.
+Jev supplies bounded semantic judgments; document/conversation models serve
+other roles. Coverage authority, valuations, exact amounts and payment permission
+are never inferred from Jev confidence.
+
+The revised mockup shows fourteen stages from report through evidence gathering,
+policy review, loss assessment, proposed resolution, authority/customer gates,
+confirmed payment or explicit no-payment outcome, and closure. Early clarification,
+urgent intervention and technical-failure states remain inspectable.
+The illustrated financial authority is deliberately not predelegated: a simulated
+authorized reviewer signs a proposal, then a separate customer response is recorded.
+No-payment acknowledgement is not acceptance of denial or waiver of review rights.
+Real autonomous decision/payment bounds need a requirements-driven authority policy.
+
+Every stage exposes actors, inputs, source revisions, decisions, tool results and
+artifacts. The customer receives a plain-language explanation and an ongoing review
+channel. Production must role-scope internal lineage and protect sensitive records.
+The demo uses invented policy/documents/amounts and does not assess real coverage,
+contact people, transfer funds, or implement the expanded backend.
+
+Product review must next include contested coverage, insufficient evidence,
+customer rejection of an offer, unknown/failed payment, reopening and appeals.
+The current prototype illustrates routine completion and selected exceptions,
+not every production branch. End-to-end success metrics and legal/operational
+authority require new review; existing intake targets cannot establish them.
+
+## Earlier intake-component discovery (historical framing)
+
+The sections below preserve the original intake component assumptions and its
+evaluation context. Intake-only non-goals no longer describe the whole product
+vision; they still delimit the approved component benchmark. Do not use these
+historical sections to derive full-claims contracts.
 Direction update: autonomous-first intake-to-handoff requested by the user;
 human intervention by exception, with continuous state/lineage/artifact access.
 Date: 2026-10-05.
