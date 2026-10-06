@@ -8,6 +8,11 @@ of end-to-end claims quality. Backend implementation remains health-only.
 
 ## Current end-to-end vision
 
+The [persona journey specifications](persona-journeys.md) define customer,
+employee and operator flows, acceptance conditions, exception ownership and
+architecture/contract coverage. They are the scenario input for further design,
+not a claim that every branch in the mockup is complete.
+
 The mockup now has three distinct persona screens sharing one simulated case:
 customer chat/progress with customer clarification and offer response; employee
 exception chat with synthetic customer/policy context and versioned demo guidelines;
@@ -140,7 +145,7 @@ Only exact selected synthetic stories have scripted assessments. Changed text
 is preserved as input and pauses for a human rather than inventing a judgment.
 No real specialist is contacted. Changing the story resets the local simulation.
 The agent must not claim completion from its own prose or act beyond delegated
-authority. The [agent/MCP design](system-design.md#agent-and-mcp-boundaries)
+authority. The [agent/MCP design](system-design.md#7-public-api-mcp-and-delegated-task-contracts)
 proposes identity, tool, confirmation, and message boundaries for review.
 
 ## Mockup journey and decisions to review

@@ -14,9 +14,9 @@ Statuses describe decisions and work completed, not just document creation.
 | Establish engineering standards | Complete | Standard 0.4.0 and linked ADR/harness guidance established; native discovery and automatic learning remain limitations |
 | Set up pre-committer | Complete | Local hooks and hosted CI verified; isolated explicit-profile review exercised; native discovery and branch protection remain unconfigured |
 | Build first Rust learning slice | Complete | Health API and four Axum/Tower tests; real HTTP, Git hooks, isolated review, and hosted CI passed for b47cb77 |
-| Formulate persona workflow and design | In progress | Analyst persona, value map, mockup, proposed system dependencies/contracts/data model and production sequences await review before implementation |
-| Model Rust API and agent contracts | Pending | After design approval, compile-checked types, JSON examples, boundary/control mapping and contract tests; no business execution |
-| Integrate providers incrementally | Pending | Fixtures/rules first, then Jev and structured LLM with wiremock HTTP contract/failure tests |
+| Formulate persona workflow and design | In progress | Three persona screens accepted as a starting point; [journey specifications](persona-journeys.md) and architecture coverage matrix await review before contracts |
+| Model Rust API and agent contracts | In progress | First servicing message/customer/operator contracts and generated browser types exist; full claims/tool contracts remain pending |
+| Integrate providers incrementally | In progress | Keyword baseline and real Jev HTTP adapter wired to React through Rust; mocked contracts exist, live account behavior and structured LLM remain pending |
 | Evaluate and document | Pending | Execute approved experiment; report evidence, limitations, and reproducible commands |
 
 ## Prerequisites
@@ -43,6 +43,10 @@ b47cb77. Independent review verified tree 6f1ad2df3c857640df02e80e16a3454242b494
 under standard 0.4.0; its stale ADR finding was corrected before acceptance.
 A deliberate wrong JSON response failed the contract test and was restored.
 The real HTTP checks returned 200/404/405 and duplicate binding failed visibly.
-Pause backend implementation for [product discovery](product-spec.md).
-Review the analyst problem, mockup, and unresolved automation policy before
-typed claim/routing contracts. No provider behavior exists.
+The user authorized implementation through a runnable UI and server-side Jev
+hook on 2026-10-05, selecting React/TypeScript and keeping model calls in Rust.
+The first servicing experiment is recorded in
+[ADR 0010](adr/0010-react-ui-and-rust-agent-boundary.md). It prepares review-only
+tasks and exposes metadata; it does not execute the full mockup workflow.
+Return for user testing after this slice. Full claim/tool contracts, identity,
+MCP and durable execution still require subsequent milestones.

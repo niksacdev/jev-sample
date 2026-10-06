@@ -39,7 +39,17 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 cargo audit --deny warnings
+npm ci --prefix web --no-fund
+npm run build --prefix web
+npm test --prefix web
+npm audit --prefix web
+npm run e2e --prefix web
 ```
+
+Frontend review requires Node 24+. Package installation uses declared, locked
+dependencies, including the pinned upstream source-map-js fix. No live provider
+calls are authorized. The `Frontend checks` CI job repeats these gates; E2E
+browser checks are run separately when configured in the frontend package.
 
 Install pinned cargo-audit 0.22.2 outside review beforehand. Audit fetches the
 public RustSec advisory database; its result depends on the database at run time.

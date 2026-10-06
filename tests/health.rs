@@ -3,12 +3,13 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use tower::ServiceExt;
+mod support;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[tokio::test]
 async fn health_returns_exact_json_contract() -> TestResult {
-    let response = jev_sample::http::router()
+    let response = support::router()
         .oneshot(Request::builder().uri("/health").body(Body::empty())?)
         .await?;
 
@@ -23,7 +24,7 @@ async fn health_returns_exact_json_contract() -> TestResult {
 
 #[tokio::test]
 async fn unknown_route_returns_not_found() -> TestResult {
-    let response = jev_sample::http::router()
+    let response = support::router()
         .oneshot(Request::builder().uri("/unknown").body(Body::empty())?)
         .await?;
 
@@ -34,7 +35,7 @@ async fn unknown_route_returns_not_found() -> TestResult {
 
 #[tokio::test]
 async fn health_rejects_post() -> TestResult {
-    let response = jev_sample::http::router()
+    let response = support::router()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -50,7 +51,7 @@ async fn health_rejects_post() -> TestResult {
 
 #[tokio::test]
 async fn health_head_returns_headers_without_body() -> TestResult {
-    let response = jev_sample::http::router()
+    let response = support::router()
         .oneshot(
             Request::builder()
                 .method("HEAD")

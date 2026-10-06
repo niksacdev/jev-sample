@@ -7,13 +7,11 @@ configured separately; see [development setup](development.md).
 
 ## Implementation boundary
 
-Use the language-agnostic pre-commit manager for YAML configuration and Git hook
-registration. Declare Rust formatting, linting, and test commands directly in
-that configuration once the Cargo project exists. Any custom orchestration must
-be Rust, not a Python runner or a second application toolchain.
-
-The temporary Python implementation, tests, and dependency manifest were removed.
-The new YAML configuration invokes Cargo directly with no custom checker.
+Use the repository-managed native Git hook for direct Cargo and npm checks; see
+[ADR 0012](adr/0012-native-git-quality-hook.md).
+The small Bash hook only selects and executes existing quality commands.
+Any future application-level AI orchestration must be Rust, not another
+application toolchain. No hook currently invokes an AI agent.
 
 ## Required behavior
 

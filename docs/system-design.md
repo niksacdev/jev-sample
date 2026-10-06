@@ -1,505 +1,528 @@
-# Intake workbench: first-level system design
+# Reassure system architecture
 
-Status: Proposed for review, not an implementation or deployment authorization.
-Scope update: the user now requests end-to-end claims servicing. The intake-only
-reference below is a component design, not a complete architecture for that vision.
-No accepted architecture ADR or deployed authority is superseded by a mockup.
-
-## Full-claims extension to review before contracts
-
-Rue orchestrates logical servicing, evidence, policy, assessment, resolution and
-payment agents. Require bounded task envelopes, actor/delegation scope, input
-artifact IDs/revisions, requested operation, deadlines, idempotency, permitted
-tools and typed outcome references across each boundary. MCP remains the tool
-protocol; agent-to-agent transport must be selected separately, not presumed.
-All agents share server-enforced state/authority, not unrestricted credentials.
-
-Additional dependencies: versioned authoritative policy/endorsements; authorized
-document/inspection sources; claim decision/valuation authority; repair/provider
-services if chosen; payment ledger and processor; dispute/review channel.
-Do not call actual payment tools from the mockup.
-Policy evaluation and consequential decisions require approved rules, source
-provenance and authorized judgement; LLM text cannot establish entitlement.
-
-Additional entities/contracts: evidence bundle/source revision, policy snapshot,
-coverage determination with reasons/authority, loss assessment with deterministic
-amounts/currency, versioned resolution offer, reviewer decision, customer response,
-payment instruction and reconciliation receipt, closure/reopening record.
-Customer acceptance and authorized insurer decision are separate records.
-Payment timeout means unknown outcome requiring reconciliation, not safe blind retry.
-No-payment outcomes have explanation and review rights; acknowledgement is not waiver.
-
-Proposed sequence: customer report -> servicing delegation -> evidence bundle ->
-policy determination -> loss assessment -> resolution proposal -> applicable
-authority/exception gates -> customer response where needed -> idempotent authorized
-payment/service instruction -> external confirmation/reconciliation -> explained
-closure. Exceptions retain an owner and resume token tied to exact revisions.
-Full-claims ADRs, data/privacy review, operational controls and new evaluation
-criteria are prerequisites to wiring this extension. Current API is health-only.
+Status: proposed architecture for design review.
 Date: 2026-10-05.
-Companion: [product problem, journey, and value map](product-spec.md).
+Inputs: [product vision](product-spec.md),
+[persona journeys](persona-journeys.md), and
+[interactive design](design/intake-workbench.html).
 
-## Boundary and assumptions
+## 1. Purpose and architectural scope
 
-Current implementation: loopback-only Axum health endpoint and four route tests.
-Accepted sample architecture: one Rust package with shared workflow, API and
-evaluation CLI; see [ADR 0007](adr/0007-single-package-api-and-evaluation.md).
-No claim contracts, database, identity integration, worker, UI backend connection,
-or downstream handoff exists.
+Reassure services an insurance claim from customer report through evidence
+collection, policy review, loss assessment, resolution, authorized payment or
+service fulfilment, and explained closure. Autonomous agents perform permitted
+work; customers and employees intervene when a defined gate requires them.
+Operators observe and manage execution without acquiring claims decision authority.
 
-This document proposes a production-shaped reference design to expose missing
-decisions. It does not select a cloud, database vendor, claims platform, or
-identity provider. Persistence, background work, and an analyst frontend extend
-the starting architecture: they require requirements approval and a new ADR
-before implementation, not silent supersession of ADR 0007.
+The architecture must support three experiences:
 
-The user clarified that the intended experience is agentic. The workbench is a
-surface for an analyst-facing orchestration agent, not merely a form. Agent
-platform, conversational model, delegated authority, and protocol versions are
-not selected. Jev is a bounded assessment dependency, not the conversation or
-workflow authority. Agent requests do not replace deterministic authorization,
-validated workflow transitions, or explicit analyst consent.
+| Experience | System responsibility |
+| --- | --- |
+| Customer conversation | Report a claim, follow progress, supply evidence, respond to proposals, receive receipts and request review |
+| Employee workbench | Resolve assigned exceptions using customer context, source evidence, current guidelines and verified authority |
+| Operator dashboard | Inspect fleet/run states, dependencies and lineage; coordinate authorized recovery; measure quality and economics |
 
-User-directed product mode: autonomous intake-to-handoff, human intervention by
-exception, continuously inspectable state/lineage/artifacts. Exact delegated
-actions, thresholds and deployment authority remain undecided. Model comparison stays in the isolated
-evaluation runner; production does not send each intake to all three providers.
-Use synthetic inputs until data rights, classification, residency, retention,
-vendor terms, and account permissions are reviewed.
+The executable sample implements a React UI, local Rust servicing coordinator,
+keyword/Jev intent assessment, review-only task planning and process-local
+operator inspection. See [ADR 0010](adr/0010-react-ui-and-rust-agent-boundary.md)
+for implemented boundaries and [README](../README.md) for runnable commands.
+The original HTML design still simulates full claims workflows.
+This target architecture is not deployment authorization or approval of
+autonomous financial decisions. Supported claim types, jurisdiction, legal
+authority and action limits must be agreed before implementation.
 
-## System context and dependency boundaries
+The accepted [single-package ADR](adr/0007-single-package-api-and-evaluation.md)
+provides the Rust foundation. Durable storage, agent execution, background work
+and external financial integration require new decisions/ADRs before they are
+introduced. Logical components below do not imply separate microservices.
+
+## 2. Architectural principles
+
+- **One authoritative workflow.** Durable state and deterministic Rust transition
+  rules determine what happened and what may happen next. Chat and model output
+  cannot overwrite them.
+- **Autonomy inside delegated bounds.** Each action requires identity, resource
+  access, permitted scope, current revisions and any required decision/consent.
+  Routine work proceeds without repeated human clicks.
+- **Evidence before consequence.** Decisions reference authoritative policy and
+  versioned evidence. Probability or a fluent explanation is not authority.
+- **Recovery is part of the workflow.** Exceptions have an owner and resume
+  condition. Unknown external outcomes require reconciliation, not blind retry.
+- **Inspectable but least-privileged.** Customers see safe claim status/explanations;
+  employees see authorized case evidence; operators see scoped execution metadata.
+- **Model roles are independent.** Choose models for tasks, not an entire agent
+  fleet by default. Evaluate component quality separately from full-claim outcomes.
+
+## 3. System context
 
 ```mermaid
 flowchart LR
-    Analyst[Authenticated intake analyst] --> UI[Workbench]
-    Source[Intake source or claims platform] --> API[Rust API / workflow]
-    UI --> Edge[TLS ingress / identity enforcement]
-    Edge --> Agent[Analyst-facing orchestration agent]
-    Agent --> MCP[MCP client / scoped tool boundary]
-    MCP --> Tools[MCP server: typed workflow tools]
-    Tools --> API
-    Agent --> ChatModel[Conversational model]
-    API --> Identity[Identity / authorization dependency]
-    API --> Store[Durable intake / assessment / disposition store]
-    Worker[Worker: same Rust package / shared workflow] --> Store
-    Worker --> Provider[Configured assessment provider: Jev OR LLM OR rules]
-    Worker --> Downstream[Claims queue / handoff adapter]
-    API --> Signals[Redacted operational signals]
-    Worker --> Signals
-    Secrets[Secret / configuration source] --> API
-    Secrets --> Worker
-    Eval[Isolated evaluation CLI] --> Shared[Same assessment and routing library]
+    C[Customer] --> CX[Customer chat and claim progress]
+    E[Employee] --> EX[Exception workbench]
+    O[Operator] --> OX[Agent operations dashboard]
+    CX --> Edge[Authenticated application boundary]
+    EX --> Edge
+    OX --> Edge
+    Edge --> App[Reassure application]
+    IdP[Identity provider] --> Edge
+    App --> Policy[Authoritative policy and endorsements]
+    App --> Evidence[Document and inspection sources]
+    App --> Models[Conversational and assessment model providers]
+    App --> Claims[Claims platform and specialist teams]
+    App --> Payments[Payment or service fulfilment provider]
+    App --> Signals[Operational telemetry and controlled audit]
 ```
 
-Arrows denote calls/data dependencies, not unrestricted network permission.
-Evaluation uses synthetic fixtures and separate output artifacts, not production
-records or human-review credentials. Domain/routing imports no transport/storage
-SDKs. API and worker orchestrate through ports; adapters own vendor DTOs and
-external failures. Logical worker does not require a separate microservice:
-propose a role of the same deployable package only if background work is approved.
+Reassure is authoritative for its workflow, intents and artifact references.
+The insurer remains authoritative for policy, eligibility/decision authority and
+claims records as assigned by integration contracts. Payment/fulfilment systems
+are authoritative for external execution confirmations.
+Synchronize external identifiers and revisions; do not silently maintain two
+conflicting sources of truth.
 
-| Dependency / owner to assign | Contract and failure boundary |
+## 4. Logical components and execution architecture
+
+```mermaid
+flowchart TB
+    UI[Three persona applications] --> API[Rust HTTP API and authorized queries]
+    API --> WF[Durable workflow and authority engine]
+    API --> Session[Conversation and task coordination]
+    Session --> Agents[Scoped agent runtime: Rue and specialist roles]
+    Agents --> LLM[Model gateway and bounded inference]
+    Agents --> MCP[MCP client]
+    MCP --> Tools[Allowlisted MCP tool servers]
+    Tools --> WF
+    WF --> DB[(Transactional workflow store)]
+    WF --> Artifacts[(Protected artifact store)]
+    Worker[Work executor and reconciler] --> DB
+    Worker --> WF
+    Worker --> Adapters[Policy, evidence, claims and financial adapters]
+    Adapters --> External[Authorized external systems]
+    API --> Views[Role-scoped read models]
+    DB --> Views
+    Worker --> Models[Jev and task-specific models]
+    WF --> Audit[Audit and operational events]
+    Eval[Isolated evaluation runner] --> Domain[Shared Rust domain and assessment contracts]
+    WF --> Domain
+```
+
+| Component | Responsibility and boundary |
 | --- | --- |
-| Intake source, insurer integration owner | Source ID, revision, narrative; deduplicate by source/revision; invalid input returns explicit error, not a fabricated claim |
-| Identity, platform owner | Authenticated principal and allowed intake/tenant scope; API enforces object-level authorization even behind ingress; invalid/unavailable identity fails closed |
-| Durable store, application/platform owner | Atomic versions, decisions, and pending work; no success acknowledgement before commit; store failure makes write unavailable |
-| Assessment provider, model integration owner | Bounded request/response, required judgments and model provenance; timeout/rate-limit/invalid data become typed assessment failures |
-| Downstream claims queue, operations/integration owner | Stable handoff ID, acknowledgement/rejection and reconciliation; timeout is unknown delivery, not success or safe-to-repeat proof |
-| Secrets/configuration, platform owner | Startup-validated settings and least-privilege credentials; missing/invalid configuration blocks readiness |
-| Observability, service owner | Bounded labels and no raw narratives; exporter failure visibly degrades monitoring, never changes disposition |
+| HTTP API | Authenticate, authorize resource access, validate boundary DTOs, accept commands and return persisted results/query views |
+| Conversation coordinator | Bind sessions to principals/claims, retrieve minimal context, present structured results and route customer/employee responses |
+| Agent runtime | Execute scoped tasks with deadlines, allowed tools, artifact inputs and typed outcomes; persist checkpoints rather than rely on model memory |
+| Workflow/authority engine | Validate state transitions, revisions, delegation, approvals, customer responses and financial limits; schedule eligible work atomically |
+| MCP tool layer | Expose narrow typed operations backed by the same workflow rules as HTTP; no duplicate business policy in prompts |
+| Work executor/reconciler | Lease durable work, call adapters, enforce budgets, record attempts, reconcile uncertain external outcomes and recover after crash |
+| Stores/read models | Persist state/decisions/work, protect documents, serve authorized persona projections and fleet aggregates |
+| Model/adapters | Own vendor formats, bounded calls, validation and typed failure translation; model output enters as untrusted data |
+| Audit/measurement | Preserve action provenance and collect redacted operational signals with defined units/windows/denominators |
 
-Concrete named owners and SLAs are review prerequisites for deployment.
+Start with a modular Rust application and shared domain library. API, execution
+and reconciliation may be runtime roles of one release. A transactional work
+queue/outbox is the proposed initial scheduling mechanism; add a broker or
+separate service only for demonstrated scale/isolation requirements.
+Domain code imports no transport, database or provider SDKs.
 
-## Agent and MCP boundaries
+### Browser and agent execution boundary
 
-The analyst describes a task, reviews proposed next actions, supplies clarification,
-and resolves exceptions through an agentic workbench. Routine permitted actions
-do not require per-step human confirmation. Structured
-cards remain authoritative views of persisted state; chat text is not a receipt
-for recording or delivery. The orchestration agent can select approved tools and
-explain their results, but cannot invent assessment results, authorize itself,
-or bypass Rust state transitions.
+The approved frontend is TypeScript/React. It submits customer messages and typed
+employee/operator commands to the Rust API and renders role-scoped results.
+It does not select models, construct provider questions, hold provider credentials,
+or invoke Jev/MCP servers directly. Rust coordinates agent tasks and calls Jev.
+Model allocation and deterministic tool selection are server-side decisions.
+Provider provenance is exposed only through the operator inspection projection;
+customer responses describe work and outcomes without provider-specific fields.
+The implemented Rust path follows
+[ADR 0011](adr/0011-provider-port-and-servicing-use-case.md): HTTP maps transport,
+`ServicingService` coordinates execution through an injected `Assessor`, adapters
+produce validated domain evidence, and an injected routing policy prepares tasks.
+Provider choice lives only in the composition root. Policy thresholds live in
+validated versioned configuration, not provider code or prompts.
 
-| Boundary | Responsibility and proposed contract |
+### Customer and policy MCP boundaries
+
+Expose customer context and policy capabilities through separate logical MCP
+servers with independently scoped access. They may initially run in the same
+Rust application; separate contracts do not require separate deployments.
+
+| Boundary | Sample implementation | Future source adapter |
+| --- | --- | --- |
+| Customer context MCP | Synthetic customer/profile and policy associations, resolved from the authenticated principal | Authorized customer system using verified login-to-customer mapping |
+| Policy MCP | Versioned synthetic policy fixtures, cited clauses and deterministic rule evaluation | Customer-specific policy/endorsement sources and access-filtered document retrieval (RAG) |
+
+Agents use these contracts rather than embed customer records or policy rules in
+prompts. Replacing fixtures with real sources changes adapters, not the agent's
+authority or workflow invariants. Source provenance and failure semantics remain
+mandatory in both implementations.
+
+RAG retrieves evidence; it does not become the policy decision authority.
+Separate retrieval of applicable clauses from evaluation of supported structured
+rules and from authorization of consequential actions. Policy documents may
+require interpretation that cannot safely become an automatic rule: missing,
+conflicting or unsupported evidence produces an explicit review-required outcome,
+not an invented entitlement. Retrieval failure remains a technical failure.
+
+Policy results identify policy/endorsement version, effective context, document
+and clause references, and retrieval/rule versions where applicable. An evaluation
+records the exact evidence used so a later document or index update cannot silently
+change the basis of an existing decision.
+
+## 5. Agent responsibilities and model allocation
+
+| Logical agent | Task / inputs -> outputs | Authority and model role |
+| --- | --- | --- |
+| Servicing / Rue | Customer conversation and claim state -> scoped tasks, status explanations, requests for intervention | Conversational LLM proposed; cannot approve coverage/payment or invent completion |
+| Evidence | Authorized sources and required facts -> provenance-bearing evidence bundle and identified gaps | Extraction/document model where needed; retrieved content is not instruction or ground truth |
+| Policy | Policy snapshot and evidence -> supported policy analysis and required decision gate | Deterministic policy checks and authorized judgement; model assistance does not establish entitlement |
+| Assessment | Incident/evidence and inspection -> bounded judgments and supported loss calculation | Jev candidate for category/urgency/ambiguity; other task-specific models as justified; amounts computed deterministically |
+| Resolution | Reviewed policy/assessment -> versioned offer or explained no-payment proposal | Model-assisted explanation; authority/consent evaluated outside model |
+| Payment/fulfilment | Authorized resolution -> instruction, external status and reconciliation result | Deterministic scoped tools; no model discretion over recipient, amount or retry safety |
+
+An agent role can have many run instances. Fleet counts group runs by role,
+version, environment and execution state; a single role badge is not a workload
+model. Agents do not freely delegate authority to one another.
+Rue's dependency plan is represented by durable tasks, not arbitrary peer chat.
+
+Jev is called through its documented HTTP contract; it is not assumed to be an
+MCP server. Validate required answer IDs, labels, numerical bounds and
+distributions. Preserve provider-specific uncertainty without pretending that
+Jev probabilities and LLM self-reported confidence are equivalent.
+Pin provider/model/prompt/rubric/policy versions.
+
+The existing rules/Jev/structured-LLM comparison design is an intake component benchmark.
+It does not evaluate coverage, valuations, payment authority or end-to-end claims.
+Use separate full-journey evaluation and measure orchestration latency/cost.
+Ordinary tests use synthetic fixtures and mocks, never paid inference.
+
+## 6. State, persistence and data ownership
+
+The claim aggregate contains lifecycle and record version, not all documents or
+model transcripts. Logical records below are design inputs, not a frozen schema.
+Use opaque IDs, UTC times, explicit versions and access scope.
+
+| Record | Essential fields / invariant |
 | --- | --- |
-| Browser to agent session | Authenticate user, scope conversation to authorized work, bind session to principal; structured commands/confirmations alongside user text |
-| Agent to conversational model | Minimal authorized context and explicit tool schemas; model emits proposed tool calls, not executable authority; model/version recorded |
-| MCP client to workflow MCP server | Negotiated MCP capabilities and version; JSON-RPC tool calls over an authenticated transport; typed inputs/results and resource-scoped authorization on every call |
-| Workflow tools to Rust API | Validated domain commands using the same workflow as HTTP/evaluation; avoid a parallel policy implementation in prompts/MCP |
-| Rust assessment adapter to Jev | Provider-specific HTTP request/response; validated Choice/Noul/Score as required by rubric, no assumption that Jev speaks MCP |
-| Orchestrator to another agent, if needed | Explicit delegated task/result contract and restricted identity; not an implicit MCP capability or shared omnipotent session |
+| Claim | Insurer/source ID, customer/policy association, lifecycle, owner, current revision, aggregate version; deduplicated creation |
+| InputRevision / EvidenceArtifact | Immutable source, revision, author, content reference, integrity/provenance and classification; corrections append |
+| PolicySnapshot / Guideline | Authoritative source/version/effective context and controlled content reference; changing sources invalidates affected conclusions |
+| Assessment / Attempt | Input references, typed valid judgments OR technical failure, model/rubric versions, attempts/usage/duration; manual correction retains original |
+| CoverageDetermination / LossAssessment | Referenced sources, basis/reasons, calculation/authority and amounts/currency; no unsupported conclusion from model prose |
+| ResolutionProposal | Versioned outcome/amount/service, basis and review requirements; changes invalidate applicable prior decisions/responses |
+| AuthorityDecision / CustomerResponse | Distinct actors, exact proposal digest/version, scope, time/expiry and outcome; acknowledgement is not waiver |
+| Exception / Assignment | Reason, owner, required action, blocked task/revision, escalation and resume condition; ownership conflicts are explicit |
+| AgentRun / DelegatedTask | Role/version, parent task, claim/input references, scope/budget, checkpoint/state and typed outcome |
+| ActionIntent / Invocation | Operation, resource/version, idempotency identity, verified authority references, model/tool attempts and result |
+| PaymentOrServiceInstruction / Receipt | Stable execution identity, authorized recipient/amount/service, pending/unknown/failed/confirmed status and external reference |
+| Closure / ReviewRequest | Explained outcome, completion evidence, review/reopen owner and links to earlier decisions; history is retained |
+| AuditEvent | Initiating/executing identities, delegation/action, artifact references, versions, timestamp/correlation and result; no credentials |
 
-MCP is a tool/resource interoperability boundary, not an agent-to-agent message
-protocol or an authorization policy. No additional agent is justified yet:
-prefer one orchestrator and narrow tools. If external agents become necessary,
-choose an agent protocol after defining their responsibilities and trust boundary;
-do not label arbitrary agent messages "MCP".
+```mermaid
+stateDiagram-v2
+    [*] --> Reported
+    Reported --> GatheringEvidence
+    GatheringEvidence --> ReviewingPolicy
+    ReviewingPolicy --> AssessingLoss
+    AssessingLoss --> ProposingResolution
+    ProposingResolution --> AwaitingRequiredDecisions
+    AwaitingRequiredDecisions --> ExecutingResolution: authority and customer gate satisfied
+    AwaitingRequiredDecisions --> ProposingResolution: proposal rejected or revised
+    ExecutingResolution --> Closed: confirmed fulfilment or authorized no-payment outcome
+    Closed --> UnderReview: review request accepted
+    UnderReview --> GatheringEvidence: new evidence
+    UnderReview --> Closed: review outcome recorded
+```
 
-Proposed tools: `get_intake`, `list_work`, `request_assessment`,
-`get_assessment`, `request_clarification`, `record_disposition`, and
-`get_handoff`. Assignment/input-revision tools are also required if owned by
-this product rather than the upstream platform. Tool availability is not
-permission. Minimize narrative-bearing resources; no unrestricted SQL,
-filesystem, arbitrary URL fetch, or generic "execute" tool.
+Exceptions are an orthogonal blocking state on tasks, not a forced lifecycle
+advance. Task states include queued/running/waiting-for-customer/
+waiting-for-employee/reconciling/completed/failed/cancelled.
+Financial state distinguishes not-applicable, not-authorized, pending, unknown,
+failed and confirmed. A claim is not closed while required execution is unknown.
+No-payment closure needs an authorized, explained decision and review channel,
+not coerced customer acceptance.
 
-Read tools and write tools have separate scopes. Proposed initial authority:
-agent may retrieve authorized intake and request assessment; routine recording and permitted handoff may execute under predelegated,
-server-enforced authority. Exceptions outside those bounds pause for the
-appropriate human. Actual action scopes and messaging permission remain proposals. Approval binds the authenticated
-actor to the exact resource revision, structured action and payload digest,
-expiry, and one-time intent ID. Changing arguments after confirmation requires
-new confirmation. The server validates the approval, not an LLM-generated
-`approved: true` flag.
+Atomic writes commit state/version, intent result, audit and pending work.
+Lease/optimistic-version controls prevent competing owners from corrupting state.
+Financial action gates are checked again immediately before execution.
+Outbox delivery may be at-least-once; recipient deduplication and reconciliation
+contracts are mandatory where repeated delivery is possible. No exactly-once claim.
 
-### Identity propagation and security
+## 7. Public API, MCP and delegated-task contracts
 
-Use two distinguishable identities: the analyst who delegates and the service
-that executes. Verify issuer, audience, expiry, and permitted scopes at each
-boundary; derive tenant/record access from verified claims and server policy,
-never user-supplied IDs alone. Apply authorization when fetching context, invoking
-tools, and retrieving results.
+Expose authenticated `/v1` JSON contracts with bounded payloads, strict schemas,
+safe errors, cursor pagination and expected-version writes. These endpoint
+families are proposed; OpenAPI and Rust DTO/domain types follow design approval.
 
-Do not pass a browser bearer token to the model or forward it unchanged to every
-MCP server. Obtain audience-bound downstream credentials using an approved
-delegation/token-exchange flow where supported. Otherwise use narrow service
-credentials with server-verified actor/approval context; never manufacture
-delegation claims. Concrete identity provider, exchange mechanism, and MCP auth
-profile must be selected and tested before integration.
+| API family | Commands and queries |
+| --- | --- |
+| Claims and conversation | Create/read authorized claim, submit message, resume session, read structured progress |
+| Evidence and clarification | Authorized upload/source attachment, request/respond to clarification, read permitted artifact metadata |
+| Exceptions and assignments | List authorized work, acquire/transfer ownership, submit typed intervention and query gate state |
+| Decisions and resolution | Request/read assessments, propose/revise resolution, record authority decision, accept/reject/request review as customer |
+| Financial fulfilment and closure | Request permitted execution, read status/receipt, reconcile through restricted controls, request review/reopening |
+| Agent operations | Scoped fleet/run/lineage queries, explicit pause/retry/reassignment commands, versioned metric queries |
 
-Background work uses a bounded service identity and persisted verified initiating
-actor/intent, not an expired user session token. Define revocation and reauthorization
-rules for delayed work; reject expired approval before new consequential actions.
-Audit user, agent/service, delegated scope, tool, resource/revision, intent,
-result, and policy/model versions without logging tokens or narrative content.
+HTTP creation returns a durable resource identity. Asynchronous work returns
+202 with status location only after durable scheduling. Reading a failed
+assessment can return 200 with a tagged failed resource; it must not look like
+valid judgments. State conflicts return 409; invalid semantic input 422;
+unauthenticated 401; denied access 403 or consistent anti-enumeration 404;
+admission limits 429; dependency unavailability 503.
+Choose one denied-resource policy before contracts.
 
-Untrusted narratives, tool descriptions/results, and other agents' messages can
-contain prompt injection. Treat them as data, isolate instructions, allowlist
-servers/tools/egress, validate schemas and result provenance, and enforce
-authorization and approval outside the model. Returned links/instructions cannot
-grant tool access. Redact sensitive context before model calls; retention and
-training terms for the conversational model need review as well as Jev's.
-Session memory must not cross users/tenants or become an unauthorized data store.
+MCP exposes allowlisted tools such as `get_claim`, `request_assessment`,
+`submit_intervention`, `record_resolution_decision` and `get_run_lineage`.
+Tool calls use the negotiated MCP protocol/SDK and declared schemas over an
+authenticated transport. MCP is not identity policy or an agent-to-agent
+protocol. Distinguish JSON-RPC errors, tool execution errors and domain outcomes.
+Do not expose arbitrary SQL, shell, filesystem or unrestricted URL tools.
 
-Use TLS for remote transports, exact approved endpoints, bounded payloads,
-deadlines, cancellation, and tool-call/conversation budgets. Credential or
-authorization failures fail closed; a model/tool failure can offer authorized
-manual handling but cannot acquire more privileges. Test cross-tenant access,
-audience mismatch, forged/replayed approval, changed arguments, resource injection,
-and sensitive-data exposure in agent/tool integration tests.
+Customer-context tools include `get_current_customer` and authorized
+`get_customer_context`. Resolve the current customer from verified server-side
+identity, not a customer ID asserted in chat. Employee lookups by customer ID
+require explicit tenant/resource/assignment authorization; possession of an ID
+is not permission. Return only the fields needed for the delegated task.
 
-### Message and model contracts
+Policy tools include `get_policy_snapshot`, `retrieve_policy_clauses` and
+`evaluate_policy_rules`. Retrieval is constrained to authorized customer policies
+and applicable versions before results reach the agent. Rule evaluation returns
+structured supported findings or explicit review-required/technical-failure
+outcomes, with evidence references; it does not authorize settlement.
+Read-only context/retrieval access does not grant policy-change or financial
+execution permissions.
 
-Application envelopes are distinct from MCP JSON-RPC envelopes. An MCP request
-uses negotiated protocol methods such as `tools/call`, a request `id`, tool
-`name`, and schema-validated `arguments`. Do not attach fabricated identity fields
-to that protocol as a substitute for authenticated transport.
-Tool results use declared structured output where supported by the selected
-protocol/SDK; distinguish protocol errors, tool errors, and domain outcomes.
-A successfully read failed-assessment resource is not a tool transport failure.
+Agents exchange application task/result envelopes through the durable coordinator.
+A separate inter-service agent protocol is needed only if remote agent execution
+is selected. Required fields are schema/task/parent IDs, claim/input artifact
+versions, requested task, allowed scope/tools, deadline, budget, correlation
+and typed result references. Verified authority is server context—not a model
+claim inside an envelope.
 
-Proposed application intent envelope:
+Example consequential intent, illustrative rather than a frozen schema:
 
 ```json
 {
   "schema_version": "1",
-  "intent_id": "opaque-intent-id",
-  "correlation_id": "opaque-trace-id",
-  "conversation_id": "opaque-session-id",
-  "operation": "record_disposition",
-  "resource": {"intake_id": "opaque-id", "input_revision": "r3"},
-  "expected_version": 7,
-  "idempotency_key": "opaque-scoped-key",
-  "arguments": {
-    "category": "glass_damage",
-    "attention": "standard",
-    "review_required": false,
-    "target_queue": "approved-queue-id"
-  },
-  "approval_reference": "server-issued-one-time-reference"
+  "intent_id": "intent-opaque",
+  "claim_id": "claim-opaque",
+  "expected_version": 12,
+  "operation": "execute_resolution",
+  "proposal_reference": {"id": "proposal-opaque", "version": 3},
+  "authority_reference": "decision-opaque",
+  "customer_response_reference": "response-opaque",
+  "idempotency_key": "key-opaque",
+  "correlation_id": "trace-opaque"
 }
 ```
 
-This illustrates fields, not a frozen API schema. Authenticated identity is
-transport/server context, not the envelope. Reject unknown operations, invalid
-enums, stale revisions and out-of-scope destinations.
-Results reference the intent, resource revision and durable outcome:
-`recorded` with disposition/handoff IDs, `conflict`, `validation_failed`,
-`authorization_denied`, or `dependency_unavailable`. No free-form "done" message
-can replace these results. Model-generated explanations must not override them.
+The server resolves authorized amount/recipient/service from immutable records;
+it does not trust model-supplied payment details. Reject changed/expired authority,
+stale proposals, wrong roles and key reuse with a different payload.
+Responses distinguish recorded/pending, confirmed, conflict, denied, invalid,
+failed and unknown; include safe reason codes and correlation.
+Client timeout is unknown write outcome: query status or replay the same key.
+Key retention/expiry must cover the external retry/reconciliation lifecycle.
 
-Add logical records to the data model: `AgentSession` (authorized principal,
-scope, retention), `ActionIntent` (typed command, approval/version/expiry),
-`ToolInvocation` (server/tool/version, identities, intent, bounded attempts and
-outcome), and `ModelInvocation` (provider/model/prompt version, usage and outcome).
-Store minimal redacted audit metadata; conversation content needs separate
-approved retention/access controls.
+## 8. Identity, trust and data protection
 
-The conversational LLM performs interaction and tool selection. Jev performs
-bounded judgments. Rust owns authorization, exact calculations, state, validation,
-and routing policy. The evaluation LLM is a comparator; it is not automatically
-the orchestration model. Select and pin each role independently. An extra
-conversation layer changes end-to-end latency/cost, so measure its overhead
-separately from the fair rules/Jev/LLM assessment comparison.
+Authenticate customers, employees and operators separately. Enforce resource
+ownership/assignment, tenant scope and action authorization on every read/write.
+Employee status alone does not imply settlement authority; operator monitoring
+permission does not permit decisions or payments.
 
-```mermaid
-sequenceDiagram
-    actor Analyst
-    participant Agent as Workbench agent
-    participant Model as Conversational LLM
-    participant MCP as Authorized MCP tool server
-    participant API as Rust workflow
-    participant Jev as Assessment provider
-    Analyst->>Agent: Review this authorized intake
-    Agent->>Model: Scoped context + approved tool schemas
-    Model-->>Agent: Proposed request_assessment call
-    Agent->>MCP: Authenticated tools/call with revision and intent
-    MCP->>MCP: Validate identity, scopes, resource and arguments
-    MCP->>API: Validated assessment command
-    API->>Jev: Bounded versioned judgments (worker details below)
-    Jev-->>API: Provider output
-    API->>API: Validate and apply routing policy
-    API-->>MCP: Assessment ID and structured state
-    MCP-->>Agent: Typed result, not disposition authority
-    Agent-->>Analyst: Assessment card and proposed next action
-    Note over Agent,Analyst: Human intervenes only if policy blocks routine action
-    Agent->>MCP: Record intent with scoped delegation or exception approval
-    MCP->>API: Authorize versioned command and delegated bounds
-    API-->>MCP: Durable disposition + pending handoff
-    MCP-->>Agent: Structured recorded result
-    Agent-->>Analyst: Recorded; delivery still pending
-```
+Separate initiating user, delegated agent and executing service identities.
+Validate issuer/audience/expiry/scopes, acquire audience-bound downstream
+credentials using the selected supported delegation mechanism, and never send
+credentials to models or forward browser tokens indiscriminately.
+Background work uses scoped service identity with verified initiating intent;
+define revocation/revalidation for delayed execution.
 
-This diagram collapses asynchronous assessment scheduling/polling for readability;
-the durable success/failure diagrams below remain authoritative for that proposal.
-Denial/replay/conflict returns a typed rejection; no tool retry or agent delegation
-may bypass it. Show it to the analyst with an actionable, non-sensitive reason.
+Bind required approvals to operation, claim/input/proposal versions, payload
+digest, actor scope and expiry; consume appropriately. Changed arguments require
+new authority. Customer clarification, insurer authority and customer acceptance
+are different control records. Ordinary autonomous work uses approved delegation
+rather than fabricated per-step approval.
 
-## Proposed data model
+Treat narratives, documents, MCP descriptions/results and peer output as
+untrusted data. Schema validation, least-privilege tools, source provenance,
+egress allowlists and server-side gates constrain prompt injection.
+Model failures cannot expand privileges or authorize an alternate provider.
+Session context is resource-scoped; cross-claim/customer memory is prohibited
+unless separately authorized.
 
-These are logical entities, not a frozen database schema or Rust/API DTOs.
-Use opaque IDs, UTC timestamps, explicit schema versions, and version checks.
-Narrative revisions are immutable; human corrections do not overwrite model
-output. Separate incident category `other` from insufficient/unclear evidence:
-uncertainty belongs in review status/reasons, not a forced incident category.
-Final labeling rubric and queue taxonomy still need approval.
+Protect artifacts and sensitive conversation content separately from redacted
+telemetry. Define data rights, residency, access, retention/deletion, vendor
+training/retention terms, encryption and document malware/type/size controls.
+Access to lineage must not disclose private claimant evidence through operators'
+aggregate dashboards. Audit retrieval and actions; never log tokens or raw
+narratives by default.
 
-| Entity | Proposed fields and invariants |
-| --- | --- |
-| Intake | `id`, source/revision identity, access scope, received time, current narrative revision, owner, work state, record version; creation deduplication is scoped to source |
-| NarrativeRevision | Intake ID, revision ID, narrative, supplied facts, author/source, created time; exact assessment input identified by revision; sensitive content excluded from ordinary logs |
-| Assessment | ID, intake/input revision, status, provider/model/rubric/policy versions, attempts/duration; tagged outcome: valid judgments OR typed technical failure, never both |
-| ValidJudgments | Optional category if unresolved, urgent cue, review-required flag/reason codes, provider-specific uncertainty evidence; no universal confidence conversion |
-| AssessmentAttempt | Assessment ID, attempt index, sanitized error/status, duration, usage if available; preserves timeout/invalid-output costs without raw responses in telemetry |
-| Disposition | ID, intake/revision/version, assessment ID if used, actor, category or unresolved state, standard/expedited attention, review reasons, target queue if routable, time; accepted/corrected/manual origin |
-| Clarification | ID, intake, requesting actor, needed facts, owner/status, answer revision; approved answer creates new narrative revision and invalidates stale assessments |
-| Handoff | ID, disposition ID, destination, pending/accepted/rejected/unknown state, attempts, acknowledgement; delivered only after destination confirmation |
-| AuditEvent | Actor/service, entity/version, action, time, correlation, result; append-only access-controlled history, sensitive content governed separately |
-
-Relations: intake has many revisions/assessments/dispositions; each assessment
-references one input revision; each disposition references its source revision
-and optionally an assessment; handoff references a disposition. New revisions
-invalidate old suggestions for new decisions but preserve history.
-
-Use separate state axes: work (`unassigned`, `owned`, `awaiting_clarification`,
-`handoff_pending`, `handed_off`), assessment (`pending`, `completed`, `failed`,
-`superseded`), and handoff status. A failed assessment can have a valid manual
-disposition. "Recorded" does not mean "handed off".
-Which states close an intake or allow reopening remains a product decision.
-
-## Proposed exposed contracts
-
-Authenticated versioned JSON API. Identity comes from verified auth, not a body
-field claiming an actor/tenant. IDs must not disclose access scope; enforce access
-on reads and writes. Request limits, enumeration values, timestamps, and error
-schemas require an OpenAPI contract after design review.
-
-| Endpoint proposal | Input / output and semantics |
-| --- | --- |
-| `POST /v1/intakes` | Source identity and narrative -> persisted intake ID/version; 201 new, replay returns original result; same key with different input -> 409 |
-| `GET /v1/intakes` | Authorized queue/filter and cursor -> bounded paginated work items; no global narrative dump |
-| `GET /v1/intakes/{id}` | Intake, current input revision, assessment/disposition/handoff states; distinguish unavailable assessment from missing intake |
-| `POST /v1/intakes/{id}/assignments` | Expected version and assignment -> owned intake; stale/competing assignment -> 409 |
-| `POST /v1/intakes/{id}/assessments` | Input revision and idempotency key -> 202 with assessment ID/status URL after durable scheduling; invalid/stale revision -> 409/422 |
-| `GET /v1/assessments/{id}` | Pending/completed/failed tagged result; completed resource retrieval may be 200 with failed assessment, never a successful judgment payload |
-| `POST /v1/intakes/{id}/clarifications` | Expected version, required facts and owner -> clarification record; not an authorization to send messages to a claimant |
-| `POST /v1/intakes/{id}/revisions` | Expected version and clarified input -> new revision; invalidates stale assessment use |
-| `POST /v1/intakes/{id}/dispositions` | Expected version, source revision, edited disposition and optional assessment reference -> 201 durably recorded decision + handoff/review state; stale reference -> 409 |
-| `GET /v1/handoffs/{id}` | Pending/accepted/rejected/unknown, sanitized reason and recovery owner; cannot infer delivery from local record |
-
-Proposed errors: `code`, safe `message`, correlation ID, retry eligibility,
-field errors when appropriate. 401 unauthenticated; 403 denied (or consistent
-404 anti-enumeration policy to decide); 422 invalid input; 409 conflicts;
-429 admission limit; 503 unavailable dependency. No narrative/secret leakage.
-Client timeout means unknown write outcome: retry with the same scoped key or
-read status. Persist key/request identity/result atomically; define expiry before
-implementation. Durable decisions require expected-version checks even with
-idempotency. No unchecked overwrite or exactly-once-delivery claim.
-
-## Successful autonomous journey
+## 9. End-to-end execution and exception sequences
 
 ```mermaid
 sequenceDiagram
-    actor Analyst
-    participant UI as Workbench
-    participant API as Rust API
-    participant DB as Durable store
-    participant W as Worker / shared workflow
-    participant P as Assessment provider
-    participant Q as Receiving queue
-    UI->>API: Authenticated read and assignment (expected version)
-    API->>DB: Authorize scope, atomically assign
-    DB-->>API: Owned intake + current revision
-    API-->>UI: Narrative and work state
-    UI->>API: Request assessment (revision, idempotency key)
-    API->>DB: Atomically persist pending assessment/work
-    API-->>UI: 202 assessment ID
-    W->>DB: Lease pending work
-    W->>P: Versioned bounded judgment request
-    P-->>W: Provider DTOs
-    W->>W: Validate DTOs, apply versioned policy
-    W->>DB: Persist judgments and attempts
-    UI->>API: Read assessment status
-    API-->>UI: Judgments, review state, provenance
-    Note over Analyst,UI: Observe state and artifacts without blocking processing
-    UI->>API: Agent records permitted disposition (version, revision, key)
-    API->>DB: Atomically persist disposition + handoff work
-    API-->>UI: Recorded, handoff pending
-    W->>Q: Handoff with stable delivery identity
-    Q-->>W: Accepted acknowledgement
-    W->>DB: Mark handoff accepted
-    UI->>API: Read handoff status
-    API-->>UI: Accepted destination and ownership
-```
-
-User-visible assessment latency is from request to usable result, including
-scheduling, attempts, and polling; asynchronous 202 does not satisfy the two-second
-target by itself. Handoff latency is a separate metric. No intermediate status
-may be silently omitted from attempted-intake denominators.
-
-## Failure, clarification, and recovery
-
-```mermaid
-sequenceDiagram
-    actor Analyst
-    participant UI
-    participant API
-    participant DB
-    participant W as Worker
-    participant P as Provider
-    participant Q as Receiving queue
-    W->>P: Assess with bounded attempts/deadline
-    alt Timeout or invalid output
-        W->>DB: Persist failed assessment and failure reason
-        UI->>API: Read status
-        API-->>UI: Technical failure, manual review action
-        Analyst->>UI: Record manual disposition
-    else Valid but ambiguous
-        W->>DB: Persist valid judgments + review requirement
-        UI->>API: Create owned clarification
-        API->>DB: Persist clarification
-        Analyst->>UI: Supply clarified input
-        UI->>API: Submit new revision (expected version)
-        API->>DB: Save revision; supersede stale suggestions
+    actor C as Customer
+    participant R as Rue and coordinator
+    participant W as Rust workflow and durable store
+    participant A as Scoped specialist agents
+    participant T as Authorized tools and external sources
+    actor E as Employee
+    participant P as Payment or fulfilment system
+    C->>R: Report claim through authenticated session
+    R->>W: Create claim and schedule scoped tasks
+    W-->>C: Durable claim ID and progress
+    W->>A: Evidence, policy and assessment tasks with input references
+    A->>T: Authorized retrieval and bounded model/tool operations
+    T-->>A: Versioned sources and typed results
+    A->>W: Persist artifacts and proposed resolution
+    alt Routine actions inside delegated authority
+        W->>W: Validate authority and current proposal
+    else Employee decision required
+        W-->>E: Owned exception with sources and guidelines
+        E->>W: Sign, revise, reject or escalate exact proposal
     end
-    UI->>API: Record disposition with expected version
-    alt Stale concurrent edit
-        API-->>UI: 409, refresh and reconcile; no overwrite
-    else Current input and version
-        API->>DB: Commit disposition + pending handoff
-        API-->>UI: Recorded, not yet delivered
-        W->>Q: Deliver with stable handoff identity
-        alt Destination rejects
-            Q-->>W: Rejection
-            W->>DB: Persist rejected state and recovery owner
-        else Delivery timeout
-            W->>DB: Persist unknown state
-            W->>Q: Query/reconcile by handoff identity
-            Note over W,Q: Retry only under agreed duplicate-safety contract
+    W-->>C: Explain proposal or reviewed no-payment outcome
+    alt Customer acceptance required
+        C->>W: Accept, reject or request review
+    else No acceptance required for outcome
+        W->>W: Record explanation and review channel
+    end
+    alt Payment or service authorized
+        W->>P: Stable idempotent execution identity
+        P-->>W: Confirmed result or reconciliation status
+        W->>W: Close only after confirmed required fulfilment
+    else Authorized no-payment decision
+        W->>W: Record closure basis and review channel
+    end
+    W-->>C: Outcome, permitted receipts and review options
+```
+
+The workflow exposes progress and authorized artifact views throughout. Models
+do not receive all financial credentials or the entire claims database.
+Customer rejection keeps resolution work open; it does not fall through to payment.
+
+```mermaid
+sequenceDiagram
+    participant A as Agent or executor
+    participant W as Workflow store and authority engine
+    actor H as Required human
+    participant X as External dependency
+    A->>X: Bounded operation
+    alt Missing or conflicting evidence
+        A->>W: Owned clarification gate
+        W-->>H: Required facts and source context
+        H->>W: New evidence revision
+        W->>A: Resume affected tasks; supersede stale conclusions
+    else Model or tool failure
+        A->>W: Typed failure and recorded attempts
+        W-->>H: Manual recovery or escalation gate
+        H->>W: Authorized intervention on current revision
+        W->>A: Resume only if gate satisfied
+    else Financial execution timeout
+        A->>W: Unknown outcome; block conflicting execution and closure
+        A->>X: Query by stable execution identity
+        alt External outcome confirmed
+            X-->>W: Verified receipt
+        else Still unknown
+            W-->>H: Payment operations reconciliation
         end
     end
 ```
 
-Store outage prevents safe recording/scheduling: API returns unavailable, keeps
-the draft visible, and never claims a durable decision. Worker leases expire
-after crash; retries have bounded budgets and stable identities. If the
-destination cannot deduplicate or report delivery status, ambiguous delivery
-requires human reconciliation instead of blind retries.
+Recheck versions and authority after waiting. A process crash cannot erase pending
+work; leases/checkpoints support safe recovery. Cancellation does not reverse an
+external payment already executed. Store outage makes recording unavailable;
+the UI retains an unsent draft, never reports durable success.
+Reopening creates review work linked to earlier closure and may invalidate
+future actions; it does not erase or automatically reverse financial history.
 
-## Production deployment reference, not a selected platform
+## 10. Deployment and operational architecture
 
 ```mermaid
 flowchart TB
-    Browser[Analyst browser] --> Ingress[TLS ingress, identity boundary]
-    Ingress --> API[Versioned Rust API replicas]
-    API --> DB[(Durable store and transactional work/outbox)]
-    Worker[Worker role: same release] --> DB
-    Worker --> Egress[Restricted provider/downstream egress]
-    Egress --> Vendors[Assessment service / receiving queue]
-    Config[Secrets and validated versioned policy] --> API
-    Config --> Worker
-    API --> Obs[Redacted logs, metrics, traces and audit]
-    Worker --> Obs
+    Users[Three authenticated persona clients] --> Ingress[TLS ingress and application access boundary]
+    Ingress --> API[Stateless Rust API replicas]
+    API --> DB[(Transactional state and work store)]
+    Runtime[Bounded agent and work executors] --> DB
+    Runtime --> Objects[(Encrypted artifact storage)]
+    Runtime --> Egress[Restricted model and integration egress]
+    Egress --> Providers[Identity, insurer, models, financial dependencies]
+    Secrets[Secrets and versioned configuration] --> API
+    Secrets --> Runtime
+    API --> Observe[Redacted telemetry and protected audit]
+    Runtime --> Observe
 ```
 
-Propose transactional store-backed work/outbox rather than a broker until
-throughput or delivery requirements justify one. No database/broker added now.
-API replicas are stateless outside the store; worker lease and version controls
-prevent concurrent processing from corrupting state. Process restarts must not
-erase pending handoffs. Provider choice/configuration is deployment-controlled,
-not an untrusted UI field.
+Cloud/runtime, store vendor, identity provider, agent SDK, MCP version/auth
+profile and deployment topology are unresolved selections.
+Runtime isolation should match tool/dependency risk; separate model/tool
+credentials and execution budgets. Test code receives no production secrets.
+Releases identify code, model/prompt/policy/guideline/schema versions.
+Migrations and rollback must preserve pending work and financial compatibility.
+Backups need tested restore and reconciliation; restoration cannot blindly
+reissue already executed instructions.
 
-Production prerequisites: named environment/owners; access/egress and retention
-approval; migrations and recovery/backup tests; validated concurrency/input/output,
-queue/polling, deadline/retry/rate limits; secret rotation; audit access controls;
-load and failure testing; health/readiness semantics; metrics/alert ownership;
-release identity and rollback compatibility. Readiness reflects necessary local
-configuration/store availability, not a provider call on every probe. Provider
-outages should preserve authorized manual work where store availability permits.
+Configure input/document/response limits, concurrency, task/claim budgets,
+deadlines, bounded retries/backoff, lease duration, queue admission, cancellation
+and model spend controls before deployment. Provider/financial outages preserve
+safe read/exception handling when dependencies permit, not false completion.
+The current `/health` is process liveness; readiness and graceful draining need
+separate implementation. Do not probe external providers with paid calls.
+Numeric SLOs, RPO/RTO, retention, owners and alert thresholds require approval.
 
-The current `/health` is liveness only. It is not proof this production topology
-is ready. Define graceful draining and unfinished-work recovery before deployment.
+## 11. Observability, value and evaluation
 
-## Evidence and approval gate
+Operational signals: task and claim states, queue/wait age by owner, attempts,
+dependency/authorization failures, invalid model outputs, deadlines, unknown
+financial outcomes, model/tool cost and release provenance.
+Correlation IDs join traces/audit but are not metric labels.
+Bound dimensions; disclose collection freshness and missing data.
+Telemetry degradation is visible and does not change claim decisions.
 
-| Before accepting | Required evidence |
+Customer views expose safe progress; employee views expose authorized evidence
+and gates; operator views expose fleet/run state and scoped drill-down.
+Projection lag is explicit; commands use authoritative versions, not stale
+dashboard state.
+
+Value reporting distinguishes measured outcomes, assumptions and forecasts.
+Correct resolved claims per staff-hour includes exception/correction/oversight
+effort; cost per correct resolution includes declared labor/model/tool/platform
+costs. Pair efficiency with correctness, disputes, payment errors, rework and
+customer effort. Capacity value is not realized cash savings. Payment amounts
+are not business savings.
+Full-claim targets/labels/baselines and study power remain unresolved; existing
+intake targets cannot substantiate end-to-end value.
+
+## 12. Journey coverage and design gates
+
+The [persona coverage matrix](persona-journeys.md#architecture-and-contract-coverage-matrix)
+is the acceptance checklist for this architecture.
+
+| Journey families | Architectural coverage |
 | --- | --- |
-| Product journey | Five stories reach accountable handoff or an explicitly owned exception; reviewed value hypotheses and countermetrics |
-| Contracts/model | Approved rubric, queue taxonomy, revision/state transitions, idempotency/error/access semantics; OpenAPI examples and boundary tests |
-| Provider adapters | Wiremock request/response/failure tests plus provenance; no paid calls in ordinary tests |
-| Durable workflow | Crash/retry, duplicate, stale-write and rejected/unknown handoff integration tests |
-| Production release | Environment-specific infrastructure/security/dependency ADRs, operational limits and recovery evidence, named authorization |
+| C-01/C-07 | Durable creation, deduplication, session resume, authorized status and write-failure recovery |
+| C-02/E-02/E-03 | Evidence provenance, clarification ownership, immutable revisions and reassessment |
+| C-03/E-01/E-06 | Owned exceptions, assignment conflicts, authority gates and verified resume |
+| E-04/O-03 | Typed failures, attempts, budgets, manual recovery and actionable dependency signals |
+| C-04/E-05/E-07 | Versioned proposals, deterministic amounts, distinct authority/customer records and conflict/rejection |
+| C-05/O-04 | Authorized execution, stable identity, reconciliation, cancellation boundaries and closure gates |
+| C-06/E-07 | Retained history, review ownership and reopening |
+| O-01/O-02/O-06 | Fleet/run separation, authorized lineage, version/freshness/redaction and audit |
+| O-05 | Comparable quality-adjusted baseline, declared costs/denominators and no double-counting |
 
-Decisions to resolve first: autonomous action bounds and exception policy; actual
-receiving queue and acknowledgement contract; intake source and required fields;
-clarification ownership/channel; queue/reason taxonomy; data classification and
-retention; synchronous versus proposed durable asynchronous assessment tradeoff.
-Then decide the minimum sample fidelity needed to validate customer value before
-selecting production infrastructure. This reference is not a request to build
-every dependency.
-Also resolve agent authority/confirmation points, host and model roles, MCP
-transport/version/auth profile, delegation mechanism, conversation memory and
-retention, tool schemas/error mapping, and any genuine agent-to-agent need.
+Before Rust contracts, decide supported claims/jurisdiction, authority/action
+matrix, identity/delegation, authoritative insurer integration, required evidence,
+financial execution/reconciliation, review rights and named exception ownership.
+Record consequential choices in ADRs; no target component is implemented by this
+document.
 
-## Next design artifact: executable Rust contracts
-
-The user requested a contract-only milestone after design approval: make the
-proposed data and control flow inspectable in Rust before business implementation.
-Introduce only agreed request/result DTOs, domain command/outcome types, and
-example JSON. Include serialization and rejection tests so contracts compile
-and document exact shapes. Do not add placeholder HTTP/MCP handlers returning
-success, empty services, or `todo!()` execution paths.
-
-Show the boundary path: untrusted API/tool arguments -> structural and semantic
-validation -> server-verified identity/approval context -> domain command ->
-typed outcome -> sanitized API/tool result. Distinguish request fields from
-controls derived or verified by the server; merely defining an approval-reference
-type does not enforce approval. Identify which checks belong at each stage and
-which remain unimplemented.
-
-Cover revisions/expected versions, scoped idempotency, action intent/approval,
-assessment judgments versus technical failure, disposition versus handoff state,
-and explicit errors for the approved slice. Keep provider DTOs distinct from
-public API types. MCP SDK protocol envelopes are not a second handwritten
-protocol model. Publish paired JSON examples and an API schema when the schema
-generation approach is selected. Review these artifacts before wiring handlers,
-storage, providers, or agent execution.
+Next produce compile-checked boundary DTOs/domain commands/tagged outcomes and
+paired JSON examples for the agreed slice—not empty success handlers.
+Separate authenticated server context from untrusted request data; derive
+OpenAPI/MCP schemas after selecting tooling. Test serialization/rejections first,
+then domain state/authority gates, mocked providers, durable crash/conflict/
+financial recovery and persona-level end-to-end scenarios.
+Use [candidate review and CI](candidate-review.md) for every implementation
+candidate. Production approval additionally requires environment-specific
+security/data review, dependency contracts, operational/recovery evidence and
+named release authority.
