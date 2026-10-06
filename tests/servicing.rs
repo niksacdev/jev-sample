@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     Router,
@@ -6,10 +6,14 @@ use axum::{
     http::{Request, StatusCode},
 };
 use jev_sample::{
-    http::{Application, router, router_with},
+    assessment::Assessor,
+    domain::Message,
+    http::router_with,
     jev::{Failure, Jev, MODEL},
 };
+mod support;
 use serde_json::{Value, json};
+use support::router;
 use tower::ServiceExt;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,
@@ -161,15 +165,13 @@ async fn unrecognized_request_requires_clarification_and_run_history_is_bounded(
 #[tokio::test]
 async fn real_adapter_sends_documented_questions_and_preserves_provenance() -> TestResult {
     let server = MockServer::start().await;
-    let questions = jev_sample::agent::INTENTS
-        .iter()
-        .map(|(_, id, instruction)| {
-            (
-                id.to_string(),
-                json!({"type": "noul", "instructions": instruction}),
-            )
-        })
-        .collect::<serde_json::Map<_, _>>();
+    // Independent vendor request fixture: do not derive the assertion from production definitions.
+    let questions = json!({
+        "claim": {"type":"noul","instructions":"Does the customer ask to file or service an insurance claim?"},
+        "policy_change": {"type":"noul","instructions":"Does the customer request a policy, beneficiary, endorsement or coverage change?"},
+        "customer_details": {"type":"noul","instructions":"Does the customer ask to change their contact details or address?"},
+        "billing": {"type":"noul","instructions":"Does the customer request help with premiums, payment timing or discounts?"}
+    });
     Mock::given(method("POST"))
         .and(path("/v1/systemone"))
         .and(header("authorization", "Bearer test-key"))
@@ -180,7 +182,7 @@ async fn real_adapter_sends_documented_questions_and_preserves_provenance() -> T
         .expect(1)
         .mount(&server)
         .await;
-    let app = router_with(Application::new(Some(client(&server)?)));
+    let app = router_with(support::service(Arc::new(client(&server)?)));
     let (status, reply) = post(app.clone(), json!({"message": "synthetic request"})).await?;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(reply["tasks"].as_array().map(Vec::len), Some(2));
@@ -207,7 +209,7 @@ async fn authentication_uses_each_configured_key_not_a_literal_placeholder() -> 
             &key,
             Duration::from_secs(2),
         )?
-        .assess("synthetic")
+        .assess(&Message::new("synthetic".into())?)
         .await
         .map_err(|failure| format!("unexpected failure: {failure:?}"))?;
     }
@@ -248,7 +250,7 @@ async fn provider_failure_is_visible_without_fallback_or_retry() -> TestResult {
             .expect(1)
             .mount(&server)
             .await;
-        let app = router_with(Application::new(Some(client(&server)?)));
+        let app = router_with(support::service(Arc::new(client(&server)?)));
         let (status, body) = post(app.clone(), json!({"message": "claim"})).await?;
         assert_eq!(status, StatusCode::BAD_GATEWAY);
         assert_eq!(body["code"], code);
@@ -296,7 +298,10 @@ async fn adapter_rejects_missing_extra_wrong_and_invalid_answers() -> TestResult
             .mount(&server)
             .await;
         assert_eq!(
-            client(&server)?.assess("synthetic").await.err(),
+            client(&server)?
+                .assess(&Message::new("synthetic".into())?)
+                .await
+                .err(),
             Some(Failure::InvalidResponse)
         );
     }
@@ -312,7 +317,10 @@ async fn adapter_bounds_response_and_deadline() -> TestResult {
         .mount(&server)
         .await;
     assert_eq!(
-        client(&server)?.assess("synthetic").await.err(),
+        client(&server)?
+            .assess(&Message::new("synthetic".into())?)
+            .await
+            .err(),
         Some(Failure::ResponseTooLarge)
     );
     let server = MockServer::start().await;
@@ -322,7 +330,10 @@ async fn adapter_bounds_response_and_deadline() -> TestResult {
         .mount(&server)
         .await;
     assert_eq!(
-        client(&server)?.assess("synthetic").await.err(),
+        client(&server)?
+            .assess(&Message::new("synthetic".into())?)
+            .await
+            .err(),
         Some(Failure::InvalidResponse)
     );
     let server = MockServer::start().await;
@@ -332,7 +343,10 @@ async fn adapter_bounds_response_and_deadline() -> TestResult {
         .mount(&server)
         .await;
     let jev = Jev::new(server.uri(), "test-key", Duration::from_millis(100))?;
-    assert_eq!(jev.assess("synthetic").await.err(), Some(Failure::Timeout));
+    assert_eq!(
+        jev.assess(&Message::new("synthetic".into())?).await.err(),
+        Some(Failure::Timeout)
+    );
     assert!(Jev::new(server.uri(), "\n", Duration::from_secs(1)).is_err());
     Ok(())
 }

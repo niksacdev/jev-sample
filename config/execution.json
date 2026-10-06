@@ -1,0 +1,5 @@
+{
+  "max_concurrent": 4,
+  "max_runs": 100,
+  "deadline_seconds": 15
+}

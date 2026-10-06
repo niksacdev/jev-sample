@@ -2,11 +2,12 @@ use std::{collections::BTreeMap, time::Duration};
 
 use reqwest::{Client, header};
 use serde::Deserialize;
-use serde_json::json;
 
+pub use crate::assessment::AssessmentFailure as Failure;
 use crate::{
-    agent::{INTENTS, model_signal},
-    contracts::IntentSignal,
+    assessment::{AssessmentFuture, Assessor, Provenance},
+    domain::{Assessment, Evidence, Message, Observation, Probability, TokenUsage},
+    rubric::{QUESTIONS, VERSION},
 };
 
 pub const MODEL: &str = "jev-1.13.0";
@@ -16,37 +17,6 @@ const MAX_RESPONSE: usize = 32 * 1024;
 pub struct Jev {
     client: Client,
     endpoint: String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Failure {
-    Timeout,
-    Transport,
-    Authentication,
-    RateLimited,
-    Provider,
-    InvalidResponse,
-    ResponseTooLarge,
-}
-
-impl Failure {
-    pub fn code(self) -> &'static str {
-        match self {
-            Self::Timeout => "provider_timeout",
-            Self::Transport => "provider_transport",
-            Self::Authentication => "provider_authentication",
-            Self::RateLimited => "provider_rate_limited",
-            Self::Provider => "provider_error",
-            Self::InvalidResponse => "invalid_provider_response",
-            Self::ResponseTooLarge => "provider_response_too_large",
-        }
-    }
-}
-
-pub struct Assessment {
-    pub signals: Vec<IntentSignal>,
-    pub input_tokens: u32,
-    pub output_tokens: u32,
 }
 
 #[derive(Deserialize)]
@@ -67,6 +37,20 @@ struct Answer {
 struct Usage {
     input_tokens: u32,
     output_tokens: u32,
+}
+
+#[derive(serde::Serialize)]
+struct Question {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    instructions: &'static str,
+}
+
+#[derive(serde::Serialize)]
+struct Request<'a> {
+    model: &'static str,
+    state: &'a str,
+    questions: BTreeMap<&'static str, Question>,
 }
 
 impl Jev {
@@ -94,15 +78,27 @@ impl Jev {
         Ok(Self { client, endpoint })
     }
 
-    pub async fn assess(&self, message: &str) -> Result<Assessment, Failure> {
-        let questions: BTreeMap<_, _> = INTENTS
+    async fn evaluate(&self, message: &Message) -> Result<Assessment, Failure> {
+        let questions: BTreeMap<_, _> = QUESTIONS
             .iter()
-            .map(|(_, id, instruction)| (*id, json!({"type": "noul", "instructions": instruction})))
+            .map(|question| {
+                (
+                    question.id,
+                    Question {
+                        kind: "noul",
+                        instructions: question.instructions,
+                    },
+                )
+            })
             .collect();
         let mut response = self
             .client
             .post(&self.endpoint)
-            .json(&json!({"model": MODEL, "state": message, "questions": questions}))
+            .json(&Request {
+                model: MODEL,
+                state: message.as_str(),
+                questions,
+            })
             .send()
             .await
             .map_err(transport_failure)?;
@@ -127,27 +123,51 @@ impl Jev {
         }
         let result: Response =
             serde_json::from_slice(&body).map_err(|_| Failure::InvalidResponse)?;
-        if result.model != MODEL || result.answers.len() != INTENTS.len() {
+        if result.model != MODEL || result.answers.len() != QUESTIONS.len() {
             return Err(Failure::InvalidResponse);
         }
-        let signals = INTENTS
+        let observations = QUESTIONS
             .iter()
-            .map(|(intent, id, _)| {
-                let answer = result.answers.get(*id).ok_or(Failure::InvalidResponse)?;
+            .map(|question| {
+                let answer = result
+                    .answers
+                    .get(question.id)
+                    .ok_or(Failure::InvalidResponse)?;
                 if answer.kind != "noul" {
                     return Err(Failure::InvalidResponse);
                 }
-                model_signal(*intent, answer.noul).ok_or(Failure::InvalidResponse)
+                let probability =
+                    Probability::new(answer.noul).map_err(|_| Failure::InvalidResponse)?;
+                Ok(Observation {
+                    intent: question.intent,
+                    evidence: Evidence::YesProbability(probability),
+                })
             })
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Assessment {
-            signals,
-            input_tokens: result.usage.input_tokens,
-            output_tokens: result.usage.output_tokens,
-        })
+        Assessment::new(
+            observations,
+            Some(TokenUsage {
+                input: result.usage.input_tokens,
+                output: result.usage.output_tokens,
+            }),
+        )
+        .map_err(|_| Failure::InvalidResponse)
     }
 }
 
+impl Assessor for Jev {
+    fn provenance(&self) -> Provenance {
+        Provenance {
+            assessor: "jev".into(),
+            model: Some(MODEL.into()),
+            rubric_version: VERSION.into(),
+        }
+    }
+
+    fn assess<'a>(&'a self, message: &'a Message) -> AssessmentFuture<'a> {
+        Box::pin(self.evaluate(message))
+    }
+}
 fn transport_failure(error: reqwest::Error) -> Failure {
     if error.is_timeout() {
         Failure::Timeout

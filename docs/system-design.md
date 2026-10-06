@@ -133,6 +133,12 @@ or invoke Jev/MCP servers directly. Rust coordinates agent tasks and calls Jev.
 Model allocation and deterministic tool selection are server-side decisions.
 Provider provenance is exposed only through the operator inspection projection;
 customer responses describe work and outcomes without provider-specific fields.
+The implemented Rust path follows
+[ADR 0011](adr/0011-provider-port-and-servicing-use-case.md): HTTP maps transport,
+`ServicingService` coordinates execution through an injected `Assessor`, adapters
+produce validated domain evidence, and an injected routing policy prepares tasks.
+Provider choice lives only in the composition root. Policy thresholds live in
+validated versioned configuration, not provider code or prompts.
 
 ### Customer and policy MCP boundaries
 

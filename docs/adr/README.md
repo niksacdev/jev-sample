@@ -15,6 +15,7 @@ Read relevant accepted records before changing their affected behavior.
 | [0008](0008-mocked-provider-contract-tests.md) | Accepted | Wiremock provider contracts and in-process HTTP integration tests |
 | [0009](0009-ci-and-independent-candidate-review.md) | Accepted | GitHub CI, advisory checks, and isolated separate-context review |
 | [0010](0010-react-ui-and-rust-agent-boundary.md) | Accepted | React UI, Rust-owned servicing assessment and disposable local run inspection |
+| [0011](0011-provider-port-and-servicing-use-case.md) | Accepted | Injected assessor port, shared servicing use case and validated versioned routing policy |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,

@@ -7,14 +7,7 @@ pub struct CustomerMessage {
     pub message: String,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize, TS)]
-#[serde(rename_all = "snake_case")]
-pub enum Intent {
-    Claim,
-    PolicyChange,
-    CustomerDetails,
-    Billing,
-}
+pub use crate::domain::Intent;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "snake_case")]

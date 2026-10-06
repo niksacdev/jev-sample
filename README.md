@@ -74,11 +74,42 @@ live in Playwright's external cache; screenshots/results are ignored artifacts.
 
 `src/contracts.rs` is the API type authority. Run `npm run contracts --prefix web`
 after changing it; a Rust test rejects stale TypeScript bindings.
-`src/agent.rs` contains pure validation, baseline and planning.
-`src/jev.rs` owns the real provider HTTP contract and validates every answer.
-`src/http.rs` coordinates bounded execution and returns distinct customer and
-operator projections. Provider tests exercise this adapter against local
-wiremock servers with dummy keys, not paid inference.
+Read the Rust backend in this order:
+
+| File | Responsibility |
+| --- | --- |
+| `src/domain.rs` | Validated message/probability/assessment values and distinct keyword versus probabilistic evidence |
+| `src/assessment.rs` | `Assessor` trait, provenance and typed failures; no concrete provider selection |
+| `src/routing.rs` | Pure planning using validated, versioned `config/routing.json` |
+| `src/baseline.rs` | Keyword comparator with explicit intent-to-keyword definitions |
+| `src/jev.rs` / `src/rubric.rs` | Typed vendor HTTP mapping and versioned question definitions; no routing threshold |
+| `src/application.rs` | Shared servicing use case, bounded execution, run lifecycle and customer/operator projections |
+| `src/http.rs` | Axum extraction, response/status mapping and browser-origin checks only |
+| `src/bin/api.rs` | Composition root: configuration, provider construction and socket startup |
+
+The binary injects an `Arc<dyn Assessor>` into `ServicingService`; swapping the
+baseline, Jev or a test assessor does not change HTTP or workflow code. The
+object-safe asynchronous trait uses standard `Future`/`Pin` without an additional
+macro framework. Keyword evidence is never represented as a probability.
+`tests/workflow.rs` proves provider interchangeability, policy injection,
+failure propagation, capacity, cancellation, deadlines and panic handling.
+Source-boundary regression checks flag selected forbidden dependency references;
+they are lightweight guards, not compiler-enforced crate isolation.
+Provider tests use local wiremock servers and independent request fixtures.
+
+`REASSURE_ROUTING_POLICY=/absolute/path/to/routing.json` can select a policy file
+at startup. Invalid/unknown/missing values fail startup; changing a threshold
+requires a new policy version and relevant reevaluation. The application-owned
+capacity/history/deadline defaults are in `config/execution.json` and are validated
+at startup. These settings do not grant financial authority.
+
+Axum owns JSON extraction, body limits, state and routing; Serde owns wire
+serialization; reqwest owns connection/TLS, request timeout and redirects; Tokio
+owns synchronization, task execution and deadlines; Tower exercises the HTTP
+service in tests. The application retains admission control because its permit
+must cover work after a browser disconnect, not merely the HTTP future.
+Once admitted, bounded work completes and records its outcome even if the
+caller disconnects. It is still process-local, not crash-durable.
 
 - [Jev capabilities and limitations](docs/jev-capabilities.md)
 - [Approved product scope](docs/product-scope.md)
