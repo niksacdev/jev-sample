@@ -74,6 +74,14 @@ operators intervene only when required by an explicit exception. Operators can
 inspect current state, source revisions, tool outcomes and artifacts at all stages.
 Structured assessment/action cards and recorded state remain visible alongside
 conversation. The mockup includes scripted customer status updates, not an open-ended chat.
+Presentation update: fictional insurer **Reassure**, with **Rue** as the
+customer-servicing agent. Customers submit through an editable chat composer,
+receive stage-specific messages, and follow a seven-stage intake progress tracker.
+The design-review inspection drawer exposes lineage/artifacts, not private model
+reasoning or an approved customer entitlement to internal audit data.
+Only exact selected synthetic stories have scripted assessments. Changed text
+is preserved as input and pauses for a human rather than inventing a judgment.
+No real specialist is contacted. Changing the story resets the local simulation.
 The agent must not claim completion from its own prose or act beyond delegated
 authority. The [agent/MCP design](system-design.md#agent-and-mcp-boundaries)
 proposes identity, tool, confirmation, and message boundaries for review.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Intake analyst workbench - discovery mockup</title>
+<title>Reassure | A little less unsure</title>
 <script>
   (() => {
     const param = new URLSearchParams(window.location.search).get("scoutTheme");
@@ -87,51 +87,87 @@ blockquote { margin: 12px 0; border-left: 3px solid var(--cp-border-strong); pad
 .failure { border-left: 4px solid var(--cp-danger); padding-left: 16px; }
 #record { padding: 12px; background: var(--cp-surface-soft); min-height: 48px; }
 details { margin-top: 16px; } summary { cursor: pointer; color: var(--cp-link); }
-@media(max-width: 760px) { .grid, .controls { grid-template-columns: 1fr; } header { padding: 24px; } }
+header { display:flex; align-items:center; justify-content:space-between; padding:20px 40px; }
+.brand { display:flex; align-items:center; gap:12px; }
+.mark { display:grid; place-items:center; width:40px; height:44px; background:var(--cp-accent); color:var(--cp-accent-fg); border-radius:16px 16px 24px 24px; font-size:24px; font-weight:700; }
+.brand strong { font-size:24px; letter-spacing:-1px; } .brand small { display:block; font-size:12px; }
+main { max-width:1280px; padding:32px; }
+.intro { margin:0 0 28px; } .intro h1 { font-size:36px; letter-spacing:-1px; font-weight:650; }
+.eyebrow { color:var(--cp-accent); text-transform:uppercase; letter-spacing:2px; font-size:12px; font-weight:700; }
+.workspace { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); gap:24px; align-items:start; }
+.chat-card { padding:0; overflow:hidden; }
+.chat-top { display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid var(--cp-border); }
+.avatar { flex-shrink:0; display:grid; place-items:center; width:36px; height:36px; border-radius:0.625rem; background:var(--cp-accent-soft); color:var(--cp-accent); font-weight:700; }
+.chat-top h2 { margin:0; font-size:17px; } .chat-top small { font-size:12px; }
+#messages { padding:24px; height:400px; overflow:auto; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; }
+.message { max-width:88%; padding:16px 20px; border-radius:16px; background:var(--cp-surface-soft); animation:appear .25s ease-out; }
+.message strong { display:block; font-size:12px; margin-bottom:6px; color:var(--cp-text-muted); }
+.message p { margin:0; } .message.customer { align-self:flex-end; background:var(--cp-accent-soft); border:1px solid var(--cp-highlight); }
+.message.human { border-left:3px solid var(--cp-warning); }
+.composer { padding:16px 24px 20px; border-top:1px solid var(--cp-border); background:var(--cp-bg-elevated); }
+textarea { width:100%; resize:vertical; min-height:96px; padding:12px; font:inherit; color:var(--cp-text); background:var(--cp-surface); border:1px solid var(--cp-border); border-radius:0.625rem; }
+.composer-bottom { display:flex; justify-content:space-between; align-items:center; gap:12px; } .composer-bottom small { font-size:11px; }
+button:disabled { cursor:default; opacity:.55; }
+.progress-head { display:flex; justify-content:space-between; align-items:center; }
+.progress-head h2 { margin:0; } #case-id { font-family:Consolas,"Courier New",Courier,monospace; font-size:12px; }
+#progress { list-style:none; padding:0; margin:24px 0; }
+#progress li { display:flex; align-items:center; gap:12px; padding:10px 0; color:var(--cp-text-muted); }
+#progress .dot { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; border:1px solid var(--cp-border); font-size:12px; }
+#progress li.done { color:var(--cp-text); } #progress li.done .dot { background:var(--cp-accent-soft); color:var(--cp-accent); border-color:var(--cp-accent); }
+#progress li.current { color:var(--cp-accent); font-weight:600; }
+#progress li.current .dot { border:2px solid var(--cp-accent); }
+.state-box { padding:16px; background:var(--cp-accent-soft); border-radius:0.625rem; }
+.state-box h3 { margin:0 0 4px; } .state-box p { margin:0; font-size:14px; }
+.demo-control { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.demo-control label { margin:0; white-space:nowrap; font-size:13px; }
+.demo-control select { max-width:320px; font-size:13px; padding:8px; }
+.banner { margin-bottom:20px; font-size:12px; border-left:0; border-radius:0.625rem; }
+.inspection { margin-top:8px; } .inspection > summary { font-weight:600; padding:8px 0; }
+#lineage { padding-left:24px; font-size:13px; } #lineage li { padding:8px 0; overflow-wrap:anywhere; }
+pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; font:12px/1.6 Consolas,"Courier New",Courier,monospace; }
+@keyframes appear { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { .message { animation:none; } #messages { scroll-behavior:auto; } }
+@media(max-width: 850px) { .workspace { grid-template-columns:1fr; } main { padding:20px; } header { padding:16px 20px; } .intro h1 { font-size:28px; } .demo-control { flex-wrap:wrap; } #messages { height:360px; } }
 </style>
 </head>
 <body>
 <header>
-<span class="badge">Product discovery / synthetic only</span>
-<h1>Submit once. Follow the agent's work.</h1>
-<p class="muted">Autonomous intake-to-handoff, with human intervention by exception.</p>
+<div class="brand"><div class="mark" aria-hidden="true">r</div><div><strong>reassure.</strong><small>A little less unsure.</small></div></div>
+<span class="badge">Fictional insurer / design demo</span>
 </header>
 <main>
-<div class="banner">Scripted simulation, not live AI. Synthetic cases only. No real messages, queue updates, coverage decisions, or payments.</div>
-<section class="card">
-<h2>Customer job</h2>
-<p>Customer: "Process my intake and tell me what happens next." Operations: "Let routine work proceed; bring me exceptions with the evidence and required action."</p>
-<div class="controls">
-<div><label for="scenario">Explore a scenario</label>
+<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>Tell us what happened.<br>We'll take the next step.</h1><p class="muted">Your servicing agent gets the intake moving. You can follow every step.</p></div>
+<div class="banner">Scripted prototype, not live AI. Use synthetic data only. No actual messages, queue updates, coverage decisions, or payments.</div>
+<div class="demo-control"><label for="scenario">Try a demo story</label>
 <select id="scenario"><option value="glass">Clear glass incident</option><option value="urgent">Collision with urgent cue</option><option value="mixed">Mixed / unclear incident</option><option value="failure">Assessment service failure</option></select></div>
-<div><label for="query">Customer intake query (synthetic demo)</label>
-<textarea id="query" readonly rows="5" style="width:100%;font:inherit;color:var(--cp-text);background:var(--cp-surface);border:1px solid var(--cp-border);border-radius:0.625rem;padding:12px"></textarea>
-<button id="submit" type="button">Submit to agent</button></div>
-</div>
+<div class="workspace">
+<section class="card chat-card" aria-label="Customer service conversation">
+<div class="chat-top"><div class="avatar" aria-hidden="true">R</div><div><h2>Rue, your servicing agent</h2><small>Intake assistant / simulated conversation</small></div></div>
+<div id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+<form id="chat-form" class="composer">
+<label for="query">What happened?</label>
+<textarea id="query" maxlength="4000" required rows="3" aria-describedby="input-note"></textarea>
+<div class="composer-bottom"><small id="input-note">Selected stories have scripted analysis.<br>Changed text requests human review.</small><button id="submit" type="submit">Send to Rue &rarr;</button></div>
+</form>
 </section>
-<div class="grid">
+<aside>
 <section class="card">
-<h2>Live processing state</h2>
-<span id="case-id" class="badge"></span>
-<blockquote id="narrative"></blockquote>
-<p class="muted">Only the supplied narrative is available. No policy, coverage, or claimant history is inferred.</p>
-<h3 id="assessment-heading">Not submitted</h3>
-<div id="assessment" aria-live="polite"></div>
-<h3>Customer updates</h3>
-<div id="messages" aria-live="polite"></div>
-</section>
-<section class="card">
-<h2>Human exception inbox</h2>
+<div class="progress-head"><h2>Your intake journey</h2><span id="case-id" class="badge"></span></div>
+<ol id="progress" aria-label="Intake progress"></ol>
+<div class="state-box"><h3 id="assessment-heading" role="status">Ready when you are</h3><div id="assessment"></div></div>
+<h3>Next action</h3>
 <div id="exception" role="status">No intervention requested.</div>
 <button id="resolve" type="button" hidden>Resolve exception and resume agent</button>
-<h3>Disposition and handoff</h3>
+<h3>Handoff receipt</h3>
 <div id="record" role="status">No disposition yet.</div>
-<p class="muted">Urgency requests human attention, not emergency dispatch. This screen cannot decide coverage or payment.</p>
+<p class="muted"><small>Intake progress is not a claim approval or settlement. Urgency requests specialist attention, not emergency dispatch.</small></p>
 </section>
+<section class="card"><details class="inspection"><summary>Under the hood: lineage &amp; artifacts</summary>
+<p class="muted"><small>Design-review view. Production access must be role-scoped; customers do not receive unrestricted internal audit data.</small></p>
+<details><summary>Original customer submission</summary><blockquote id="narrative"></blockquote></details>
+<ol id="lineage"></ol><div id="artifacts"></div></details></section>
+</aside>
 </div>
-<section class="card"><h2>Inspectable lineage and artifacts</h2>
-<p class="muted">Every event names its actor, input, output, and control. These are audit facts, not private model reasoning. Expand artifacts while the run is active or paused.</p>
-<ol id="lineage" aria-live="polite"></ol><div id="artifacts"></div></section>
 <section class="card">
 <h2>What customer value are we testing?</h2>
 <p>Fewer routine human touches per correctly completed handoff, without hidden failures or missed urgent cases. Exception resolution and oversight effort count too. Fast inference alone is not success.</p>
@@ -153,6 +189,26 @@ const cases = {
 const byId = id => document.getElementById(id);
 let timer = null, active = null, step = 0, sequence = 0, paused = false;
 const steps = ["received", "validated", "assessing", "policy_checked", "disposition_recorded", "handoff_pending", "handoff_accepted"];
+const stageLabels = ["Intake received", "Details checked", "Incident assessed", "Next action checked", "Disposition recorded", "Team handoff", "Handoff accepted"];
+function chat(text, sender = "Rue / agent") {
+  const bubble = document.createElement("div");
+  bubble.className = `message ${sender === "You" ? "customer" : sender.includes("specialist") ? "human" : ""}`;
+  const label = document.createElement("strong"); label.textContent = sender;
+  const body = document.createElement("p"); body.textContent = text;
+  bubble.append(label, body); byId("messages").append(bubble);
+  byId("messages").scrollTop = byId("messages").scrollHeight;
+}
+function progress(index = -1, waiting = false) {
+  byId("progress").replaceChildren();
+  stageLabels.forEach((label, i) => {
+    const li = document.createElement("li");
+    li.className = i < index || (i === index && !waiting) ? "done" : i === index ? "current" : "";
+    const dot = document.createElement("span"); dot.className = "dot";
+    dot.textContent = i < index || (i === index && !waiting) ? "\u2713" : String(i + 1);
+    const text = document.createElement("span"); text.textContent = label + (i === index && waiting ? " / waiting for human" : "");
+    li.append(dot, text); byId("progress").append(li);
+  });
+}
 function artifact(id, value) {
   const details = document.createElement("details");
   const summary = document.createElement("summary"); summary.textContent = id;
@@ -167,6 +223,7 @@ function event(state, actor, input, output, control) {
   li.textContent = `${id} | ${state} | ${actor} | ${input} -> ${output} | ${control}`;
   byId("lineage").append(li);
   byId("assessment-heading").textContent = state.replaceAll("_", " ");
+  progress(Math.max(0, step - 1), state === "awaiting_intervention");
   artifact(id, {state, actor, input, output, control, time:new Date().toISOString(), simulated:true});
 }
 function reset() {
@@ -180,6 +237,9 @@ function reset() {
   byId("exception").textContent = "No intervention requested.";
   byId("record").textContent = "No disposition yet.";
   byId("resolve").hidden = true; byId("submit").disabled = false;
+  byId("query").disabled = false;
+  progress();
+  chat("Hi, I'm Rue. Tell me what happened and I'll review your intake, check the next action, and arrange a handoff. If this needs a person, I'll tell you and bring them in. This demo does not decide coverage.");
 }
 function advance() {
   if (!active || paused) return;
@@ -187,13 +247,22 @@ function advance() {
   if (state === "received") {
     artifact("input-r1", {id:active.id, revision:"r1", narrative:active.narrative});
     event(state,"intake agent","customer query","input-r1","authorized synthetic intake");
-    byId("messages").textContent = "Intake received. The agent is processing it; no analyst action is needed yet.";
+    chat("Thanks for sharing that. I've started your intake. You can watch the progress on the right while I work.");
   } else if (state === "validated") {
     event(state,"Rust workflow","input-r1","validated-input","schema/access checks simulated");
+    if (active.key === "custom") {
+      paused = true;
+      event("awaiting_intervention","demo input guard","input-r1","exception-1","unscripted input; no invented analysis");
+      artifact("exception-1",{owner:"intake specialist",reason:"unsupported demo input",status:"open"});
+      chat("This prototype can only analyze its selected demo stories. I'm bringing a human into this scenario rather than guessing from your changed text. No real person has been contacted.");
+      byId("exception").textContent = "Intake specialist required. Custom input is not analyzed by this scripted demo. Choose a demo story to restart.";
+      return;
+    }
   } else if (state === "assessing") {
     event(state,"assessment adapter","input-r1","assessment-1","bounded call; hand-authored result");
     artifact("assessment-1", {input_revision:"r1", provider:"scripted fixture, not Jev", category:active.category, urgent:active.key==="urgent", review_required:active.key==="mixed", technical_failure:active.key==="failure"});
     byId("assessment").textContent = active.key === "failure" ? "Technical timeout; no valid assessment." : `Category: ${active.category || "unresolved"}. Original input and assessment remain available.`;
+    chat(active.key === "failure" ? "The assessment service hasn't returned a usable result. I won't guess at an answer." : active.key === "mixed" ? "There are a few possible explanations here. I need to clarify what happened before choosing a route." : active.key === "urgent" ? "I've noticed an injury-related cue in your description. This needs specialist attention." : "The demo assessment identifies glass damage with no urgent cue. I'm checking the permitted handling route.");
   } else if (state === "policy_checked" && active.key !== "glass") {
     paused = true;
     const reasons = {urgent:["expedited human attention","claims specialist","Confirm specialist takeover of this urgent intake"], mixed:["conflicting incident information","customer via authorized clarification channel","Provide a synthetic clarification: towing confirmed"], failure:["assessment unavailable after bounded attempts","intake analyst","Record a synthetic manual weather-damage classification"]};
@@ -203,30 +272,40 @@ function advance() {
     byId("exception").textContent = `${reason}. Owner: ${owner}. Required: ${action}.`;
     byId("resolve").textContent = `${action} and resume`;
     byId("resolve").hidden = false;
-    byId("messages").textContent = active.key === "mixed" ? "Clarification requested. Processing is paused pending your response." : "Your intake has been assigned for human attention; routine processing is paused.";
+    chat(active.key === "mixed" ? "Can you confirm whether the car was towed? I've paused processing until you clarify that. Use the demo response below to continue." : "I'm bringing a human into this scenario. Your intake is paused until the specialist records the required intervention. In this demo, you can simulate that takeover.");
     return;
   } else if (state === "policy_checked") {
+    artifact("routing-intent",{assessment:"assessment-1",permitted:true,policy:"demo-v1"});
     event(state,"policy engine","assessment-1","routing-intent","predelegated permitted queue; policy demo-v1");
+    chat("This intake can continue without a routine human approval. I'll record its disposition and arrange the handoff.");
   } else if (state === "disposition_recorded") {
     artifact("disposition-1",{category:active.category,origin:active.key==="failure"?"human_manual":"agent",input_revision:active.key==="mixed"?"r2":"r1",assessment_reference:active.key==="mixed"?"assessment-2":active.key==="failure"?null:"assessment-1",policy:"demo-v1"});
     event(state,"workflow tool","routing-intent","disposition-1","version/idempotency controls simulated");
     byId("record").textContent = "Disposition recorded in simulation. Handoff not yet accepted.";
   } else if (state === "handoff_pending") {
     event(state,"handoff tool","disposition-1","handoff-1","stable delivery ID; no actual queue call");
+    chat("The disposition is recorded. I'm waiting for the receiving team to acknowledge ownership; recording alone doesn't mean the handoff succeeded.");
   } else if (state === "handoff_accepted") {
     artifact("handoff-1",{disposition:"disposition-1",status:"accepted",destination:active.key==="urgent"?"specialist review":"incident handling queue",acknowledgement:"synthetic-ack"});
     event(state,"receiving queue","handoff-1","synthetic-ack","completion requires acknowledgement");
     byId("record").textContent = "Intake handed off and receiving ownership acknowledged (simulated). Claim is NOT settled.";
-    byId("messages").textContent = "Your intake is with the receiving team. This is a handling update, not a coverage or payment decision.";
+    chat("The receiving team has acknowledged your intake in this simulation. The intake handoff is complete; your claim has not been approved or settled. Your receipt and journey remain available.");
     return;
   }
-  timer = setTimeout(advance, 900);
+  timer = setTimeout(advance, 1400);
 }
 byId("scenario").addEventListener("change", reset);
-byId("submit").addEventListener("click", () => {
+byId("chat-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const submitted = byId("query").value.trim();
+  if (!submitted || active) return;
   reset();
   const key = byId("scenario").value;
-  active = {...cases[key],key}; byId("submit").disabled = true; advance();
+  active = submitted === cases[key].narrative ? {...cases[key],key} : {id:"SYN-CUSTOM",narrative:submitted,category:null,key:"custom"};
+  byId("query").value = submitted; byId("narrative").textContent = submitted;
+  byId("case-id").textContent = active.id;
+  chat(submitted, "You");
+  byId("submit").disabled = true; byId("query").disabled = true; advance();
 });
 byId("resolve").addEventListener("click", () => {
   if (!active || !paused) return;
@@ -236,8 +315,13 @@ byId("resolve").addEventListener("click", () => {
     artifact("input-r2",{parent:"input-r1",clarification:"Towing confirmed by customer (scripted).",author:"simulated customer"});
     artifact("assessment-2",{input_revision:"r2",supersedes:"assessment-1",category:"other",review_required:false,provider:"scripted fixture"});
     event("reassessed","assessment adapter","input-r2","assessment-2","old assessment preserved, not reused");
+    chat("The towing company confirmed they have the car.", "You");
+    chat("Thanks. I've saved that clarification as a new revision and reassessed the intake. The earlier assessment is preserved in the lineage.");
   }
+  if (active.key !== "mixed") chat(active.key === "urgent" ? "Specialist takeover confirmed for expedited human review. The routine intake can now be handed off to the specialist team." : "Manual weather-damage assessment recorded. The failed service attempt remains in the record.", "Intake specialist / simulated");
   artifact("resolution-1",{exception:"exception-1",state:"resolved",actor:active.key==="mixed"?"customer":active.key==="urgent"?"specialist":"analyst",simulated:true});
+  artifact("routing-intent",{source:active.key==="mixed"?"assessment-2":"resolution-1",permitted:true,policy:"demo-v1"});
+  event("policy_rechecked","policy engine","resolution-1","routing-intent","permitted action after intervention");
   byId("exception").textContent = "Intervention recorded; exception resolved. Agent resuming permitted workflow.";
   byId("resolve").hidden = true; paused = false; advance();
 });
