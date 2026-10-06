@@ -121,6 +121,34 @@ queue/outbox is the proposed initial scheduling mechanism; add a broker or
 separate service only for demonstrated scale/isolation requirements.
 Domain code imports no transport, database or provider SDKs.
 
+### Customer and policy MCP boundaries
+
+Expose customer context and policy capabilities through separate logical MCP
+servers with independently scoped access. They may initially run in the same
+Rust application; separate contracts do not require separate deployments.
+
+| Boundary | Sample implementation | Future source adapter |
+| --- | --- | --- |
+| Customer context MCP | Synthetic customer/profile and policy associations, resolved from the authenticated principal | Authorized customer system using verified login-to-customer mapping |
+| Policy MCP | Versioned synthetic policy fixtures, cited clauses and deterministic rule evaluation | Customer-specific policy/endorsement sources and access-filtered document retrieval (RAG) |
+
+Agents use these contracts rather than embed customer records or policy rules in
+prompts. Replacing fixtures with real sources changes adapters, not the agent's
+authority or workflow invariants. Source provenance and failure semantics remain
+mandatory in both implementations.
+
+RAG retrieves evidence; it does not become the policy decision authority.
+Separate retrieval of applicable clauses from evaluation of supported structured
+rules and from authorization of consequential actions. Policy documents may
+require interpretation that cannot safely become an automatic rule: missing,
+conflicting or unsupported evidence produces an explicit review-required outcome,
+not an invented entitlement. Retrieval failure remains a technical failure.
+
+Policy results identify policy/endorsement version, effective context, document
+and clause references, and retrieval/rule versions where applicable. An evaluation
+records the exact evidence used so a later document or index update cannot silently
+change the basis of an existing decision.
+
 ## 5. Agent responsibilities and model allocation
 
 | Logical agent | Task / inputs -> outputs | Authority and model role |
@@ -229,6 +257,20 @@ Tool calls use the negotiated MCP protocol/SDK and declared schemas over an
 authenticated transport. MCP is not identity policy or an agent-to-agent
 protocol. Distinguish JSON-RPC errors, tool execution errors and domain outcomes.
 Do not expose arbitrary SQL, shell, filesystem or unrestricted URL tools.
+
+Customer-context tools include `get_current_customer` and authorized
+`get_customer_context`. Resolve the current customer from verified server-side
+identity, not a customer ID asserted in chat. Employee lookups by customer ID
+require explicit tenant/resource/assignment authorization; possession of an ID
+is not permission. Return only the fields needed for the delegated task.
+
+Policy tools include `get_policy_snapshot`, `retrieve_policy_clauses` and
+`evaluate_policy_rules`. Retrieval is constrained to authorized customer policies
+and applicable versions before results reach the agent. Rule evaluation returns
+structured supported findings or explicit review-required/technical-failure
+outcomes, with evidence references; it does not authorize settlement.
+Read-only context/retrieval access does not grant policy-change or financial
+execution permissions.
 
 Agents exchange application task/result envelopes through the durable coordinator.
 A separate inter-service agent protocol is needed only if remote agent execution
