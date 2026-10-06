@@ -8,6 +8,21 @@ of end-to-end claims quality. Backend implementation remains health-only.
 
 ## Current end-to-end vision
 
+The mockup now has three distinct persona screens sharing one simulated case:
+customer chat/progress with customer clarification and offer response; employee
+exception chat with synthetic customer/policy context and versioned demo guidelines;
+operator dashboard with all six logical agents, states, boundaries and audit
+artifacts. Employee review actions are not customer buttons. Persona switching
+is design navigation only, not authentication or production RBAC.
+
+The dashboard counts current-session transitions/interventions, not production
+quality or savings. Its editable volume, net effort, labor and incremental-cost
+assumptions compute an illustrative capacity scenario; realized savings,
+quality, model consumption and production latency are explicitly unmeasured.
+Switching a story resets the single-case demo rather than accumulating a fictional
+portfolio. Production portfolio filters, workloads and role-scoped telemetry
+need contract design.
+
 The customer reports a claim to Rue, the servicing orchestrator. Scoped evidence,
 policy, loss assessment, resolution and payment agents progress work using
 appropriate models and deterministic controls. They are proposed logical roles,
