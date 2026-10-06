@@ -9,6 +9,11 @@ Read relevant accepted records before changing their affected behavior.
 | [0002](0002-harness-skills-and-review-context.md) | Accepted | Harness implementation, same-context skills, separate-context pre-committer |
 | [0003](0003-separate-principles-from-tools.md) | Superseded by 0004 | Initial separation of principles and tool candidates |
 | [0004](0004-consolidate-engineering-guidance.md) | Accepted | One standard, one entry point, ADR memory, executable enforcement |
+| [0005](0005-evidence-driven-instruction-maintenance.md) | Accepted | Explicit evidence-driven maintenance with human adoption |
+| [0006](0006-direct-cargo-commit-checks.md) | Accepted | Direct Cargo checks through YAML-configured pre-commit |
+| [0007](0007-single-package-api-and-evaluation.md) | Accepted | One library workflow shared by Axum/Tokio HTTP and evaluation CLI |
+| [0008](0008-mocked-provider-contract-tests.md) | Accepted | Wiremock provider contracts and in-process HTTP integration tests |
+| [0009](0009-ci-and-independent-candidate-review.md) | Accepted | GitHub CI, advisory checks, and isolated separate-context review |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,

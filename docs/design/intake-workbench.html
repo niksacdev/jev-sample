@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reassure | A little less unsure</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 16px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+header { background: var(--cp-surface); border-bottom: 1px solid var(--cp-border); padding: 24px 32px; }
+main { max-width: 1200px; margin: auto; padding: 24px; }
+h1 { font-size: 28px; margin: 0; } h2 { font-size: 20px; margin-top: 0; } h3 { font-size: 16px; }
+p { margin: 8px 0 16px; }
+.muted, small { color: var(--cp-text-muted); }
+.banner { padding: 12px 16px; background: var(--cp-accent-soft); border-left: 4px solid var(--cp-accent); margin-bottom: 24px; }
+.controls, .grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+.card { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+select, button { font: inherit; border-radius: 0.625rem; padding: 10px 12px; }
+select { width: 100%; color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border-strong); }
+button { cursor: pointer; background: var(--cp-accent); color: var(--cp-accent-fg); border: 1px solid var(--cp-accent); margin-top: 16px; }
+button:hover { background: var(--cp-accent-hover); }
+:focus-visible { outline: 3px solid var(--cp-link); outline-offset: 3px; }
+blockquote { margin: 12px 0; border-left: 3px solid var(--cp-border-strong); padding: 8px 16px; background: var(--cp-surface-soft); }
+.badge { display: inline-block; padding: 4px 12px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface-soft); }
+.review { border-left: 4px solid var(--cp-warning); padding-left: 16px; }
+.failure { border-left: 4px solid var(--cp-danger); padding-left: 16px; }
+#record { padding: 12px; background: var(--cp-surface-soft); min-height: 48px; }
+details { margin-top: 16px; } summary { cursor: pointer; color: var(--cp-link); }
+header { display:flex; align-items:center; justify-content:space-between; padding:20px 40px; }
+.brand { display:flex; align-items:center; gap:12px; }
+.mark { display:grid; place-items:center; width:40px; height:44px; background:var(--cp-accent); color:var(--cp-accent-fg); border-radius:16px 16px 24px 24px; font-size:24px; font-weight:700; }
+.brand strong { font-size:24px; letter-spacing:-1px; } .brand small { display:block; font-size:12px; }
+main { max-width:1280px; padding:32px; }
+.intro { margin:0 0 28px; } .intro h1 { font-size:36px; letter-spacing:-1px; font-weight:650; }
+.eyebrow { color:var(--cp-accent); text-transform:uppercase; letter-spacing:2px; font-size:12px; font-weight:700; }
+.workspace { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); gap:24px; align-items:start; }
+.chat-card { padding:0; overflow:hidden; }
+.chat-top { display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid var(--cp-border); }
+.avatar { flex-shrink:0; display:grid; place-items:center; width:36px; height:36px; border-radius:0.625rem; background:var(--cp-accent-soft); color:var(--cp-accent); font-weight:700; }
+.chat-top h2 { margin:0; font-size:17px; } .chat-top small { font-size:12px; }
+#messages { padding:24px; height:400px; overflow:auto; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; }
+.message { max-width:88%; padding:16px 20px; border-radius:16px; background:var(--cp-surface-soft); animation:appear .25s ease-out; }
+.message strong { display:block; font-size:12px; margin-bottom:6px; color:var(--cp-text-muted); }
+.message p { margin:0; } .message.customer { align-self:flex-end; background:var(--cp-accent-soft); border:1px solid var(--cp-highlight); }
+.message.human { border-left:3px solid var(--cp-warning); }
+.composer { padding:16px 24px 20px; border-top:1px solid var(--cp-border); background:var(--cp-bg-elevated); }
+textarea { width:100%; resize:vertical; min-height:96px; padding:12px; font:inherit; color:var(--cp-text); background:var(--cp-surface); border:1px solid var(--cp-border); border-radius:0.625rem; }
+.composer-bottom { display:flex; justify-content:space-between; align-items:center; gap:12px; } .composer-bottom small { font-size:11px; }
+button:disabled { cursor:default; opacity:.55; }
+.progress-head { display:flex; justify-content:space-between; align-items:center; }
+.progress-head h2 { margin:0; } #case-id { font-family:Consolas,"Courier New",Courier,monospace; font-size:12px; }
+#progress { list-style:none; padding:0; margin:24px 0; }
+#progress li { display:flex; align-items:center; gap:12px; padding:10px 0; color:var(--cp-text-muted); }
+#progress .dot { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; border:1px solid var(--cp-border); font-size:12px; }
+#progress li.done { color:var(--cp-text); } #progress li.done .dot { background:var(--cp-accent-soft); color:var(--cp-accent); border-color:var(--cp-accent); }
+#progress li.current { color:var(--cp-accent); font-weight:600; }
+#progress li.current .dot { border:2px solid var(--cp-accent); }
+.state-box { padding:16px; background:var(--cp-accent-soft); border-radius:0.625rem; }
+.state-box h3 { margin:0 0 4px; } .state-box p { margin:0; font-size:14px; }
+.demo-control { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.demo-control label { margin:0; white-space:nowrap; font-size:13px; }
+.demo-control select { max-width:320px; font-size:13px; padding:8px; }
+.banner { margin-bottom:20px; font-size:12px; border-left:0; border-radius:0.625rem; }
+.inspection { margin-top:8px; } .inspection > summary { font-weight:600; padding:8px 0; }
+#lineage { padding-left:24px; font-size:13px; } #lineage li { padding:8px 0; overflow-wrap:anywhere; }
+pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; font:12px/1.6 Consolas,"Courier New",Courier,monospace; }
+[hidden] { display:none !important; }
+.screen-nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.screen-nav button { margin:0; background:var(--cp-surface); color:var(--cp-text-muted); border-color:var(--cp-border); }
+.screen-nav button[aria-pressed="true"] { background:var(--cp-accent); color:var(--cp-accent-fg); border-color:var(--cp-accent); }
+.metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; }
+.metric strong { font-size:28px; display:block; } .metric small { display:block; }
+.agent-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin:20px 0; }
+.agent-card { padding:16px; background:var(--cp-surface-soft); border:1px solid var(--cp-border); border-radius:16px; }
+.agent-card h3 { margin:0 0 8px; } .agent-card p { font-size:13px; }
+#employee-messages { padding:24px; min-height:260px; max-height:400px; overflow:auto; display:flex; flex-direction:column; gap:16px; }
+@keyframes appear { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { .message { animation:none; } #messages { scroll-behavior:auto; } }
+@media(max-width: 850px) { .workspace { grid-template-columns:1fr; } main { padding:20px; } header { padding:16px 20px; } .intro h1 { font-size:28px; } .demo-control { flex-wrap:wrap; } #messages { height:360px; } }
+</style>
+</head>
+<body>
+<header>
+<div class="brand"><div class="mark" aria-hidden="true">r</div><div><strong>reassure.</strong><small>A little less unsure.</small></div></div>
+<span class="badge">Fictional insurer / design demo</span>
+</header>
+<main>
+<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>One conversation.<br>Your whole claim journey.</h1><p class="muted">Rue coordinates your agent team from first report to resolution. Follow the work, see the evidence, and know when a person is needed.</p></div>
+<div class="banner">End-to-end vision / scripted simulation. Synthetic policy, evidence, decisions and payment receipts; no live AI or real financial actions. Production authority and financial controls are not yet approved.</div>
+<div class="demo-control"><label for="scenario">Try a demo story</label>
+<select id="scenario"><option value="glass">Clear glass incident</option><option value="urgent">Collision with urgent cue</option><option value="mixed">Mixed / unclear incident</option><option value="failure">Assessment service failure</option></select></div>
+<nav class="screen-nav" aria-label="Persona screens">
+<button id="nav-customer" type="button" aria-pressed="true">Customer / claim conversation</button>
+<button id="nav-employee" type="button" aria-pressed="false">Employee / exception workbench</button>
+<button id="nav-operator" type="button" aria-pressed="false">Operator / agent operations</button>
+</nav>
+<p class="muted"><small>Persona switch is for design review, not authentication or a production permission boundary. All screens share one simulated case.</small></p>
+<div id="screen-customer">
+<div class="workspace">
+<section class="card chat-card" aria-label="Customer service conversation">
+<div class="chat-top"><div class="avatar" aria-hidden="true">R</div><div><h2>Rue, your servicing agent</h2><small>Intake assistant / simulated conversation</small></div></div>
+<div id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+<form id="chat-form" class="composer">
+<label for="query">What happened?</label>
+<textarea id="query" maxlength="4000" required rows="3" aria-describedby="input-note"></textarea>
+<div class="composer-bottom"><small id="input-note">Selected stories have scripted analysis.<br>Changed text requests human review.</small><button id="submit" type="submit">Send to Rue &rarr;</button></div>
+</form>
+</section>
+<aside>
+<section class="card">
+<div class="progress-head"><h2>Your claim journey</h2><span id="case-id" class="badge"></span></div>
+<ol id="progress" aria-label="Intake progress"></ol>
+<div class="state-box"><h3 id="assessment-heading" role="status">Ready when you are</h3><div id="assessment"></div></div>
+<h3>Next action</h3>
+<div id="customer-action" role="status">No action needed yet.</div>
+<button id="customer-resolve" type="button" hidden>Respond to Rue</button>
+<h3>Claim outcome &amp; receipts</h3>
+<div id="record" role="status">No disposition yet.</div>
+<p class="muted"><small>All outcomes here are fictional. Urgency requests specialist attention, not emergency dispatch. Human approval appears when the simulated authority policy requires it.</small></p>
+</section>
+</aside>
+</div>
+<section class="card">
+<h2>Your agent team, one accountable journey</h2>
+<p>Rue coordinates servicing, evidence, policy, loss assessment, resolution and payment agents. Each has a scoped responsibility and produces inspectable artifacts. These are proposed roles, not six deployed services.</p>
+<p>The value hypothesis is less customer chasing, less repeated evidence gathering and fewer routine human touches through claim resolution. Correct outcomes, disputes, exception effort and payment accuracy matter—not just completion speed.</p>
+<details><summary>Where Jev, Rust, and an LLM fit</summary>
+<p>Jev is a candidate for bounded category, urgency, and review-required judgments. A structured-output LLM and deterministic rules must be compared on the same task. Rust validates results and applies routing policy. No provider is proven better by this mockup.</p>
+<p>Generation, coverage/payout decisions, and exact arithmetic are not Jev's role here. No fabricated confidence numbers or generated advice are displayed.</p></details>
+<details><summary>Questions for analyst design review</summary>
+<p>Is the next action clear? Can you challenge a wrong suggestion? Does the assessment save reading time or add verification work? Which missing fields or queue names would prevent this from fitting your actual job?</p>
+<p>Routine actions run within predelegated policy. Exceptions pause, gain a named owner, and resume only after the required intervention. Real authority, thresholds, messaging permissions, and tool identity still need contract approval.</p></details>
+</section>
+</div>
+<section id="screen-employee" hidden>
+<div class="intro"><span class="eyebrow">Human expertise where it matters</span><h2>Exception workbench</h2><p class="muted">Review the evidence, apply the guideline, and return a bounded decision to the agent.</p></div>
+<div class="workspace">
+<div class="card chat-card"><div class="chat-top"><div class="avatar">E</div><div><h2>Employee &amp; Rue</h2><small>Claims specialist / simulated identity</small></div></div>
+<div id="employee-messages" role="log" aria-live="polite"></div>
+<div class="composer"><div id="exception" role="status">No intervention requested.</div>
+<button id="resolve" type="button" hidden>Resolve exception and resume agent</button>
+<form id="employee-form"><label for="employee-query">Ask about this case</label><textarea id="employee-query" maxlength="2000" rows="2" placeholder="Ask Rue about evidence or authority..." required></textarea><button type="submit">Ask Rue</button></form>
+<small>Chat cannot approve a payment. Use the explicit, revision-bound review action above. Responses are scripted.</small></div></div>
+<aside><section class="card"><h2>Customer &amp; claim context</h2><div id="customer-data"></div><h3>Original submission</h3><blockquote id="narrative"></blockquote></section>
+<section class="card"><h2>Applicable guidelines</h2><p>Demo guideline G-01 / version 1</p><ul><li>Validate evidence and exact proposal revision before signing.</li><li>Escalate urgency to a specialist; do not infer medical severity.</li><li>Clarification must come from the customer, not employee guesswork.</li><li>Technical failure remains recorded after manual resolution.</li><li>Customer response and reviewer authority are separate records.</li></ul><p class="muted"><small>Fictional procedure, not actual policy wording or legal guidance.</small></p></section></aside>
+</div>
+</section>
+<section id="screen-operator" hidden>
+<div class="intro"><span class="eyebrow">Agent operations</span><h2>The team behind every claim</h2><p class="muted">Current case execution, model/tool boundaries, exceptions and value evidence.</p></div>
+<div class="metrics">
+<section class="card metric"><small>Cases in this demo session</small><strong id="metric-cases">0</strong><small>One active case maximum; switching story resets it.</small></section>
+<section class="card metric"><small>Observed transitions</small><strong id="metric-events">0</strong><small>Browser simulation events, not production throughput.</small></section>
+<section class="card metric"><small>Human/customer interventions</small><strong id="metric-touches">0</strong><small>Explicit responses; observation clicks excluded.</small></section>
+<section class="card metric"><small>Realized savings</small><strong>Not measured</strong><small>No customer study, production baseline, or operating cost data.</small></section>
+</div>
+<section class="card"><h2>Current workload</h2><p id="operator-state" role="status">No submitted case.</p><div id="agents" class="agent-grid"></div></section>
+<section class="card"><h2>Value &amp; capacity scenario</h2><p>Illustrative only. Not derived from this animation or proof of realized cash savings.</p>
+<div class="controls"><div><label for="volume">Annual claim volume (assumption)</label><input id="volume" type="number" min="0" max="100000000" value="100000"></div><div><label for="minutes">Net minutes saved per claim (assumption)</label><input id="minutes" type="number" min="0" max="10000" step="0.1" value="2"></div><div><label for="labor">Loaded labor cost / hour, USD (assumption)</label><input id="labor" type="number" min="0" max="10000" value="50"></div><div><label for="costs">Annual incremental costs, USD (assumption)</label><input id="costs" type="number" min="0" max="100000000000" value="0"></div></div><p id="savings" role="status"></p><p class="muted"><small>Net minutes must include review/correction effort. Costs should include operation, models and annualized implementation. Capacity value is not cash savings; zero costs are a placeholder, not an estimate. Quality, disputes and payment accuracy remain unmeasured.</small></p></section>
+<section class="card"><h2>Execution lineage &amp; artifacts</h2><p class="muted">Actors, input/output references and controls—not private model reasoning. Role-scoped access must be enforced server-side in production.</p><ol id="lineage"></ol><div id="artifacts"></div></section>
+</section>
+</main>
+<script>
+const cases = {
+  glass: {id:"SYN-001", narrative:"A stone hit my windshield yesterday. The glass is cracked. No one was hurt and the car is parked at home.", category:"glass_damage"},
+  urgent: {id:"SYN-002", narrative:"Another car hit us. My passenger says their neck hurts and we are still beside the road.", category:"collision"},
+  mixed: {id:"SYN-003", narrative:"My car was gone this morning. A neighbor says it might have been towed after last night's storm. I also found broken glass where I parked.", category:null},
+  failure: {id:"SYN-004", narrative:"A branch fell onto my parked car during the storm. There is a dent in the roof and no one was inside.", category:"weather_damage"}
+};
+const byId = id => document.getElementById(id);
+let timer = null, active = null, step = 0, sequence = 0, paused = false;
+const steps = ["received", "validated", "assessing", "policy_checked", "disposition_recorded", "handoff_pending", "handoff_accepted", "evidence_gathered", "coverage_reviewed", "loss_assessed", "resolution_ready", "settlement_authorized", "payment_confirmed", "claim_closed"];
+const stageLabels = ["Claim reported", "Details checked", "Incident understood", "Exception checks", "Claim registered", "Agent team assigned", "Case ownership accepted", "Evidence assembled", "Policy & coverage review", "Loss assessment", "Resolution proposed", "Authority & customer acceptance", "Payment / service confirmation", "Claim closed"];
+let financialGate = false;
+let touches = 0, latestState = "not_submitted";
+const agentSpecs = [
+  ["Servicing / Rue","Conversational LLM proposed","Authorized claim tools","received","handoff_accepted"],
+  ["Evidence agent","Extraction LLM proposed","Document retrieval","evidence_gathered","evidence_gathered"],
+  ["Policy agent","Model assistance + authoritative rules","Versioned policy source","coverage_reviewed","coverage_reviewed"],
+  ["Assessment agent","Jev for bounded judgments; deterministic amounts","Assessment / inspection","assessing","loss_assessed"],
+  ["Resolution agent","Explanation model + authority controls","Versioned offer / decision","resolution_ready","settlement_authorized"],
+  ["Payment agent","Deterministic tool execution","Payment / reconciliation","payment_confirmed","payment_confirmed"]
+];
+function employeeChat(text, sender = "Rue / case coordinator") {
+  const bubble = document.createElement("div"); bubble.className = "message";
+  const label = document.createElement("strong"); label.textContent = sender;
+  const body = document.createElement("p"); body.textContent = text;
+  bubble.append(label, body); byId("employee-messages").append(bubble);
+}
+function updateOperations() {
+  byId("metric-cases").textContent = active ? "1" : "0";
+  byId("metric-events").textContent = String(sequence);
+  byId("metric-touches").textContent = String(touches);
+  byId("operator-state").textContent = active ? `${active.id} / ${latestState} / ${paused ? "waiting for intervention" : latestState === "claim_closed" ? "closed in simulation" : "agent workflow active"}` : "No submitted case.";
+  byId("agents").replaceChildren();
+  agentSpecs.forEach(([name, model, tool, start, end]) => {
+    const card = document.createElement("div"); card.className = "agent-card";
+    const title = document.createElement("h3"); title.textContent = name;
+    const status = document.createElement("span"); status.className = "badge";
+    const index = Math.max(0, step - 1);
+    status.textContent = !active ? "Idle" : latestState === "claim_closed" ? "Completed" : index < steps.indexOf(start) ? "Queued" : index > steps.indexOf(end) ? "Completed" : paused ? "Blocked / human dependency" : "Working";
+    const info = document.createElement("p"); info.textContent = `${model}. Tools: ${tool}. No live model/tool calls.`;
+    const detail = document.createElement("details"); const summary = document.createElement("summary"); summary.textContent = "Inspect boundary";
+    const text = document.createElement("p"); text.textContent = `Case ${active ? active.id : "not submitted"}; service identity scoped to ${tool}; input/output evidence below. Model versions, tokens, latency and cost: not measured.`;
+    detail.append(summary,text); card.append(title,status,info,detail); byId("agents").append(card);
+  });
+}
+function updateActions() {
+  const customerTurn = paused && (financialGate === "customer" || (!financialGate && active && active.key === "mixed"));
+  byId("customer-resolve").hidden = !customerTurn;
+  byId("resolve").hidden = !paused || customerTurn || (active && active.key === "custom");
+  byId("customer-resolve").textContent = financialGate === "customer" ? (active.key === "mixed" ? "Demo: acknowledge explanation" : "Demo: accept fictional $400 offer") : "Demo: confirm towing company has the car";
+  byId("customer-action").textContent = customerTurn ? "Rue needs your response below." : paused ? "An employee is reviewing this exception. Follow progress here; employee actions are in their workbench." : latestState === "claim_closed" ? "Journey complete in this simulation. Review remains available." : "The agent team is processing your claim; no routine approval needed.";
+  updateOperations();
+}
+function showScreen(name) {
+  for (const screen of ["customer","employee","operator"]) {
+    byId(`screen-${screen}`).hidden = screen !== name;
+    byId(`nav-${screen}`).setAttribute("aria-pressed", String(screen === name));
+  }
+  updateActions();
+}
+for (const name of ["customer","employee","operator"]) byId(`nav-${name}`).addEventListener("click", () => showScreen(name));
+function savings() {
+  const inputs = ["volume","minutes","labor","costs"].map(id => byId(id));
+  if (!inputs.every(input => input.checkValidity() && input.value !== "")) { byId("savings").textContent = "Enter valid, non-negative assumptions within the displayed bounds."; return; }
+  const [volume, minutes, labor, costs] = inputs.map(input => Number(input.value));
+  const gross = volume * minutes / 60 * labor;
+  byId("savings").textContent = `Illustrative gross capacity value: ${gross.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0})}/year. After assumed incremental costs: ${(gross-costs).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0})}/year. Not measured or realized savings.`;
+}
+for (const id of ["volume","minutes","labor","costs"]) byId(id).addEventListener("input", savings);
+byId("employee-form").addEventListener("submit", e => {
+  e.preventDefault(); const text = byId("employee-query").value.trim(); if (!text) return;
+  employeeChat(text,"Employee / simulated");
+  employeeChat(`Scripted case summary: ${active ? active.id : "no case submitted"}, state ${latestState}. Inspect the artifacts and G-01 guideline. Chat does not grant authority or change workflow state.`);
+  byId("employee-query").value = "";
+});
+function chat(text, sender = "Rue / agent") {
+  const bubble = document.createElement("div");
+  bubble.className = `message ${sender === "You" ? "customer" : sender.includes("specialist") ? "human" : ""}`;
+  const label = document.createElement("strong"); label.textContent = sender;
+  const body = document.createElement("p"); body.textContent = text;
+  bubble.append(label, body); byId("messages").append(bubble);
+  byId("messages").scrollTop = byId("messages").scrollHeight;
+}
+function progress(index = -1, waiting = false) {
+  byId("progress").replaceChildren();
+  stageLabels.forEach((label, i) => {
+    const li = document.createElement("li");
+    li.className = i < index || (i === index && !waiting) ? "done" : i === index ? "current" : "";
+    const dot = document.createElement("span"); dot.className = "dot";
+    dot.textContent = i < index || (i === index && !waiting) ? "\u2713" : String(i + 1);
+    const text = document.createElement("span"); text.textContent = label + (i === index && waiting ? " / waiting for human" : "");
+    li.append(dot, text); byId("progress").append(li);
+  });
+}
+function artifact(id, value) {
+  const details = document.createElement("details");
+  const summary = document.createElement("summary"); summary.textContent = id;
+  const pre = document.createElement("pre");
+  pre.style.whiteSpace = "pre-wrap"; pre.style.overflowWrap = "anywhere";
+  pre.textContent = JSON.stringify(value, null, 2);
+  details.append(summary, pre); byId("artifacts").append(details);
+}
+function event(state, actor, input, output, control) {
+  latestState = state;
+  const id = `event-${++sequence}`;
+  const li = document.createElement("li");
+  li.textContent = `${id} | ${state} | ${actor} | ${input} -> ${output} | ${control}`;
+  byId("lineage").append(li);
+  byId("assessment-heading").textContent = state.replaceAll("_", " ");
+  progress(Math.max(0, step - 1), state === "awaiting_intervention");
+  artifact(id, {state, actor, input, output, control, time:new Date().toISOString(), simulated:true});
+  updateOperations();
+}
+function reset() {
+  clearTimeout(timer); active = null; step = 0; sequence = 0; paused = false; financialGate = false; touches = 0; latestState = "not_submitted";
+  const item = cases[byId("scenario").value];
+  byId("case-id").textContent = item.id;
+  byId("narrative").textContent = item.narrative;
+  byId("query").value = item.narrative;
+  byId("assessment-heading").textContent = "Not submitted";
+  for (const id of ["assessment","messages","lineage","artifacts"]) byId(id).replaceChildren();
+  byId("exception").textContent = "No intervention requested.";
+  byId("record").textContent = "No disposition yet.";
+  byId("resolve").hidden = true; byId("submit").disabled = false;
+  byId("employee-messages").replaceChildren();
+  byId("employee-query").value = "";
+  byId("customer-data").textContent = `${item.id} / Alex Demo / fictional customer / policy DEMO-AUTO-01 / source revision r1. No verified real customer or policy.`;
+  employeeChat("No intervention yet. Rue will bring a structured exception here with its required action. Customer replies must occur on the customer screen.");
+  byId("query").disabled = false;
+  progress();
+  chat("Hi, I'm Rue, your claim-servicing agent. Tell me what happened. I'll coordinate the specialist agents, gather evidence, track policy review and resolution, and keep you updated through closure. If a decision needs a person, I'll bring them in. Everything in this demo is fictional.");
+  updateActions();
+}
+function advance() {
+  if (!active || paused) return;
+  const state = steps[step++];
+  if (state === "received") {
+    artifact("input-r1", {id:active.id, revision:"r1", narrative:active.narrative});
+    event(state,"intake agent","customer query","input-r1","authorized synthetic intake");
+    chat("Thanks for sharing that. I've started your intake. You can watch the progress on the right while I work.");
+  } else if (state === "validated") {
+    event(state,"Rust workflow","input-r1","validated-input","schema/access checks simulated");
+    if (active.key === "custom") {
+      paused = true;
+      event("awaiting_intervention","demo input guard","input-r1","exception-1","unscripted input; no invented analysis");
+      artifact("exception-1",{owner:"intake specialist",reason:"unsupported demo input",status:"open"});
+      chat("This prototype can only analyze its selected demo stories. I'm bringing a human into this scenario rather than guessing from your changed text. No real person has been contacted.");
+      byId("exception").textContent = "Intake specialist required. Custom input is not analyzed by this scripted demo. Choose a demo story to restart.";
+      employeeChat("Unscripted input: no supported assessment. Do not fabricate a decision; choose a supported demo story to restart.");
+      updateActions();
+      return;
+    }
+  } else if (state === "assessing") {
+    event(state,"assessment adapter","input-r1","assessment-1","bounded call; hand-authored result");
+    artifact("assessment-1", {input_revision:"r1", provider:"scripted fixture, not Jev", category:active.category, urgent:active.key==="urgent", review_required:active.key==="mixed", technical_failure:active.key==="failure"});
+    byId("assessment").textContent = active.key === "failure" ? "Technical timeout; no valid assessment." : `Category: ${active.category || "unresolved"}. Original input and assessment remain available.`;
+    chat(active.key === "failure" ? "The assessment service hasn't returned a usable result. I won't guess at an answer." : active.key === "mixed" ? "There are a few possible explanations here. I need to clarify what happened before choosing a route." : active.key === "urgent" ? "I've noticed an injury-related cue in your description. This needs specialist attention." : "The demo assessment identifies glass damage with no urgent cue. I'm checking the permitted handling route.");
+  } else if (state === "policy_checked" && active.key !== "glass") {
+    paused = true;
+    const reasons = {urgent:["expedited human attention","claims specialist","Confirm specialist takeover of this urgent intake"], mixed:["conflicting incident information","customer via authorized clarification channel","Provide a synthetic clarification: towing confirmed"], failure:["assessment unavailable after bounded attempts","intake analyst","Record a synthetic manual weather-damage classification"]};
+    const [reason,owner,action] = reasons[active.key];
+    event("awaiting_intervention","policy engine","assessment-1","exception-1",reason);
+    artifact("exception-1",{reason,owner,required_action:action,status:"open",blocks_routine_handoff:true});
+    byId("exception").textContent = `${reason}. Owner: ${owner}. Required: ${action}.`;
+    byId("resolve").textContent = `${action} and resume`;
+    byId("resolve").hidden = false;
+    chat(active.key === "mixed" ? "Can you confirm whether the car was towed? I've paused processing until you clarify that. Use the demo response below to continue." : "I'm bringing a human into this scenario. Your intake is paused until the specialist records the required intervention. In this demo, you can simulate that takeover.");
+    employeeChat(`Exception for ${active.id}: ${reason}. Owner: ${owner}. Required action: ${action}. Source assessment-1; apply G-01.`);
+    updateActions();
+    return;
+  } else if (state === "policy_checked") {
+    artifact("routing-intent",{assessment:"assessment-1",permitted:true,policy:"demo-v1"});
+    event(state,"policy engine","assessment-1","routing-intent","predelegated permitted queue; policy demo-v1");
+    chat("This intake can continue without a routine human approval. I'll record its disposition and arrange the handoff.");
+  } else if (state === "disposition_recorded") {
+    artifact("disposition-1",{category:active.category,origin:active.key==="failure"?"human_manual":"agent",input_revision:active.key==="mixed"?"r2":"r1",assessment_reference:active.key==="mixed"?"assessment-2":active.key==="failure"?null:"assessment-1",policy:"demo-v1"});
+    event(state,"workflow tool","routing-intent","disposition-1","version/idempotency controls simulated");
+    byId("record").textContent = "Disposition recorded in simulation. Handoff not yet accepted.";
+  } else if (state === "handoff_pending") {
+    event(state,"handoff tool","disposition-1","handoff-1","stable delivery ID; no actual queue call");
+    chat("The disposition is recorded. I'm waiting for the receiving team to acknowledge ownership; recording alone doesn't mean the handoff succeeded.");
+  } else if (state === "handoff_accepted") {
+    artifact("handoff-1",{disposition:"disposition-1",status:"accepted",destination:active.key==="urgent"?"specialist review":"incident handling queue",acknowledgement:"synthetic-ack"});
+    event(state,"receiving queue","handoff-1","synthetic-ack","completion requires acknowledgement");
+    byId("record").textContent = "Intake handed off and receiving ownership acknowledged (simulated). Claim is NOT settled.";
+    chat("Your case team has accepted ownership. I'll stay with you while the evidence, policy, assessment and resolution agents continue the work. This handoff is not claim completion.");
+  } else if (state === "evidence_gathered") {
+    artifact("evidence-pack",{parent:"input-r1",clarification:active.key==="mixed"?"input-r2":null,documents:["synthetic incident statement","synthetic inspection record"],status:"fixture_complete",model_role:"document extraction LLM proposed; no inference"});
+    event(state,"evidence agent","input revision + approved document source","evidence-pack","authorized retrieval; provenance required");
+    chat("The evidence agent has assembled the demo incident and inspection records. You can inspect their sources in the artifact drawer.");
+  } else if (state === "coverage_reviewed") {
+    artifact("coverage-review",{inputs:["evidence-pack","fictional-policy-v1"],result:active.key==="mixed"?"no payable loss in this fixture":"eligible under fictional policy",limitations:"scripted determination, not Jev output or actual advice",authority:"demo-only"});
+    event(state,"policy agent","evidence-pack + fictional-policy-v1","coverage-review","policy source and decision authority required");
+    chat(active.key==="mixed"?"The clarified towing scenario has no payable loss under this fictional policy. I'll prepare a reasoned outcome for human review; the agent does not silently deny a real claim.":"The policy agent has reviewed the fictional terms and evidence. The demo scenario can proceed to loss assessment.");
+  } else if (state === "loss_assessed") {
+    artifact("loss-assessment",{inputs:["coverage-review","evidence-pack"],amount:active.key==="mixed"?0:400,currency:"USD",basis:"invented fixture estimate",calculation_owner:"deterministic calculation, not model arithmetic"});
+    event(state,"assessment agent","coverage-review + evidence-pack","loss-assessment","inspection evidence and deterministic amounts");
+    chat(active.key==="mixed"?"No payment is proposed in this fixture. A human must review the explanation before the customer is asked to acknowledge receipt.":"The assessment agent has prepared a fictional $400 resolution from the demo inspection record. This is not a real valuation.");
+  } else if (state === "resolution_ready") {
+    artifact("resolution-proposal",{inputs:["coverage-review","loss-assessment"],outcome:active.key==="mixed"?"no_payment_proposed":"payment_proposed",requires:["authorized human decision","customer response"],status:"not_authorized"});
+    event(state,"resolution agent","coverage-review + loss-assessment","resolution-proposal","outside currently approved financial authority");
+    financialGate = true; paused = true;
+    byId("exception").textContent = "Resolution needs authorized human review and a separate customer response. No payment or closure yet.";
+    byId("resolve").textContent = "Demo: authorized reviewer signs decision";
+    byId("resolve").hidden = false;
+    event("awaiting_intervention","authority control","resolution-proposal","financial-review","no agent self-approval");
+    chat("I'm bringing a human into this scenario to review the proposed outcome. After their decision, I'll ask for your response before continuing. No actual reviewer or payment service has been contacted.");
+    employeeChat("Review resolution-proposal, coverage-review and loss-assessment. Fictional policy and evidence only. Sign the exact proposal with the employee action; customer acceptance is a separate customer-screen action.");
+    updateActions();
+    return;
+  } else if (state === "settlement_authorized") {
+    event(state,"resolution tool","human-decision + customer-response","authorized-resolution","separate actor records and exact proposal version");
+    artifact("authorized-resolution",{proposal:"resolution-proposal",human:"human-decision",customer:"customer-response",payment_permitted:active.key!=="mixed",simulated:true});
+  } else if (state === "payment_confirmed") {
+    artifact("payment-receipt",{resolution:"authorized-resolution",status:active.key==="mixed"?"not_applicable":"confirmed",amount:active.key==="mixed"?0:400,currency:"USD",provider:"fictional payment service",reference:"DEMO-ONLY"});
+    event(state,"payment agent","authorized-resolution","payment-receipt","confirmed external receipt or explicit no-payment outcome");
+    chat(active.key==="mixed"?"The reviewed no-payment outcome has been explained and acknowledged in this simulation. No funds were transferred.":"The fictional payment service returned a confirmation for the demo $400 payment. A request alone would not count as a completed payment.");
+  } else if (state === "claim_closed") {
+    artifact("closure-record",{inputs:["authorized-resolution","payment-receipt"],status:"closed_in_simulation",reopen_channel:"request review through Rue",outcome:active.key==="mixed"?"reviewed_no_payment":"fictional_payment_confirmed"});
+    event(state,"servicing agent","authorized-resolution + payment-receipt","closure-record","outcome explained; no unresolved simulated work");
+    byId("record").textContent = active.key==="mixed"?"Simulation complete: reviewed no-payment outcome. Explanation and review channel available.":"Simulation complete: fictional $400 payment confirmed and claim closed. No real money moved.";
+    byId("exception").textContent = "No open simulated exceptions. You can request further review; closure does not remove history.";
+    chat("The demo claim journey is complete. Your decision explanation, receipts and full history remain available. If you disagree or have new evidence, you can ask for review rather than starting from scratch.");
+    updateActions();
+    return;
+  }
+  updateActions(); timer = setTimeout(advance, 1400);
+}
+byId("scenario").addEventListener("change", reset);
+byId("chat-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const submitted = byId("query").value.trim();
+  if (!submitted || active) return;
+  reset();
+  const key = byId("scenario").value;
+  active = submitted === cases[key].narrative ? {...cases[key],key} : {id:"SYN-CUSTOM",narrative:submitted,category:null,key:"custom"};
+  byId("query").value = submitted; byId("narrative").textContent = submitted;
+  byId("case-id").textContent = active.id;
+  chat(submitted, "You");
+  byId("submit").disabled = true; byId("query").disabled = true; advance();
+});
+function respond(role) {
+  if (!active || !paused) return;
+  const requiredRole = financialGate === "customer" || (!financialGate && active.key === "mixed") ? "customer" : "employee";
+  if (role !== requiredRole || active.key === "custom") return;
+  touches++;
+  if (financialGate === true) {
+    artifact("human-decision",{proposal:"resolution-proposal",actor:"authorized claims reviewer / simulated",result:"signed fixture outcome",version:1});
+    event("human_review_recorded","authorized reviewer","resolution-proposal","human-decision","distinct from customer acceptance");
+    chat("I've reviewed and signed the fictional outcome. Rue will now ask for the customer's response.", "Claims specialist / simulated");
+    financialGate = "customer";
+    byId("resolve").textContent = active.key==="mixed"?"Demo customer: acknowledge explanation":"Demo customer: accept fictional $400 offer";
+    byId("exception").textContent = "Human review complete. Waiting for customer response; financial workflow remains paused.";
+    employeeChat("Signed demo decision recorded as human-decision. Waiting for customer response; no payment has been authorized by customer chat.");
+    updateActions();
+    return;
+  }
+  if (financialGate === "customer") {
+    artifact("customer-response",{proposal:"resolution-proposal",actor:"customer / simulated",response:active.key==="mixed"?"explanation_received_not_waiver":"offer_accepted",version:1});
+    chat(active.key==="mixed"?"I've received the explanation. I understand I can ask for review.":"I accept this fictional offer.", "You");
+    financialGate = false; paused = false; byId("resolve").hidden = true;
+    byId("exception").textContent = "Required demo human and customer records are present. Agent resuming.";
+    advance(); return;
+  }
+  event("intervention_recorded","design reviewer simulating required human","exception-1","resolution-1","bound to paused case; no real approval");
+  if (active.key === "mixed") {
+    active.category = "other";
+    artifact("input-r2",{parent:"input-r1",clarification:"Towing confirmed by customer (scripted).",author:"simulated customer"});
+    artifact("assessment-2",{input_revision:"r2",supersedes:"assessment-1",category:"other",review_required:false,provider:"scripted fixture"});
+    event("reassessed","assessment adapter","input-r2","assessment-2","old assessment preserved, not reused");
+    chat("The towing company confirmed they have the car.", "You");
+    chat("Thanks. I've saved that clarification as a new revision and reassessed the intake. The earlier assessment is preserved in the lineage.");
+  }
+  if (active.key !== "mixed") chat(active.key === "urgent" ? "Specialist takeover confirmed for expedited human review. The routine intake can now be handed off to the specialist team." : "Manual weather-damage assessment recorded. The failed service attempt remains in the record.", "Intake specialist / simulated");
+  artifact("resolution-1",{exception:"exception-1",state:"resolved",actor:active.key==="mixed"?"customer":active.key==="urgent"?"specialist":"analyst",simulated:true});
+  artifact("routing-intent",{source:active.key==="mixed"?"assessment-2":"resolution-1",permitted:true,policy:"demo-v1"});
+  event("policy_rechecked","policy engine","resolution-1","routing-intent","permitted action after intervention");
+  byId("exception").textContent = "Intervention recorded; exception resolved. Agent resuming permitted workflow.";
+  byId("resolve").hidden = true; paused = false; advance();
+}
+byId("resolve").addEventListener("click", () => respond("employee"));
+byId("customer-resolve").addEventListener("click", () => respond("customer"));
+reset(); savings();
+</script>
+</body>
+</html>

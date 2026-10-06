@@ -1,0 +1,5 @@
+//! Insurance intake sample.
+//!
+//! Domain behavior and provider integrations will be added in reviewed milestones.
+
+pub mod http;

@@ -1,6 +1,6 @@
 # Engineering standards
 
-Version: **0.3.0**. Updated: 2026-10-05.
+Version: **0.4.0**. Updated: 2026-10-05.
 Status: working standard for this branch; team adoption is reviewed through the PR.
 
 All requirements below are mandatory when applicable. This is the single rule
@@ -97,6 +97,14 @@ source. ADRs explain decisions; configuration and verified runbooks specify tool
   No unused generated code or anonymous TODOs. Deliver small learning milestones
   with Rust explanations/runnable checks and pause for discussion as agreed.
   **Evidence:** coherent diff, updated records, and explicit remaining work.
+- **Learn from observed mistakes.** Material failures, repeated corrections, and
+  stale guidance MUST be assessed for missing rules, missing enforcement, or
+  noncompliance. Prefer executable checks for testable behavior and scoped
+  instructions for module-specific lessons. Guidance changes MUST cite evidence,
+  require human acceptance, and include a verification method; no silent
+  post-commit self-modification. Use the bounded
+  [engineering learning loop](docs/engineering-maintenance.md).
+  **Evidence:** accepted proposal or reasoned no-change outcome and follow-up.
 
 ## Delivery
 

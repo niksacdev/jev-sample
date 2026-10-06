@@ -1,6 +1,12 @@
 # Insurance Claim Agent scope
 
 Status: approved on 2026-10-05.
+Direction update 2026-10-05: the user expanded the product design to end-to-end
+autonomous claims servicing. See [current vision](product-spec.md).
+The original scope below remains the approved bounded intake/model experiment;
+it is not the whole new product vision. Expanded contracts, authority, metrics
+and architecture require review before implementation; no live coverage/payment
+actions are authorized by the design request.
 
 ## Business outcome
 
