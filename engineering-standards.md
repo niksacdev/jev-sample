@@ -1,6 +1,6 @@
 # Engineering standards
 
-Version: **0.4.0**. Updated: 2026-10-05.
+Version: **0.6.0**. Updated: 2026-10-07.
 Status: working standard for this branch; team adoption is reviewed through the PR.
 
 All requirements below are mandatory when applicable. This is the single rule
@@ -76,6 +76,25 @@ source. ADRs explain decisions; configuration and verified runbooks specify tool
 
 ## Change discipline
 
+- **Close the product/architecture feedback loop.** Each issue MUST identify the
+  customer/business problem, value mechanism, and affected approved metric with
+  expected direction and guardrails. Indirect enabling work or no metric impact
+  needs an explicit rationale, not an invented benefit. Define a baseline,
+  denominator, measurement source/window, evidence owner, and review trigger;
+  unknowns MUST remain explicit with owned follow-up. Architecture decisions MUST
+  compare alternatives against these outcomes and record feasibility, cost,
+  quality, and authority constraints. Technical evidence may motivate a different
+  mechanism, scope, metric definition, or target, but MUST NOT silently change
+  the approved scorecard. Record proposed deviations with old/new values or scope,
+  evidence, tradeoffs, approval status, and reevaluation plan. User/product-owner
+  approval is required before treating a revision as approved.
+  PRs MUST distinguish implementation verification from measured product outcomes,
+  reconcile issue hypotheses with architectural evidence, and update affected
+  metric definitions and ADRs. Unmeasured outcomes MUST have a linked follow-up,
+  named owner, and date or milestone trigger before delivery closes their task.
+  Follow the [feedback procedure](docs/metrics.md#productarchitecture-feedback-loop).
+  **Evidence:** issue hypothesis, metric/ADR links, PR evidence, deviation decision,
+  and owned outcome-review follow-up.
 - **Implement agreed requirements.** Establish acceptance criteria and non-goals.
   Resolve consequential ambiguity/conflicts; do not freeze historical scope.
   Update affected contracts, product documents, and relevant ADRs as needs evolve.
@@ -108,6 +127,16 @@ source. ADRs explain decisions; configuration and verified runbooks specify tool
 
 ## Delivery
 
+- **Track every PR with a GitHub issue.** Before starting implementation intended
+  for a PR, create or identify an issue with purpose, scope, acceptance criteria,
+  and non-goals. This applies to code, documentation, maintenance, and policy
+  changes. Every PR body MUST explicitly link at least one tracking issue.
+  Use `Closes #<number>` only when the PR completes that issue; otherwise use
+  `Refs #<number>` and leave remaining work on the issue. Keep active task status,
+  decisions about scope, and follow-up work in GitHub issues, not a parallel
+  Markdown task list. Historical plans remain reference material, not a backlog.
+  Reviewers MUST verify the issue linkage and acceptance criteria before merge.
+  **Evidence:** linked issue, PR body, and issue-specific acceptance evidence.
 - **Commit coherent candidates.** Commits MUST contain only intended, reviewed
   changes and describe their purpose accurately. Verify the staged diff; do not
   include unrelated user work, secrets, or transient artifacts. Commit/push only

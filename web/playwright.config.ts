@@ -9,7 +9,7 @@ export default defineConfig({
     {
       command: "cd .. && cargo run --bin api --locked",
       url: "http://127.0.0.1:3000/health",
-      env: { REASSURE_ASSESSOR: "rules", TYPESAFE_API_KEY: "" },
+      env: { TYPESAFE_API_KEY: "", REASSURE_OPERATOR_KEY: "e2e-only-operator-key-not-for-production" },
       reuseExistingServer: false,
       timeout: 120000,
     },

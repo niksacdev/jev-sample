@@ -4,5 +4,5 @@ import App from "./App";
 import "./style.css";
 
 const root = document.getElementById("root");
-if (!root) throw new Error("Reassure root element is missing.");
+if (!root) throw new Error("Claim of Thrones root element is missing.");
 createRoot(root).render(<StrictMode><App /></StrictMode>);

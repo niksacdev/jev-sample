@@ -1,6 +1,6 @@
 # Harness working agreement
 
-Standard version reflected here: **0.4.0**.
+Standard version reflected here: **0.6.0**.
 
 ## Read before implementation or review
 
@@ -28,6 +28,15 @@ Do not inspect held-out cases while tuning implementation or prompts.
 
 ## Execute, verify, stop
 
+Create or identify the tracking GitHub issue before PR-bound implementation.
+Use its acceptance criteria and keep progress there; link it in the PR body.
+Follow the canonical [issue policy](engineering-standards.md#delivery).
+Do not use docs/task-list.md as the active backlog.
+Connect the issue's value hypothesis and metrics to architecture tradeoffs;
+record technical feedback, deviations, and outcome-review ownership using the
+[product/architecture feedback loop](docs/metrics.md#productarchitecture-feedback-loop).
+Do not equate passing tests or a merged PR with demonstrated product value.
+
 State acceptance criteria; implement one coherent slice; validate the exact
 candidate using actual executable checks and verified runbooks. Review against
 applicable standard requirements and report candidate/version, evidence,
@@ -41,9 +50,10 @@ The maintainer profile and learning skill exist; automatic hook integration is
 pending. Read the learning-loop guide for the intended contract and limitations. Native agent
 discovery and live CLI analysis are not yet verified. The minimal Cargo scaffold
 and native Git Cargo/npm hook exist; use docs/development.md for commands.
-The local health API, servicing coordinator, Jev adapter, React UI and mocked
-contract tests exist. See README for runnable commands and limitations.
-No consequential claim workflow, MCP, login or durable storage exists yet.
+The local health API, servicing coordinator, provider-comparison UI, Jev adapter,
+operator shared-key inspection and mocked contract tests exist.
+See README for runnable commands and limitations.
+No consequential claim workflow, MCP, production identity or durable storage exists yet.
 The [candidate-review runbook](docs/candidate-review.md), pre-committer profile,
 and Rust CI workflow are configured. Hosted CI passed for quality-gate commit
 e2278bf; each changed candidate needs its own checks. Native profile discovery

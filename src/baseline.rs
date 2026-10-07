@@ -1,7 +1,12 @@
 //! Explicitly limited keyword comparator. Not insurance policy enforcement.
 
+use std::collections::BTreeMap;
+
 use crate::{
-    assessment::{AssessmentFailure, AssessmentFuture, Assessor, Provenance},
+    assessment::{
+        AssessmentAttempt, AssessmentFailure, AssessmentFuture, Assessor, Provenance,
+        ProviderExchange,
+    },
     domain::{Assessment, Evidence, Intent, Message, Observation},
 };
 
@@ -43,7 +48,7 @@ impl Assessor for KeywordBaseline {
     fn assess<'a>(&'a self, message: &'a Message) -> AssessmentFuture<'a> {
         Box::pin(async move {
             let text = message.as_str().to_lowercase();
-            let observations = DEFINITIONS
+            let observations: Vec<_> = DEFINITIONS
                 .iter()
                 .map(|definition| Observation {
                     intent: definition.intent,
@@ -52,7 +57,34 @@ impl Assessor for KeywordBaseline {
                     ),
                 })
                 .collect();
-            Assessment::new(observations, None).map_err(|_| AssessmentFailure::InvalidResponse)
+            let response_body = serde_json::json!({
+                "observations": observations.iter().map(|observation| {
+                    let evidence = match observation.evidence {
+                        Evidence::KeywordMatch(matched) => serde_json::json!({"keyword_match": matched}),
+                        Evidence::YesProbability(value) => serde_json::json!({"yes_probability": value.value()}),
+                    };
+                    (observation.intent, evidence)
+                }).collect::<BTreeMap<_, _>>()
+            })
+            .to_string();
+            match Assessment::new(observations, None) {
+                Ok(assessment) => AssessmentAttempt::success(
+                    assessment,
+                    ProviderExchange {
+                        request_body: message.as_str().into(),
+                        response_status: None,
+                        response_body: Some(response_body),
+                        response_truncated: false,
+                    },
+                ),
+                Err(_) => AssessmentAttempt::failure(
+                    AssessmentFailure::InvalidResponse,
+                    ProviderExchange {
+                        request_body: message.as_str().into(),
+                        ..ProviderExchange::default()
+                    },
+                ),
+            }
         })
     }
 }
@@ -69,6 +101,7 @@ mod tests {
                 "File a claim; update my address; delay my premium.".into(),
             )?)
             .await
+            .result
             .map_err(|e| format!("{e:?}"))?;
         assert_eq!(
             assessment

@@ -30,9 +30,6 @@
                 }
             },
             "cwd": "${workspaceFolder}",
-            "env": {
-                "REASSURE_ASSESSOR": "rules"
-            },
             "args": []
         },
         {

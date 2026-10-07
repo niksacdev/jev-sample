@@ -26,9 +26,9 @@ may be committed; ignore rules are not secret scanning.
 Never put API keys or real claim narratives in fixtures or telemetry.
 
 The library exposes an HTTP router and the `api` binary serves it locally.
-The serving application now delegates synthetic servicing messages to a bounded
-Rust coordinator and keyword/Jev assessment adapter. See the root README for the
-React UI and opt-in Jev commands. No consequential actions are implemented.
+The serving application delegates synthetic servicing messages to a bounded
+Rust coordinator and selectable Code/Jev assessors. See the root README for local
+`.env` setup and the comparison UI. No consequential actions are implemented.
 Configured lints forbid project unsafe code and reject unwrap/expect.
 The Rust CI workflow repeats checks; its hosted result must pass before the first
 behavioral slice is accepted. Use the [candidate-review runbook](candidate-review.md)
@@ -84,23 +84,24 @@ These diagrams describe the executable code, not the full-claims target
 architecture. Start with [the assessor port](../src/assessment.rs), then follow
 [the application service](../src/application.rs).
 
-### Startup: choose dependencies once
+### Startup: construct available assessors once
 
 ```mermaid
 sequenceDiagram
     participant Main as api.rs (composition root)
     participant Config as Configuration
-    participant Provider as KeywordBaseline or Jev
+    participant Provider as Code + optional Jev
     participant Service as ServicingService
     participant HTTP as Axum Router
-    Main->>Config: Read REASSURE_ASSESSOR
-    Main->>Provider: Construct selected implementation
-    Provider-->>Main: Arc of dyn Assessor
+    Main->>Config: Load optional .env and read TYPESAFE_API_KEY
+    Main->>Provider: Construct Code and optional Jev
+    Provider-->>Main: Map AssessorId to Arc of dyn Assessor
     Main->>Config: Parse routing.json and execution.json
     Config-->>Main: Validated RoutingPolicy and ExecutionLimits
-    Main->>Service: new(assessor, policy, limits)
+    Main->>Service: with_assessors(map, policy, limits)
     Service-->>Main: ServicingService
     Main->>HTTP: router_with(service)
+    Note over Service,HTTP: GET /v1/assessors reports availability; LLM stays disabled
     Main->>HTTP: Serve on loopback port 3000
     Note over Main,HTTP: Invalid configuration fails startup; no silent fallback
 ```
@@ -123,8 +124,13 @@ sequenceDiagram
     participant Policy as routing.rs
     participant Store as Process-local run store
     Customer->>UI: Enter message
-    UI->>HTTP: POST /v1/messages (CustomerMessage JSON)
-    HTTP->>Service: submit(message: String)
+    par Code selected
+        UI->>HTTP: POST /v1/messages (message, assessor=code)
+        HTTP->>Service: submit_with(message, Code)
+    and Jev selected, when configured
+        UI->>HTTP: POST /v1/messages (same message, assessor=jev)
+        HTTP->>Service: submit_with(message, Jev)
+    end
     Service->>Domain: Message::new(String)
     Domain-->>Service: Result of validated Message or InvalidMessage
     Service->>Service: Acquire permit and check history limit
@@ -142,7 +148,7 @@ sequenceDiagram
     Service->>Store: Record ReviewRequired or ClarificationRequired
     Service-->>HTTP: Result of CustomerReply or ServiceError
     HTTP-->>UI: HTTP 200 + CustomerReply JSON
-    UI-->>Customer: Reply, next steps and status
+    UI-->>Customer: Separate reply and tasks for each selected assessor
     Note over Service,Store: Permit released after work completes; history is not durable
 ```
 
@@ -197,6 +203,7 @@ sequenceDiagram
     participant Worker as Assessor worker
     participant Store as Process-local run store
     actor Operator
+    actor Employee
     Service->>Worker: Start assessment under deadline
     alt Provider rejects request or returns invalid data
         Worker-->>Service: AssessmentFailure
@@ -215,16 +222,27 @@ sequenceDiagram
     else HTTP caller disconnected
         Note over Service,Store: Work still records its final result; no response delivery
     end
-    Operator->>HTTP: GET /v1/operator/runs
+    Operator->>HTTP: GET /v1/operator/runs + bearer key
+    HTTP->>HTTP: Constant-time key check
+    HTTP->>Store: service.run_details()
+    Store-->>HTTP: OperatorRun + bounded ProviderExchange + ExecutionTraceEvent list
+    HTTP-->>Operator: Evidence, provenance, trace and raw exchange
+    Employee->>HTTP: GET /v1/employee/runs
     HTTP->>Store: service.runs()
-    Store-->>HTTP: OperatorRun DTOs
-    HTTP-->>Operator: States, signals, usage and provenance
+    Store-->>HTTP: Sanitized OperatorRun summaries
+    HTTP-->>Employee: Tasks and metadata only
 ```
 
 Invalid input returns 422; exhausted concurrency/history returns 429. Those
 rejections do not invoke the assessor or create a run. Malformed JSON/body limits
 are handled by Axum before the use case. Provider failures never become keyword
-fallback or successful empty assessments. Disconnect survival is process-local:
+fallback or successful empty assessments. Raw provider exchanges are bounded,
+kept only in process memory and returned only by the operator endpoint after
+local shared-key authentication. They are excluded from logs and spans.
+The operator endpoint also returns a sanitized execution-stage trace; it does
+not expose narrative text in that trace. OpenTelemetry spans and structured
+events are emitted by the local API process for correlation and diagnostics.
+Disconnect survival is process-local:
 stopping the server still loses history and interrupts work.
 
 ### Type ownership quick reference
@@ -236,9 +254,12 @@ stopping the server still loses history and interrupts work.
 | `Intent`, `Evidence`, `Observation` | `domain.rs` | Application category and provider-independent typed evidence |
 | `Assessment`, `TokenUsage` | `domain.rs` | Validated complete evidence set and optional usage |
 | `Assessor`, `AssessmentFuture`, `Provenance`, `AssessmentFailure` | `assessment.rs` | Provider behavioral port, asynchronous result and provenance/failure contract |
+| `AssessorId`, `AssessorOption` | `contracts.rs` | Runtime selection and server-reported provider availability; LLM remains unavailable |
+| `AssessmentAttempt`, `ProviderExchange` | `assessment.rs` | Validated result plus bounded provider request/response retained for authenticated inspection |
+| `ExecutionTraceEvent` | `contracts.rs` | Sanitized per-run stage, outcome and elapsed-time record for operator inspection |
 | `RoutingPolicy`, `Plan`, `RoutedIntent` | `routing.rs` | Pure configured decision logic and internal planning result |
 | `ServicingService`, `ExecutionLimits`, `ServiceError` | `application.rs` | Use-case coordination, validated limits and transport-independent errors |
-| `IntentSignal`, `ServicingTask`, `CustomerReply`, `OperatorRun`, `ApiError` | `contracts.rs` | Persona/API projections, serialized by Serde and exported to TypeScript |
+| `IntentSignal`, `ServicingTask`, `CustomerReply`, `OperatorRun`, `ApiError` | `contracts.rs` | Persona/API projections; customer replies carry sanitized trace events, while provider exchanges remain operator-only |
 
 `Intent` is re-exported through `contracts.rs` so the generated TypeScript schema
 uses the same categories without moving the domain into the HTTP layer.
@@ -263,12 +284,14 @@ Expect HTTP 200, `content-type: application/json`, and `{"status":"ok"}`.
 `GET /health` means the process can serve this route; it does not claim provider
 readiness, successful triage, or deployment readiness. HEAD returns the same
 status/content type with no body; POST returns 405; unknown routes return 404.
-No authentication, consequential claims execution or readiness endpoint exists.
-Provider calls are opt-in from the server; health remains process liveness only.
+Operator raw-exchange inspection requires `REASSURE_OPERATOR_KEY`; employee
+summaries omit provider bodies. No consequential claims execution or provider
+readiness endpoint exists. Health remains process liveness only.
 
 The prototype binds only `127.0.0.1:3000`; an occupied port causes a visible
 startup error and nonzero exit, never a silent fallback. Stop with Ctrl+C.
-Startup diagnostics and structured assessment-attempt telemetry go to stderr.
+Structured application logs go to stderr; OpenTelemetry spans are exported to
+stdout. Set `RUST_BACKTRACE=1` for Rust panic backtraces in process diagnostics.
 Provider/application deadlines and concurrency controls exist; graceful request
 draining, alerts and managed telemetry retention remain unimplemented.
 Do not expose or deploy this local learning slice as a production service.

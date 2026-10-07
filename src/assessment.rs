@@ -4,8 +4,36 @@ use std::{future::Future, pin::Pin};
 
 use crate::domain::{Assessment, Message};
 
-pub type AssessmentFuture<'a> =
-    Pin<Box<dyn Future<Output = Result<Assessment, AssessmentFailure>> + Send + 'a>>;
+pub type AssessmentFuture<'a> = Pin<Box<dyn Future<Output = AssessmentAttempt> + Send + 'a>>;
+
+#[derive(Clone, Debug, Default, serde::Serialize, ts_rs::TS)]
+pub struct ProviderExchange {
+    pub request_body: String,
+    pub response_status: Option<u16>,
+    pub response_body: Option<String>,
+    pub response_truncated: bool,
+}
+
+pub struct AssessmentAttempt {
+    pub result: Result<Assessment, AssessmentFailure>,
+    pub exchange: ProviderExchange,
+}
+
+impl AssessmentAttempt {
+    pub fn success(assessment: Assessment, exchange: ProviderExchange) -> Self {
+        Self {
+            result: Ok(assessment),
+            exchange,
+        }
+    }
+
+    pub fn failure(failure: AssessmentFailure, exchange: ProviderExchange) -> Self {
+        Self {
+            result: Err(failure),
+            exchange,
+        }
+    }
+}
 
 /// Object-safe async port, implemented by the baseline, Jev and test assessors.
 /// Output is validated domain evidence, never routing or authorization.

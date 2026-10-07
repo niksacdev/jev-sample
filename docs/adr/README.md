@@ -17,6 +17,9 @@ Read relevant accepted records before changing their affected behavior.
 | [0010](0010-react-ui-and-rust-agent-boundary.md) | Accepted | React UI, Rust-owned servicing assessment and disposable local run inspection |
 | [0011](0011-provider-port-and-servicing-use-case.md) | Accepted | Injected assessor port, shared servicing use case and validated versioned routing policy |
 | [0012](0012-native-git-quality-hook.md) | Accepted | Repository-managed native Git hook invoking Cargo/npm |
+| [0013](0013-provider-comparison-and-authenticated-inspection.md) | Accepted | Same-query provider choices, local operator authentication and OpenTelemetry inspection |
+| [0014](0014-issue-backed-pull-requests.md) | Accepted | GitHub issues track active work; every PR explicitly links its issue |
+| [0015](0015-product-architecture-feedback-loop.md) | Accepted | Bidirectional product-metric and architecture feedback through issues and PRs |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,

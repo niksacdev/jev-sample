@@ -9,11 +9,14 @@ use std::{
 
 use serde::Deserialize;
 use tokio::sync::{Mutex, Semaphore};
-use tracing::instrument::WithSubscriber;
+use tracing::{Instrument, instrument::WithSubscriber};
 
 use crate::{
     assessment::{AssessmentFailure, Assessor},
-    contracts::{CustomerReply, IntentSignal, OperatorRun, RunState, ServicingTask, TaskState},
+    contracts::{
+        AssessorId, AssessorOption, CustomerReply, ExecutionTraceEvent, IntentSignal, OperatorRun,
+        OperatorRunDetail, RunState, ServicingTask, TaskState,
+    },
     domain::{InvalidMessage, Message},
     routing::RoutingPolicy,
 };
@@ -64,6 +67,7 @@ pub enum ServiceError {
         failure: AssessmentFailure,
         run_id: String,
     },
+    AssessorUnavailable(AssessorId),
 }
 
 #[derive(Clone)]
@@ -72,7 +76,7 @@ pub struct ServicingService {
 }
 
 struct Runtime {
-    assessor: Arc<dyn Assessor>,
+    assessors: BTreeMap<AssessorId, Arc<dyn Assessor>>,
     policy: RoutingPolicy,
     limits: ExecutionLimits,
     capacity: Arc<Semaphore>,
@@ -85,10 +89,22 @@ impl ServicingService {
         policy: RoutingPolicy,
         limits: ExecutionLimits,
     ) -> Self {
+        Self::with_assessors(
+            BTreeMap::from([(AssessorId::Code, assessor)]),
+            policy,
+            limits,
+        )
+    }
+
+    pub fn with_assessors(
+        assessors: BTreeMap<AssessorId, Arc<dyn Assessor>>,
+        policy: RoutingPolicy,
+        limits: ExecutionLimits,
+    ) -> Self {
         let capacity = Arc::new(Semaphore::new(limits.max_concurrent));
         Self {
             inner: Arc::new(Runtime {
-                assessor,
+                assessors,
                 policy,
                 limits,
                 capacity,
@@ -98,7 +114,22 @@ impl ServicingService {
     }
 
     pub async fn submit(&self, text: String) -> Result<CustomerReply, ServiceError> {
+        self.submit_with(text, AssessorId::Code).await
+    }
+
+    #[tracing::instrument(skip_all, fields(assessor = %assessor_id.as_str()))]
+    pub async fn submit_with(
+        &self,
+        text: String,
+        assessor_id: AssessorId,
+    ) -> Result<CustomerReply, ServiceError> {
         let message = Message::new(text).map_err(ServiceError::InvalidMessage)?;
+        let assessor = self
+            .inner
+            .assessors
+            .get(&assessor_id)
+            .cloned()
+            .ok_or(ServiceError::AssessorUnavailable(assessor_id))?;
         let permit = self
             .inner
             .capacity
@@ -110,7 +141,7 @@ impl ServicingService {
             return Err(ServiceError::RunLimit);
         }
         let run_id = format!("run-{:04}", store.len() + 1);
-        let provenance = self.inner.assessor.provenance();
+        let provenance = assessor.provenance();
         let run = OperatorRun {
             run_id: run_id.clone(),
             state: RunState::Assessing,
@@ -124,6 +155,12 @@ impl ServicingService {
             signals: Vec::new(),
             tasks: Vec::new(),
             failure_code: None,
+            provider_exchange: None,
+            execution_trace: vec![ExecutionTraceEvent {
+                stage: "request_admitted".into(),
+                outcome: "assessing".into(),
+                elapsed_ms: None,
+            }],
         };
         store.insert(run_id.clone(), run.clone());
         drop(store);
@@ -134,8 +171,9 @@ impl ServicingService {
         let handle = tokio::spawn(
             async move {
                 let _permit = permit;
-                service.execute(message, run).await
+                service.execute(message, run, assessor).await
             }
+            .in_current_span()
             .with_current_subscriber(),
         );
         match handle.await {
@@ -145,6 +183,11 @@ impl ServicingService {
                 if let Some(run) = self.inner.runs.lock().await.get_mut(&run_id) {
                     run.state = RunState::Failed;
                     run.failure_code = Some(failure.code().into());
+                    run.execution_trace.push(ExecutionTraceEvent {
+                        stage: "supervisor_failed".into(),
+                        outcome: failure.code().into(),
+                        elapsed_ms: None,
+                    });
                 }
                 tracing::error!(
                     event = "servicing_execution_failed",
@@ -156,12 +199,19 @@ impl ServicingService {
         }
     }
 
+    #[tracing::instrument(skip_all, fields(run_id = %run.run_id, assessor = %run.assessor))]
     async fn execute(
         &self,
         message: Message,
         mut run: OperatorRun,
+        assessor: Arc<dyn Assessor>,
     ) -> Result<CustomerReply, ServiceError> {
         let start = Instant::now();
+        run.execution_trace.push(ExecutionTraceEvent {
+            stage: "assessment_started".into(),
+            outcome: "running".into(),
+            elapsed_ms: Some(0),
+        });
         tracing::info!(
             event = "assessment_attempt_started",
             run_id = %run.run_id,
@@ -171,15 +221,21 @@ impl ServicingService {
             rubric_version = %run.rubric_version,
             routing_version = %run.routing_version,
         );
-        let assessor = self.inner.assessor.clone();
-        let mut worker = tokio::spawn(async move { assessor.assess(&message).await });
+        let mut worker = tokio::spawn(
+            async move { assessor.assess(&message).await }
+                .in_current_span()
+                .with_current_subscriber(),
+        );
         let assessment = match tokio::time::timeout(
             Duration::from_secs(self.inner.limits.deadline_seconds),
             &mut worker,
         )
         .await
         {
-            Ok(Ok(result)) => result,
+            Ok(Ok(attempt)) => {
+                run.provider_exchange = Some(attempt.exchange);
+                attempt.result
+            }
             Ok(Err(_)) => Err(AssessmentFailure::Execution),
             Err(_) => {
                 worker.abort();
@@ -192,6 +248,20 @@ impl ServicingService {
         };
         // The validated deadline bounds elapsed time well below u32 milliseconds.
         run.elapsed_ms = Some(u32::try_from(start.elapsed().as_millis()).unwrap_or(u32::MAX));
+        let assessment_outcome = if assessment.is_ok() {
+            "succeeded".to_owned()
+        } else {
+            assessment
+                .as_ref()
+                .err()
+                .map(|failure| failure.code().to_owned())
+                .unwrap_or_else(|| "failed".into())
+        };
+        run.execution_trace.push(ExecutionTraceEvent {
+            stage: "assessment_completed".into(),
+            outcome: assessment_outcome,
+            elapsed_ms: run.elapsed_ms,
+        });
         let outcome = match assessment {
             Ok(assessment) => {
                 let plan = self.inner.policy.plan(&assessment);
@@ -221,20 +291,42 @@ impl ServicingService {
                 } else {
                     RunState::ReviewRequired
                 };
+                run.execution_trace.push(ExecutionTraceEvent {
+                    stage: "routing_completed".into(),
+                    outcome: match run.state {
+                        RunState::ClarificationRequired => "clarification_required",
+                        RunState::ReviewRequired => "review_required",
+                        RunState::Assessing => "assessing",
+                        RunState::Failed => "failed",
+                    }
+                    .into(),
+                    elapsed_ms: run.elapsed_ms,
+                });
+                run.execution_trace.push(ExecutionTraceEvent {
+                    stage: "run_completed".into(),
+                    outcome: "succeeded".into(),
+                    elapsed_ms: run.elapsed_ms,
+                });
                 Ok(CustomerReply {
                     run_id: run.run_id.clone(),
                     state: run.state,
                     reply: if run.tasks.is_empty() {
-                        "I'd like to understand a little more. Please clarify whether you need help with a claim, your policy, contact details or a premium payment."
+                        "We couldn't identify a specific insurance need in this message. Add details about your claim, policy, contact information, or payment question."
                     } else {
-                        "I've organized your request into the next steps below. They're ready for review, and you can follow their status here."
+                        "This message may relate to the insurance areas listed below. Review the assessment; no insurance action has been taken."
                     }.into(),
                     tasks: run.tasks.clone(),
+                    execution_trace: run.execution_trace.clone(),
                 })
             }
             Err(failure) => {
                 run.state = RunState::Failed;
                 run.failure_code = Some(failure.code().into());
+                run.execution_trace.push(ExecutionTraceEvent {
+                    stage: "run_failed".into(),
+                    outcome: failure.code().into(),
+                    elapsed_ms: run.elapsed_ms,
+                });
                 Err(ServiceError::Assessment {
                     failure,
                     run_id: run.run_id.clone(),
@@ -267,6 +359,48 @@ impl ServicingService {
             .values()
             .cloned()
             .rev()
+            .collect()
+    }
+
+    pub async fn run_details(&self) -> Vec<OperatorRunDetail> {
+        self.inner
+            .runs
+            .lock()
+            .await
+            .values()
+            .cloned()
+            .rev()
+            .map(|run| OperatorRunDetail {
+                provider_exchange: run.provider_exchange.clone(),
+                execution_trace: run.execution_trace.clone(),
+                run,
+            })
+            .collect()
+    }
+
+    pub fn assessor_options(&self) -> Vec<AssessorOption> {
+        AssessorId::ALL
+            .into_iter()
+            .map(|id| {
+                let available = self.inner.assessors.contains_key(&id);
+                let (label, unavailable_reason) = match id {
+                    AssessorId::Code => ("Code (keyword baseline)", None),
+                    AssessorId::Jev => (
+                        "Jev",
+                        (!available).then_some("Configure TYPESAFE_API_KEY and restart the API."),
+                    ),
+                    AssessorId::Llm => (
+                        "LLM",
+                        Some("LLM provider has not been selected or configured."),
+                    ),
+                };
+                AssessorOption {
+                    id,
+                    label: label.into(),
+                    available,
+                    unavailable_reason: unavailable_reason.map(str::to_owned),
+                }
+            })
             .collect()
     }
 }

@@ -3,6 +3,17 @@
 Status: hierarchy and initial primary targets approved on 2026-10-05.
 These are experiment targets, not demonstrated capabilities.
 
+## Applicability and current evidence
+
+The approved scorecard below applies to the bounded auto-insurance intake
+experiment, not end-to-end claims or all servicing intents. The runnable
+provider-comparison app and expanded claims vision do not yet have an approved
+matching product scorecard. Do not apply intake targets to them without review,
+or treat UI improvements and passing tests as evidence of business value.
+The buyer, commercial model, willingness to pay, and unit-economics assumptions
+also remain unvalidated. Cost reductions need an explicit beneficiary and
+measured total effort, not API spend alone.
+
 ## North star
 
 Correctly triaged claims per analyst-hour, paired with routing and urgency
@@ -74,3 +85,57 @@ The comparison design, dataset sizes, and statistical confidence criteria are
 approved in [evaluation-design.md](evaluation-design.md). The precise rubric
 and execution settings still need to be resolved.
 No acceptable correctness degradation margin has been approved.
+
+## Product/architecture feedback loop
+
+The [engineering standard](../engineering-standards.md#change-discipline) defines
+the obligation; GitHub issues and PRs hold live hypotheses, evidence, status,
+and ownership. This document holds current approved metric definitions and
+scope, not a second task backlog. ADRs hold architectural rationale.
+
+1. **Frame in the issue.** Link the applicable metric and explain the customer
+   problem, business-value mechanism, expected effect, and guardrails. Specify
+   baseline, numerator/denominator, source, window, owner, and review trigger.
+   Record indirect/no impact with rationale; do not force maintenance into a
+   fabricated product experiment. Unapproved metrics are proposals.
+2. **Use metrics to choose architecture.** Compare alternatives using total
+   workflow effort/cost, quality, latency, authority, and operational constraints.
+   Record assumptions and experiments in the issue; capture consequential choices
+   in an ADR linked back to the issue and affected metric definitions.
+3. **Feed technical evidence back.** When feasibility, observed behavior, or
+   cost challenges a product assumption, record previous/proposed scope or metric,
+   evidence and limitations, tradeoffs, and reevaluation. Mark the decision
+   proposed, approved, rejected, or deferred. Obtain explicit user/product-owner
+   approval before changing the approved scorecard. Preserve the old definition
+   and rationale through Git history and decision links.
+4. **Review delivery in the PR.** Compare the issue hypothesis with actual
+   evidence. Report implementation checks separately from product measurements,
+   with counts and uncertainty where relevant. Update affected definitions and
+   ADRs in the same change for approved revisions. Partial results and unknowns
+   remain visible; a merge establishes delivery, not product success.
+5. **Review outcomes on the issue.** At the named date or milestone, compare
+   observed outcomes with baseline and guardrails. The user/product owner chooses
+   continue, revise, narrow, or stop and records why. A failed gate or insufficient
+   evidence requires explicit response, not post-hoc relabeling as success.
+   If delivery closes before measurement, keep an outcome-review follow-up issue
+   with a named owner and trigger. Do not close that follow-up until the evidence
+   review or an explicit decision to stop measurement is recorded.
+
+Review is also triggered by material scope, provider/model, policy, authority,
+architecture, or business-cost assumption changes and by guardrail breaches.
+For each approved metric revision, record the decision date, originating issue,
+approval reference, prior/new definition or target, applicable scope/version,
+and reevaluation requirement here beside the affected definition.
+
+### Current reconciliation needed
+
+Before claiming value for broader servicing or end-to-end claims, agree the
+beneficiary/buyer, business model assumptions, value mechanism, and corresponding
+scorecard. Decide explicitly whether the intake experiment remains a separate
+benchmark. Metric owners, measurement windows, and product exercise execution
+remain unresolved; no measured product improvements are asserted here.
+Track that reconciliation in an issue rather than copying historical milestones.
+
+These controls are review-enforced. No automated linkage/metric gate, recurring
+review automation, production measurement, or assigned metric owners are implied
+by the templates or this procedure.

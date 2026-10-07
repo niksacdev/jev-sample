@@ -5,11 +5,16 @@ use std::{
 
 use jev_sample::{
     application::{ExecutionLimits, ServicingService},
-    assessment::{AssessmentFailure, AssessmentFuture, Assessor, Provenance},
+    assessment::{
+        AssessmentAttempt, AssessmentFailure, AssessmentFuture, Assessor, Provenance,
+        ProviderExchange,
+    },
     domain::{Assessment, Evidence, Intent, Message, Observation},
     routing::RoutingPolicy,
 };
-use tracing::instrument::WithSubscriber;
+use opentelemetry::trace::TracerProvider as _;
+use tracing::{Instrument, instrument::WithSubscriber};
+use tracing_subscriber::prelude::*;
 
 #[derive(Clone, Default)]
 struct Capture(Arc<Mutex<Vec<u8>>>);
@@ -40,23 +45,104 @@ impl Assessor for TelemetryAssessor {
         }
     }
     fn assess<'a>(&'a self, _: &'a Message) -> AssessmentFuture<'a> {
-        Box::pin(async move {
-            if self.fail {
-                return Err(AssessmentFailure::Authentication);
+        Box::pin(
+            async move {
+                if self.fail {
+                    return AssessmentAttempt::failure(
+                        AssessmentFailure::Authentication,
+                        ProviderExchange {
+                            request_body: "private-narrative-marker".into(),
+                            ..ProviderExchange::default()
+                        },
+                    );
+                }
+                match Assessment::new(
+                    Intent::ALL
+                        .into_iter()
+                        .map(|intent| Observation {
+                            intent,
+                            evidence: Evidence::KeywordMatch(intent == Intent::Claim),
+                        })
+                        .collect(),
+                    None,
+                ) {
+                    Ok(assessment) => AssessmentAttempt::success(
+                        assessment,
+                        ProviderExchange {
+                            request_body: "private-narrative-marker".into(),
+                            response_body: Some("fixture".into()),
+                            ..ProviderExchange::default()
+                        },
+                    ),
+                    Err(_) => AssessmentAttempt::failure(
+                        AssessmentFailure::InvalidResponse,
+                        ProviderExchange::default(),
+                    ),
+                }
             }
-            Assessment::new(
-                Intent::ALL
-                    .into_iter()
-                    .map(|intent| Observation {
-                        intent,
-                        evidence: Evidence::KeywordMatch(intent == Intent::Claim),
-                    })
-                    .collect(),
-                None,
-            )
-            .map_err(|_| AssessmentFailure::InvalidResponse)
-        })
+            .instrument(tracing::info_span!("provider_assessment")),
+        )
     }
+}
+
+#[tokio::test]
+async fn spawned_assessment_spans_preserve_execution_parentage()
+-> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let exporter = opentelemetry_sdk::trace::InMemorySpanExporter::default();
+    let provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+        .with_simple_exporter(exporter.clone())
+        .build();
+    let subscriber = tracing_subscriber::registry()
+        .with(tracing_opentelemetry::layer().with_tracer(provider.tracer("test")));
+    let service = ServicingService::new(
+        Arc::new(TelemetryAssessor { fail: false }),
+        RoutingPolicy::from_json(include_str!("../config/routing.json"))?,
+        ExecutionLimits::from_json(include_str!("../config/execution.json"))?,
+    );
+    async {
+        service
+            .submit("private-narrative-marker".into())
+            .instrument(tracing::info_span!("http_request"))
+            .await
+    }
+    .with_subscriber(subscriber)
+    .await
+    .map_err(|error| format!("{error:?}"))?;
+    provider.force_flush()?;
+    let spans = exporter.get_finished_spans()?;
+    let http = spans
+        .iter()
+        .find(|span| span.name == "http_request")
+        .ok_or("missing HTTP span")?;
+    let execution = spans
+        .iter()
+        .find(|span| span.name == "execute")
+        .ok_or("missing execution span")?;
+    let submission = spans
+        .iter()
+        .find(|span| span.name == "submit_with")
+        .ok_or("missing submission span")?;
+    let assessment = spans
+        .iter()
+        .find(|span| span.name == "provider_assessment")
+        .ok_or("missing provider span")?;
+    assert_eq!(submission.parent_span_id, http.span_context.span_id());
+    assert_eq!(execution.parent_span_id, submission.span_context.span_id());
+    assert_eq!(assessment.parent_span_id, execution.span_context.span_id());
+    assert_eq!(
+        assessment.span_context.trace_id(),
+        http.span_context.trace_id()
+    );
+    assert!(
+        execution
+            .attributes
+            .iter()
+            .any(|attribute| attribute.key.as_str() == "run_id"
+                && attribute.value.to_string() == "run-0001")
+    );
+    assert!(!format!("{spans:?}").contains("private-narrative-marker"));
+    provider.shutdown()?;
+    Ok(())
 }
 
 #[tokio::test]
