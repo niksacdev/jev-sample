@@ -38,6 +38,25 @@ introduced. Logical components below do not imply separate microservices.
 
 ## 2. Architectural principles
 
+### Proposed metric-to-architecture acceptance
+
+Use the [proposed holistic scorecard](metrics.md#proposed-holistic-product-scorecard)
+to review architecture tradeoffs, not as proof of implemented behavior.
+Verified resolution needs authoritative outcome/receipt and reopenable history;
+effort/elapsed-time measures need stage transitions, owned waits and human
+interventions; economic comparison needs attempted-claim, task/run and
+tenant/workload identities kept distinct. Cost measurements need provider/tool
+usage, retries and human support without putting narratives in telemetry.
+Financial records need reconciliation with external authority, not inferred
+payment success.
+
+These requirements favor explicit state/ownership/confirmation contracts but
+do not by themselves mandate a database, event bus or microservices.
+Choose persistence/telemetry architecture in an issue-backed ADR once approved
+measurement and recovery requirements exist. Record tradeoffs in total operating
+cost, quality and feasibility; technical constraints may propose metric changes
+but cannot silently approve them.
+
 - **One authoritative workflow.** Durable state and deterministic Rust transition
   rules determine what happened and what may happen next. Chat and model output
   cannot overwrite them.

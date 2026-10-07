@@ -1,8 +1,44 @@
-# Model and workflow comparison design
+# Intake benchmark and proposed holistic product evaluation
 
 Status: design approved on 2026-10-05. Execution details listed below remain
 to be resolved before running the experiment.
 This document does not authorize paid API calls.
+
+## Proposed end-to-end claims and financial validation
+
+The [holistic scorecard and dual-sided economics](metrics.md#proposed-holistic-product-scorecard)
+are proposals under [issue #13](https://github.com/niksacdev/jev-sample/issues/13),
+not revised approved intake targets. A human claims/finance review is prerequisite
+to selecting baselines, populations and numerical gates.
+
+1. Map each customer/employee/operator journey to actual authoritative states,
+   owners, evidence, permitted actions and recovery. Include contested coverage,
+   missing evidence, rejected offers, authorized no-payment, unknown/failed payment,
+   reopened claims and interrupted sessions, not just successful closure.
+2. Specify supported insurance line/jurisdiction, eligible cohort and observation
+   maturity. Establish independent adjudication, severity and sampling rules.
+   Do not assume closed cases are correct or exclude unresolved cases from time/
+   effort reporting. Reopenings and appeal outcomes need lagged follow-up.
+3. Establish manual and assisted baselines with comparable case mix. Measure
+   active handling/review/correction effort, wall-clock wait by owner, customer
+   effort, correctness and verified fulfilment. Counterbalance learning effects;
+   disclose synthetic-study limits and missing production evidence.
+4. Freeze a financial input register: period, currency, volumes, ramp, price,
+   expense/cash boundaries, total effort, realized savings versus capacity,
+   one-time and recurring costs, discount assumptions and attribution.
+   Reconcile insurer benefits after fees with vendor unit economics; do not
+   add their transfer payments into combined value or assume saved labor is cash.
+5. Predeclare sample size/power, targets and guardrails with experts before
+   observing outcomes. Stage decisions as continue/revise/narrow/stop; a low-cost
+   result with worse entitlement, recourse or safety fails the product hypothesis.
+6. Publish denominators, unresolved/missing observations, uncertainty, cohort age
+   and sensitivity. Independently reconcile financial inputs and sampled outcomes.
+   Record human expert review and product-owner acceptance on the issue.
+
+Current code is review-only servicing assessment, not a full claims experiment;
+none of these outcomes or financial baselines is collected. Passing adapter/
+workflow/UI tests cannot substitute for this study. Until actual baselines exist,
+use clearly labeled scenarios and no realized ROI claim.
 
 ## Execution applicability preflight
 

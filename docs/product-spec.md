@@ -58,6 +58,21 @@ The current prototype illustrates routine completion and selected exceptions,
 not every production branch. End-to-end success metrics and legal/operational
 authority require new review; existing intake targets cannot establish them.
 
+## Proposed holistic value and financial measurement
+
+The [proposed product scorecard](metrics.md#proposed-holistic-product-scorecard)
+measures verified resolution, total handling effort, customer effort, exception
+quality, recourse and correct fulfilment, rather than intake triage alone.
+The [dual-sided financial model](metrics.md#proposed-dual-sided-financial-model)
+separates insurer net value from agent-product revenue, delivery economics and
+commercial assumptions. Released capacity is not automatically cash savings;
+indemnity reductions and faster denial are not product benefits.
+
+These are proposals requiring human claims/finance validation and measured
+baselines under [issue #13](https://github.com/niksacdev/jev-sample/issues/13).
+No price, commercial model, ROI, holistic numerical target or increased authority
+has been approved. The approved intake experiment remains a component benchmark.
+
 ## Executable comparison boundary
 
 The React/Rust application is a synthetic, review-only servicing comparison:
