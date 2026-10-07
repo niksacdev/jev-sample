@@ -126,19 +126,23 @@ Domain code imports no transport, database or provider SDKs.
 
 ### Browser and agent execution boundary
 
-The approved frontend is TypeScript/React. It submits customer messages and typed
-employee/operator commands to the Rust API and renders role-scoped results.
-It does not select models, construct provider questions, hold provider credentials,
-or invoke Jev/MCP servers directly. Rust coordinates agent tasks and calls Jev.
-Model allocation and deterministic tool selection are server-side decisions.
-Provider provenance is exposed only through the operator inspection projection;
-customer responses describe work and outcomes without provider-specific fields.
-The implemented Rust path follows
-[ADR 0011](adr/0011-provider-port-and-servicing-use-case.md): HTTP maps transport,
-`ServicingService` coordinates execution through an injected `Assessor`, adapters
-produce validated domain evidence, and an injected routing policy prepares tasks.
-Provider choice lives only in the composition root. Policy thresholds live in
-validated versioned configuration, not provider code or prompts.
+The TypeScript/React browser delegates assessment to Rust; it does not hold
+provider credentials, construct Jev questions, or invoke provider/MCP services
+directly. In the current local comparison, the user may select available
+assessors and the browser sends a separate request with the same message for
+each selection, as accepted in [ADR 0013](adr/0013-provider-comparison-and-authenticated-inspection.md).
+Rust validates the requested assessor against implementations configured by the
+composition root.
+
+HTTP delegates to `ServicingService`, which coordinates an injected `Assessor`.
+Adapters return validated domain evidence; pure routing uses startup-validated,
+versioned configuration. Selection never grants servicing or financial authority.
+
+Comparison labels and sanitized traces may appear in the customer UI.
+Assessment evidence, model/rubric/policy provenance and bounded raw exchanges
+are available through operator inspection; raw exchanges require the local
+operator key. This experiment does not establish production persona access,
+model allocation, durable workflows, or the full-claims target contracts.
 
 ### Customer and policy MCP boundaries
 

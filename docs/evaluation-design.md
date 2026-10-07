@@ -4,6 +4,26 @@ Status: design approved on 2026-10-05. Execution details listed below remain
 to be resolved before running the experiment.
 This document does not authorize paid API calls.
 
+## Execution applicability preflight
+
+This design remains the approved auto-intake comparison. Before execution,
+record the candidate and a mapping from each required judgment and route to
+the actual executable contract. Confirm incident category, urgent-assistance
+cue, and review-required ambiguity outputs; shared routing/review semantics;
+all configured comparators; frozen settings; labeling provenance; and the
+declared measurement boundaries.
+
+The current servicing application does not supply that mapping: its four
+outputs are servicing intents, every task requires review, the LLM comparator
+is disabled, and no evaluation CLI is implemented. Ordinary tests and UI
+stories are not held-out evaluation evidence.
+
+Record this experiment as not executed until the mapping and unresolved
+execution settings are established. A separate servicing experiment may be
+proposed with its own labels and measurement contract; it does not replace
+this design or inherit its targets without explicit approval. Do not inspect
+locked cases while resolving implementation or rubric gaps.
+
 ## Providers and common task
 
 Compare deterministic rules, Jev pinned to `jev-1.13.0`, and a versioned

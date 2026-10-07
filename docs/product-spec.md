@@ -58,6 +58,23 @@ The current prototype illustrates routine completion and selected exceptions,
 not every production branch. End-to-end success metrics and legal/operational
 authority require new review; existing intake targets cannot establish them.
 
+## Executable comparison boundary
+
+The React/Rust application is a synthetic, review-only servicing comparison:
+selected Code/Jev assessors receive the same submitted message and return
+independent outcomes. It identifies servicing topics, not incident categories,
+urgent-assistance cues, coverage decisions, or completed claims.
+
+A review-required task is an assessment result, not an assigned human review
+or acknowledged handoff. Clarification means no servicing intent was selected;
+it does not establish that all ambiguity or urgent needs were detected.
+The end-to-end HTML mockup remains a simulation. Neither surface establishes
+the approved intake targets or end-to-end product value.
+
+See [metric applicability](metrics.md#intake-gate-applicability-to-the-runnable-code)
+for the current evidence boundaries. Live outcome-review status and ownership
+remain on [issue #9](https://github.com/niksacdev/jev-sample/issues/9), not here.
+
 ## Earlier intake-component discovery (historical framing)
 
 The sections below preserve the original intake component assumptions and its

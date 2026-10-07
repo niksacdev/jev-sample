@@ -14,6 +14,44 @@ The buyer, commercial model, willingness to pay, and unit-economics assumptions
 also remain unvalidated. Cost reductions need an explicit beneficiary and
 measured total effort, not API spend alone.
 
+### Runnable servicing comparison: measurement boundary
+
+The current executable assesses `claim`, `policy_change`, `customer_details`,
+and `billing`, using Jev rubric `servicing-intents-v1` and default routing policy
+`experiment-review-only-v1`. Matching intents create review-required tasks;
+no-match results request clarification. Neither outcome is an automatic intake
+route, an urgency judgment, a completed human review, or a completed claim.
+
+Operator run/failure counts describe process-local assessor runs, not distinct
+customer requests or independently scored outcomes. Selecting two assessors
+creates two runs for one submission. Restart loses history; rejected requests
+create no run. These counts alone do not establish a failure-rate denominator.
+
+`elapsed_ms` measures assessor execution through completion/failure, before
+routing and response delivery. It is not submission-to-visible-result latency.
+The browser displays comparison results after all selected requests settle.
+Record these boundaries separately; do not compare either with the approved
+response-latency target without a matching measurement.
+
+Any servicing diagnostic report should declare its workload, window, provider,
+versions, attempted/admitted/rejected/completed/failed counts, and missing
+observations. Unknown usage is not zero cost. These are diagnostic definitions,
+not new approved product targets. The approved intake scorecard is unchanged.
+
+### Intake gate applicability to the runnable code
+
+| Approved measure | Current evidence boundary |
+| --- | --- |
+| Correct triages per analyst-hour | Unmeasured: no timed manual/assisted exercise |
+| Final routing correctness | Unmeasured: no independent labels or manual baseline |
+| Automatic routing precision | Undefined for current review-only tasks: zero automatic-route denominator |
+| Automation coverage | No automatic routes implemented; not an executed intake-benchmark result |
+| Urgency escalation recall | Intake urgency judgment and expedited-review route not implemented |
+| Ambiguity escalation recall | No-match clarification is not labeled ambiguity/contradiction detection |
+| Response latency | Unmeasured end-to-end p95; assessor elapsed time is a different boundary |
+| Technical failure rate | Unmeasured over a declared workload/window; failure tests are not a rate |
+| Technical failure routing | Visible error/failed run exists; owned review queue/handoff not implemented |
+
 ## North star
 
 Correctly triaged claims per analyst-hour, paired with routing and urgency

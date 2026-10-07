@@ -69,3 +69,12 @@ The next candidate implements the local Axum health router/API binary and four
 in-process integration tests. The original future-work statements above describe
 the architecture-approval milestone, not the current implementation status.
 Domain/routing, provider adapters, and the evaluation CLI remain unimplemented.
+
+Implementation evidence 2026-10-07: candidate
+`c55cbe9b7fe127acfbcf7d861435c82cecb9970f` contains a shared servicing application,
+pure routing and injected Code/Jev assessors. Its binaries are `api` and
+`export-contracts`; the evaluation CLI remains unimplemented. ADRs 0010,
+0011 and 0013 describe this review-only servicing slice and provider comparison.
+It is not an implementation of the approved intake benchmark. Retain the
+decision that a future evaluator calls the shared workflow rather than
+duplicating routing; resolve benchmark-contract applicability before execution.
