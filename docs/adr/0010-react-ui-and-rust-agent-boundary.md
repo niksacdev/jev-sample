@@ -47,6 +47,12 @@ system or RAG exists in this slice. Persona tabs share one synthetic workspace
 and are not access controls. Never expose this server beyond loopback.
 Production workflow persistence/authentication still requires separate decisions.
 
+Implementation update 2026-10-06: local provider comparison and authenticated
+raw-exchange inspection supersede the startup-single-provider, no-login and
+no-message-retention statements above only as described in
+[ADR 0013](0013-provider-comparison-and-authenticated-inspection.md). The API
+remains loopback-only; this local shared key is not production identity.
+
 Use one reused reqwest client, a 15-second whole-request deadline, a 32-KiB
 response limit, no redirects, no automatic retries and four concurrent requests.
 Validate exact model/question IDs, answer type, required usage and finite

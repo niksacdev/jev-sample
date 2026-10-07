@@ -1,4 +1,4 @@
-# Reassure system architecture
+# Claim of Thrones system architecture
 
 Status: proposed architecture for design review.
 Date: 2026-10-05.
@@ -8,7 +8,7 @@ Inputs: [product vision](product-spec.md),
 
 ## 1. Purpose and architectural scope
 
-Reassure services an insurance claim from customer report through evidence
+Claim of Thrones services an insurance claim from customer report through evidence
 collection, policy review, loss assessment, resolution, authorized payment or
 service fulfilment, and explained closure. Autonomous agents perform permitted
 work; customers and employees intervene when a defined gate requires them.
@@ -63,7 +63,7 @@ flowchart LR
     CX --> Edge[Authenticated application boundary]
     EX --> Edge
     OX --> Edge
-    Edge --> App[Reassure application]
+    Edge --> App[Claim of Thrones application]
     IdP[Identity provider] --> Edge
     App --> Policy[Authoritative policy and endorsements]
     App --> Evidence[Document and inspection sources]
@@ -73,7 +73,7 @@ flowchart LR
     App --> Signals[Operational telemetry and controlled audit]
 ```
 
-Reassure is authoritative for its workflow, intents and artifact references.
+Claim of Thrones is authoritative for its workflow, intents and artifact references.
 The insurer remains authoritative for policy, eligibility/decision authority and
 claims records as assigned by integration contracts. Payment/fulfilment systems
 are authoritative for external execution confirmations.
@@ -87,7 +87,7 @@ flowchart TB
     UI[Three persona applications] --> API[Rust HTTP API and authorized queries]
     API --> WF[Durable workflow and authority engine]
     API --> Session[Conversation and task coordination]
-    Session --> Agents[Scoped agent runtime: Rue and specialist roles]
+    Session --> Agents[Scoped agent runtime: Maia and specialist roles]
     Agents --> LLM[Model gateway and bounded inference]
     Agents --> MCP[MCP client]
     MCP --> Tools[Allowlisted MCP tool servers]
@@ -172,7 +172,7 @@ change the basis of an existing decision.
 
 | Logical agent | Task / inputs -> outputs | Authority and model role |
 | --- | --- | --- |
-| Servicing / Rue | Customer conversation and claim state -> scoped tasks, status explanations, requests for intervention | Conversational LLM proposed; cannot approve coverage/payment or invent completion |
+| Servicing / Maia | Customer conversation and claim state -> scoped tasks, status explanations, requests for intervention | Conversational LLM proposed; cannot approve coverage/payment or invent completion |
 | Evidence | Authorized sources and required facts -> provenance-bearing evidence bundle and identified gaps | Extraction/document model where needed; retrieved content is not instruction or ground truth |
 | Policy | Policy snapshot and evidence -> supported policy analysis and required decision gate | Deterministic policy checks and authorized judgement; model assistance does not establish entitlement |
 | Assessment | Incident/evidence and inspection -> bounded judgments and supported loss calculation | Jev candidate for category/urgency/ambiguity; other task-specific models as justified; amounts computed deterministically |
@@ -182,7 +182,7 @@ change the basis of an existing decision.
 An agent role can have many run instances. Fleet counts group runs by role,
 version, environment and execution state; a single role badge is not a workload
 model. Agents do not freely delegate authority to one another.
-Rue's dependency plan is represented by durable tasks, not arbitrary peer chat.
+Maia's dependency plan is represented by durable tasks, not arbitrary peer chat.
 
 Jev is called through its documented HTTP contract; it is not assumed to be an
 MCP server. Validate required answer IDs, labels, numerical bounds and
@@ -362,7 +362,7 @@ narratives by default.
 ```mermaid
 sequenceDiagram
     actor C as Customer
-    participant R as Rue and coordinator
+    participant R as Maia and coordinator
     participant W as Rust workflow and durable store
     participant A as Scoped specialist agents
     participant T as Authorized tools and external sources

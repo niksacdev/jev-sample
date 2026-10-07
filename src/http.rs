@@ -7,10 +7,13 @@ use axum::{
     routing::{get, post},
 };
 use serde::Serialize;
+use subtle::ConstantTimeEq;
 
 use crate::{
     application::{ServiceError, ServicingService},
-    contracts::{ApiError, CustomerMessage, CustomerReply, OperatorRun},
+    contracts::{
+        ApiError, AssessorOption, CustomerMessage, CustomerReply, OperatorRun, OperatorRunDetail,
+    },
 };
 
 #[derive(Serialize)]
@@ -18,13 +21,64 @@ struct Health {
     status: &'static str,
 }
 
-pub fn router_with(service: ServicingService) -> Router {
+#[derive(Clone)]
+pub struct OperatorAuth {
+    key: Option<String>,
+}
+
+impl OperatorAuth {
+    pub fn new(key: Option<String>) -> Result<Self, std::io::Error> {
+        if key.as_ref().is_some_and(|value| {
+            value
+                .chars()
+                .filter(|c| !c.is_whitespace())
+                .map(char::len_utf8)
+                .sum::<usize>()
+                < 32
+        }) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "REASSURE_OPERATOR_KEY must contain at least 32 non-whitespace bytes",
+            ));
+        }
+        Ok(Self { key })
+    }
+
+    fn allows(&self, headers: &HeaderMap) -> bool {
+        let Some(expected) = self.key.as_deref() else {
+            return false;
+        };
+        let Some(provided) = headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.strip_prefix("Bearer "))
+        else {
+            return false;
+        };
+        let expected = expected.as_bytes();
+        let provided = provided.as_bytes();
+        expected.len() == provided.len() && expected.ct_eq(provided).unwrap_u8() == 1
+    }
+}
+
+#[derive(Clone)]
+struct AppState {
+    service: ServicingService,
+    operator_auth: OperatorAuth,
+}
+
+pub fn router_with(service: ServicingService, operator_auth: OperatorAuth) -> Router {
     Router::new()
         .route("/health", get(|| async { Json(Health { status: "ok" }) }))
+        .route("/v1/assessors", get(assessors))
         .route("/v1/messages", post(message))
-        .route("/v1/operator/runs", get(runs))
+        .route("/v1/employee/runs", get(employee_runs))
+        .route("/v1/operator/runs", get(operator_runs))
         .layer(DefaultBodyLimit::max(8192))
-        .with_state(service)
+        .with_state(AppState {
+            service,
+            operator_auth,
+        })
 }
 
 type HttpError = (StatusCode, Json<ApiError>);
@@ -66,11 +120,18 @@ fn service_error(error_value: ServiceError) -> HttpError {
             "The assessment failed. No servicing action was executed. Inspect the operator view; there is no automatic fallback or retry.",
             Some(run_id),
         ),
+        ServiceError::AssessorUnavailable(_) => error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "assessor_unavailable",
+            "The selected assessor is not configured.",
+            None,
+        ),
     }
 }
 
+#[tracing::instrument(skip_all)]
 async fn message(
-    State(service): State<ServicingService>,
+    State(state): State<AppState>,
     headers: HeaderMap,
     body: Result<Json<CustomerMessage>, JsonRejection>,
 ) -> Result<Json<CustomerReply>, HttpError> {
@@ -92,13 +153,41 @@ async fn message(
             None,
         )
     })?;
-    service
-        .submit(input.message)
+    state
+        .service
+        .submit_with(input.message, input.assessor)
         .await
         .map(Json)
         .map_err(service_error)
 }
 
-async fn runs(State(service): State<ServicingService>) -> Json<Vec<OperatorRun>> {
-    Json(service.runs().await)
+async fn assessors(State(state): State<AppState>) -> Json<Vec<AssessorOption>> {
+    Json(state.service.assessor_options())
+}
+
+async fn employee_runs(State(state): State<AppState>) -> Json<Vec<OperatorRun>> {
+    Json(state.service.runs().await)
+}
+
+async fn operator_runs(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<Vec<OperatorRunDetail>>, HttpError> {
+    if state.operator_auth.key.is_none() {
+        return Err(error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "operator_auth_unconfigured",
+            "Operator inspection is locked until REASSURE_OPERATOR_KEY is configured.",
+            None,
+        ));
+    }
+    if !state.operator_auth.allows(&headers) {
+        return Err(error(
+            StatusCode::UNAUTHORIZED,
+            "operator_auth_required",
+            "Enter the local operator key to inspect provider exchanges.",
+            None,
+        ));
+    }
+    Ok(Json(state.service.run_details().await))
 }

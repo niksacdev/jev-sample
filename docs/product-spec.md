@@ -1,10 +1,11 @@
-# Reassure: end-to-end autonomous claims vision
+# Claim of Thrones: end-to-end autonomous claims vision
 
 Status: Proposed, not approved for contract implementation.
 Scope update 2026-10-05: the user requested the complete claims journey, not
 intake-to-handoff alone. This supersedes the draft's intake-only product framing.
 The earlier intake evaluation remains a bounded component experiment, not proof
-of end-to-end claims quality. Backend implementation remains health-only.
+of end-to-end claims quality. The backend implements review-only servicing
+assessment and provider comparison, not the full claims journey.
 
 ## Current end-to-end vision
 
@@ -28,7 +29,7 @@ Switching a story resets the single-case demo rather than accumulating a fiction
 portfolio. Production portfolio filters, workloads and role-scoped telemetry
 need contract design.
 
-The customer reports a claim to Rue, the servicing orchestrator. Scoped evidence,
+The customer reports a claim to Northstar, the servicing orchestrator. Scoped evidence,
 policy, loss assessment, resolution and payment agents progress work using
 appropriate models and deterministic controls. They are proposed logical roles,
 not a requirement for six services or unrestricted peer delegation.
@@ -136,7 +137,7 @@ operators intervene only when required by an explicit exception. Operators can
 inspect current state, source revisions, tool outcomes and artifacts at all stages.
 Structured assessment/action cards and recorded state remain visible alongside
 conversation. The mockup includes scripted customer status updates, not an open-ended chat.
-Presentation update: fictional insurer **Reassure**, with **Rue** as the
+Presentation update: fictional insurer **Claim of Thrones**, with **Northstar** as the
 customer-servicing agent. Customers submit through an editable chat composer,
 receive stage-specific messages, and follow a seven-stage intake progress tracker.
 The design-review inspection drawer exposes lineage/artifacts, not private model

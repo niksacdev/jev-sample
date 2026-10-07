@@ -5,7 +5,10 @@ use std::sync::{
 
 use jev_sample::{
     application::{ExecutionLimits, ServiceError, ServicingService},
-    assessment::{AssessmentFailure, AssessmentFuture, Assessor, Provenance},
+    assessment::{
+        AssessmentAttempt, AssessmentFailure, AssessmentFuture, Assessor, Provenance,
+        ProviderExchange,
+    },
     contracts::{RunState, TaskState},
     domain::{Assessment, Evidence, Intent, Message, Observation, Probability},
     routing::RoutingPolicy,
@@ -29,7 +32,7 @@ async fn same_http_transport_accepts_baseline_and_test_provider() -> TestResult 
     }));
     for (router, expected_state) in [
         (support::router(), "clarification_required"),
-        (jev_sample::http::router_with(injected), "review_required"),
+        (support::router_for(injected), "review_required"),
     ] {
         let response = router
             .oneshot(
@@ -67,8 +70,14 @@ impl Assessor for TestAssessor {
         Box::pin(async move {
             assert_eq!(message.as_str(), "test request");
             self.calls.fetch_add(1, Ordering::SeqCst);
+            let exchange = ProviderExchange {
+                request_body: "test request".into(),
+                response_status: None,
+                response_body: Some("fixture response".into()),
+                response_truncated: false,
+            };
             if let Some(failure) = self.failure {
-                return Err(failure);
+                return AssessmentAttempt::failure(failure, exchange);
             }
             let observations = Intent::ALL
                 .into_iter()
@@ -80,9 +89,20 @@ impl Assessor for TestAssessor {
                         }
                     })
                 })
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|_| AssessmentFailure::InvalidResponse)?;
-            Assessment::new(observations, None).map_err(|_| AssessmentFailure::InvalidResponse)
+                .collect::<Result<Vec<_>, _>>();
+            let observations = match observations {
+                Ok(observations) => observations,
+                Err(_) => {
+                    return AssessmentAttempt::failure(
+                        AssessmentFailure::InvalidResponse,
+                        exchange,
+                    );
+                }
+            };
+            match Assessment::new(observations, None) {
+                Ok(assessment) => AssessmentAttempt::success(assessment, exchange),
+                Err(_) => AssessmentAttempt::failure(AssessmentFailure::InvalidResponse, exchange),
+            }
         })
     }
 }
@@ -169,13 +189,17 @@ impl Assessor for ControlledAssessor {
     fn assess<'a>(&'a self, _: &'a Message) -> AssessmentFuture<'a> {
         Box::pin(async move {
             self.started.notify_one();
-            let permit = self
-                .release
-                .acquire()
-                .await
-                .map_err(|_| AssessmentFailure::Execution)?;
+            let permit = match self.release.acquire().await {
+                Ok(permit) => permit,
+                Err(_) => {
+                    return AssessmentAttempt::failure(
+                        AssessmentFailure::Execution,
+                        ProviderExchange::default(),
+                    );
+                }
+            };
             permit.forget();
-            Assessment::new(
+            match Assessment::new(
                 Intent::ALL
                     .into_iter()
                     .map(|intent| Observation {
@@ -184,8 +208,20 @@ impl Assessor for ControlledAssessor {
                     })
                     .collect(),
                 None,
-            )
-            .map_err(|_| AssessmentFailure::InvalidResponse)
+            ) {
+                Ok(assessment) => AssessmentAttempt::success(
+                    assessment,
+                    ProviderExchange {
+                        request_body: "controlled request".into(),
+                        response_body: Some("controlled response".into()),
+                        ..ProviderExchange::default()
+                    },
+                ),
+                Err(_) => AssessmentAttempt::failure(
+                    AssessmentFailure::InvalidResponse,
+                    ProviderExchange::default(),
+                ),
+            }
         })
     }
 }
@@ -241,7 +277,10 @@ async fn workflow_deadline_cancels_stalled_provider_and_releases_capacity() -> T
             ..
         })
     ));
-    assert_eq!(service.runs().await[0].state, RunState::Failed);
+    let failed = &service.runs().await[0];
+    assert_eq!(failed.state, RunState::Failed);
+    assert_eq!(failed.failure_code.as_deref(), Some("provider_timeout"));
+    assert!(failed.provider_exchange.is_none());
     assessor.release.add_permits(1);
     let next = service.submit("request".into()).await;
     assert!(next.is_ok());
@@ -313,7 +352,7 @@ fn workflow_and_domain_dependency_boundaries_stay_explicit() {
     for dependency in [
         "crate::jev",
         "crate::baseline",
-        "Assessor",
+        "assessment::Assessor",
         "tokio::spawn",
         ".plan(",
     ] {

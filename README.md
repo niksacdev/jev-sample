@@ -5,7 +5,7 @@ Rust based sample to demonstrate use of Jev model in FSI applications
 
 ## Project decisions
 
-Reassure explores autonomous insurance servicing, with separate customer,
+Claim of Thrones explores autonomous insurance servicing, with separate customer,
 employee and operator views. The first executable slice delegates a synthetic
 customer message from React to a Rust servicing coordinator, which assesses
 intents and prepares review-only tasks. Rust can use a keyword baseline or Jev.
@@ -24,22 +24,37 @@ npm ci --prefix web
 npm run dev --prefix web
 ```
 
-Open **http://127.0.0.1:5173**. The frontend proxies application requests to the
-loopback Rust API; it never calls models directly. Default mode is an explicitly
-limited keyword baseline. The customer screen prepares tasks; the employee
-screen reads them; the operator screen inspects real run metadata.
+Open **http://127.0.0.1:5173**. The frontend proxies application requests to the loopback Rust API; it never
+calls models directly. The customer screen can run the same message against
+Code (the limited keyword baseline) and Jev in parallel. Jev appears when its
+server-side key is configured. The LLM option remains disabled until its
+provider/model is selected. Each result stays separate; failures are not
+substituted with another provider's output.
 
-To experiment with Jev, stop the API and restart it with:
+Create the local environment file and fill it locally:
 
 ```sh
-REASSURE_ASSESSOR=jev cargo run --bin api --locked
+cp .env.example .env
 ```
 
-Set `TYPESAFE_API_KEY` in the server's environment first using your local secret
-manager or a non-echoing terminal prompt. Do not put it in frontend configuration,
-source, chat, or a command saved in shell history. The app does not load `.env`
-files. Missing/invalid configuration fails startup; provider failures never
-silently fall back to the baseline. Live calls may incur vendor charges.
+Add your `TYPESAFE_API_KEY` and a private `REASSURE_OPERATOR_KEY` of at least
+32 bytes to `.env`; run the API from the repository root so it loads that file.
+The operator key unlocks raw request/response inspection in the Operator view.
+The browser keeps the key only in memory, and the API never logs it. Do not put
+either key in chat, frontend configuration, source, or shell history. The file is
+ignored by Git. Jev is disabled if its key is absent or blank; a nonempty but
+invalid key will fail authentication at the vendor. Provider failures never silently fall
+back to Code. Live calls may incur vendor charges.
+
+Rust structured logs go to stderr. OpenTelemetry spans are exported locally to
+stdout and include the HTTP, application and Jev assessment spans. `RUST_BACKTRACE=1`
+enables Rust panic backtraces in the API process diagnostics. Narratives,
+credentials and raw provider bodies are excluded from logs and spans; raw exchanges
+are kept only in bounded process memory and returned by the authenticated operator
+endpoint. The Operator view also presents a sanitized per-run execution trace
+(admission, assessment and routing stages). Restart clears in-memory run data.
+Application-deadline and worker-panic failures have no retained raw exchange;
+their failure code and sanitized trace remain visible.
 
 Only submit synthetic data. Every message submission requires acknowledgement
 before potential external inference. No live inference was needed for tests.
@@ -51,9 +66,13 @@ metadata history is capped at 100 runs and lost on restart, and MCP, RAG,
 durable claims workflows and real customer systems are not implemented.
 The full-claims [design mockup](docs/design/intake-workbench.html) remains a
 separate simulation, not a representation of completed backend capabilities.
-The UI keeps preview disclosure in Rue's welcome and expandable preview details,
-not repeated in every status message. Natural servicing copy does not imply
-that prepared tasks have been executed or assigned to an employee.
+The UI explains the experiment and fictional-data requirement in expandable
+preview details. Customer-facing assessment results are descriptive and do not
+imply that an insurer action has been executed or assigned to an employee.
+The customer view identifies its assessment assistant as Northstar, animates its
+icon while a request is processing, and offers Geek mode to show sanitized
+execution-stage traces alongside each result. Raw provider payloads remain
+available only in the authenticated Operator view.
 
 ## Checks and Rust learning
 
@@ -125,7 +144,8 @@ caller disconnects. It is still process-local, not crash-durable.
 - [Harness working agreement](AGENTS.md)
 - [Engineering learning loop](docs/engineering-maintenance.md)
 - [Architecture decision records](docs/adr/README.md)
-- [Milestone task list](docs/task-list.md)
+- [Active tasks: GitHub issues](https://github.com/niksacdev/jev-sample/issues)
+- [Historical milestone task list (deprecated)](docs/task-list.md)
 
 Documents distinguish approved decisions from proposals. Work pauses for discussion
 after each logical milestone.

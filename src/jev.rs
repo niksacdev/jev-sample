@@ -2,10 +2,11 @@ use std::{collections::BTreeMap, time::Duration};
 
 use reqwest::{Client, header};
 use serde::Deserialize;
+use tracing::instrument;
 
 pub use crate::assessment::AssessmentFailure as Failure;
 use crate::{
-    assessment::{AssessmentFuture, Assessor, Provenance},
+    assessment::{AssessmentAttempt, AssessmentFuture, Assessor, Provenance, ProviderExchange},
     domain::{Assessment, Evidence, Message, Observation, Probability, TokenUsage},
     rubric::{QUESTIONS, VERSION},
 };
@@ -78,7 +79,8 @@ impl Jev {
         Ok(Self { client, endpoint })
     }
 
-    async fn evaluate(&self, message: &Message) -> Result<Assessment, Failure> {
+    #[instrument(skip_all, fields(assessor = "jev", model = MODEL))]
+    async fn evaluate(&self, message: &Message) -> AssessmentAttempt {
         let questions: BTreeMap<_, _> = QUESTIONS
             .iter()
             .map(|question| {
@@ -91,67 +93,102 @@ impl Jev {
                 )
             })
             .collect();
-        let mut response = self
+        let request_body = match serde_json::to_string(&Request {
+            model: MODEL,
+            state: message.as_str(),
+            questions,
+        }) {
+            Ok(body) => body,
+            Err(_) => {
+                return AssessmentAttempt::failure(Failure::Execution, ProviderExchange::default());
+            }
+        };
+        let mut exchange = ProviderExchange {
+            request_body: request_body.clone(),
+            ..ProviderExchange::default()
+        };
+        let mut response = match self
             .client
             .post(&self.endpoint)
-            .json(&Request {
-                model: MODEL,
-                state: message.as_str(),
-                questions,
-            })
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(request_body)
             .send()
             .await
-            .map_err(transport_failure)?;
-        match response.status().as_u16() {
-            200 => {}
-            401 | 403 => return Err(Failure::Authentication),
-            429 | 529 => return Err(Failure::RateLimited),
-            _ => return Err(Failure::Provider),
-        }
-        if response
-            .content_length()
-            .is_some_and(|size| size > MAX_RESPONSE as u64)
         {
-            return Err(Failure::ResponseTooLarge);
-        }
+            Ok(response) => response,
+            Err(error) => {
+                return AssessmentAttempt::failure(transport_failure(error), exchange);
+            }
+        };
+        let status = response.status().as_u16();
+        exchange.response_status = Some(status);
         let mut body = Vec::new();
-        while let Some(chunk) = response.chunk().await.map_err(transport_failure)? {
+        loop {
+            let chunk = match response.chunk().await {
+                Ok(Some(chunk)) => chunk,
+                Ok(None) => break,
+                Err(error) => {
+                    exchange.response_body = Some(String::from_utf8_lossy(&body).into_owned());
+                    return AssessmentAttempt::failure(transport_failure(error), exchange);
+                }
+            };
             if body.len() + chunk.len() > MAX_RESPONSE {
-                return Err(Failure::ResponseTooLarge);
+                body.extend_from_slice(&chunk[..MAX_RESPONSE.saturating_sub(body.len())]);
+                exchange.response_body = Some(String::from_utf8_lossy(&body).into_owned());
+                exchange.response_truncated = true;
+                return AssessmentAttempt::failure(Failure::ResponseTooLarge, exchange);
             }
             body.extend_from_slice(&chunk);
         }
-        let result: Response =
-            serde_json::from_slice(&body).map_err(|_| Failure::InvalidResponse)?;
+        exchange.response_body = Some(String::from_utf8_lossy(&body).into_owned());
+        if status != 200 {
+            let failure = match status {
+                401 | 403 => Failure::Authentication,
+                429 | 529 => Failure::RateLimited,
+                _ => Failure::Provider,
+            };
+            return AssessmentAttempt::failure(failure, exchange);
+        }
+        let result: Response = match serde_json::from_slice(&body) {
+            Ok(response) => response,
+            Err(_) => return AssessmentAttempt::failure(Failure::InvalidResponse, exchange),
+        };
         if result.model != MODEL || result.answers.len() != QUESTIONS.len() {
-            return Err(Failure::InvalidResponse);
+            return AssessmentAttempt::failure(Failure::InvalidResponse, exchange);
         }
         let observations = QUESTIONS
             .iter()
             .map(|question| {
-                let answer = result
-                    .answers
-                    .get(question.id)
-                    .ok_or(Failure::InvalidResponse)?;
+                let Some(answer) = result.answers.get(question.id) else {
+                    return Err(Failure::InvalidResponse);
+                };
                 if answer.kind != "noul" {
                     return Err(Failure::InvalidResponse);
                 }
-                let probability =
-                    Probability::new(answer.noul).map_err(|_| Failure::InvalidResponse)?;
+                let Ok(probability) = Probability::new(answer.noul) else {
+                    return Err(Failure::InvalidResponse);
+                };
                 Ok(Observation {
                     intent: question.intent,
                     evidence: Evidence::YesProbability(probability),
                 })
             })
-            .collect::<Result<Vec<_>, _>>()?;
-        Assessment::new(
+            .collect::<Result<Vec<_>, _>>();
+        let observations = match observations {
+            Ok(observations) => observations,
+            Err(failure) => return AssessmentAttempt::failure(failure, exchange),
+        };
+        let assessment = Assessment::new(
             observations,
             Some(TokenUsage {
                 input: result.usage.input_tokens,
                 output: result.usage.output_tokens,
             }),
-        )
-        .map_err(|_| Failure::InvalidResponse)
+        );
+        match assessment {
+            Ok(assessment) => AssessmentAttempt::success(assessment, exchange),
+            Err(_) => AssessmentAttempt::failure(Failure::InvalidResponse, exchange),
+        }
     }
 }
 

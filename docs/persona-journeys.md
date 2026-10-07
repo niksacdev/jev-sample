@@ -1,10 +1,11 @@
-# Reassure: persona journey specifications
+# Claim of Thrones: persona journey specifications
 
 Date: 2026-10-05. Status: design-review baseline, not production authority.
 The user accepted the three persona screens as a starting point.
 These requirements feed the [product spec](product-spec.md),
 [system design](system-design.md), contract modeling and acceptance tests.
-The [mockup](design/intake-workbench.html) is scripted; backend remains health-only.
+The [mockup](design/intake-workbench.html) is scripted. The backend implements
+review-only servicing assessment and provider comparison, not these full journeys.
 
 ## Shared journey rules
 
@@ -68,7 +69,7 @@ financial authority is independently verified, not inferred from employee role.
 
 | ID / scenario | Steps and agent behavior | Required exit / acceptance |
 | --- | --- | --- |
-| E-01 Acquire an exception | Employee opens assigned work, claims ownership with a version check; Rue presents reason, required decision, customer context and linked artifacts | One owner or explicit collaboration model; competing assignment conflicts visibly; source/guideline versions shown |
+| E-01 Acquire an exception | Employee opens assigned work, claims ownership with a version check; Maia presents reason, required decision, customer context and linked artifacts | One owner or explicit collaboration model; competing assignment conflicts visibly; source/guideline versions shown |
 | E-02 Investigate with agent chat | Employee asks evidence/policy/state questions; agent retrieves only authorized sources and references records; employee inspects documents and gaps | Answers distinguish facts, model suggestions and missing evidence. Chat cannot silently alter claim state or grant authority |
 | E-03 Resolve urgent/ambiguous intake | Employee arranges permitted specialist handling or requests customer clarification; customer alone supplies their response | Intervention and remaining work recorded; urgency is not medical diagnosis/dispatch; employee does not impersonate customer clarification |
 | E-04 Recover assessment failure | Employee sees failed attempts, enters authorized manual assessment or chooses approved recovery | Technical failure remains in lineage/metrics; manual assessment has actor/source/revision; retries obey budget and cannot erase failure |

@@ -1,15 +1,32 @@
-import type { CustomerMessage, CustomerReply, OperatorRun } from "./contracts";
+import type {
+  AssessorId,
+  AssessorOption,
+  CustomerMessage,
+  CustomerReply,
+  OperatorRun,
+  OperatorRunDetail,
+} from "./contracts";
 
-export async function sendMessage(message: string): Promise<CustomerReply> {
+export async function getAssessors(): Promise<AssessorOption[]> {
+  return request<AssessorOption[]>("/v1/assessors");
+}
+
+export async function sendMessage(message: string, assessor: AssessorId): Promise<CustomerReply> {
   return request<CustomerReply>("/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message } satisfies CustomerMessage),
+    body: JSON.stringify({ message, assessor } satisfies CustomerMessage),
   });
 }
 
 export async function getRuns(): Promise<OperatorRun[]> {
-  return request<OperatorRun[]>("/v1/operator/runs");
+  return request<OperatorRun[]>("/v1/employee/runs");
+}
+
+export async function getOperatorRuns(operatorKey: string): Promise<OperatorRunDetail[]> {
+  return request<OperatorRunDetail[]>("/v1/operator/runs", {
+    headers: { Authorization: `Bearer ${operatorKey}` },
+  });
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {

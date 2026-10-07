@@ -1,5 +1,13 @@
 # Milestone task list
 
+Status: **Deprecated as an active task plan on 2026-10-06.**
+Use [GitHub issues](https://github.com/niksacdev/jev-sample/issues) for current
+scope, acceptance criteria, progress, and follow-up work. Every PR must link its
+tracking issue under the [delivery policy](../engineering-standards.md#delivery).
+The entries below are a historical snapshot; their statuses and pause point are
+not current instructions. Unfinished entries require review before migration
+into issues.
+
 Updated: 2026-10-05. Pause for discussion after each logical milestone.
 Statuses describe decisions and work completed, not just document creation.
 

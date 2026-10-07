@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root=$(git rev-parse --show-toplevel)
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 mkdir -p "$root/target"
 scratch=$(mktemp -d "$root/target/git-hook-test.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT
