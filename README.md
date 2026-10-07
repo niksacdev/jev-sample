@@ -134,10 +134,10 @@ Once admitted, bounded work completes and records its outcome even if the
 caller disconnects. It is still process-local, not crash-durable.
 
 - [Jev capabilities and limitations](docs/jev-capabilities.md)
-- [Approved product scope](docs/product-scope.md)
-- [Product discovery draft and clickable mockup](docs/product-spec.md)
-- [Customer, employee and operator journey specifications](docs/persona-journeys.md)
-- [Approved metrics and targets](docs/metrics.md)
+- [Proposed product scope and customer problems](docs/product-scope.md)
+- [Proposed product requirements and acceptance](docs/product-spec.md)
+- [Persona jobs and reference journeys](docs/persona-journeys.md)
+- [Proposed full-claims scorecard and insurer/vendor economics](docs/metrics.md)
 - [Approved comparison design](docs/evaluation-design.md)
 - [Approved application architecture](docs/adr/0007-single-package-api-and-evaluation.md)
 - [Engineering standards](engineering-standards.md)

@@ -4,6 +4,31 @@ Status: design approved on 2026-10-05. Execution details listed below remain
 to be resolved before running the experiment.
 This document does not authorize paid API calls.
 
+## Approved intake-component scorecard
+
+This benchmark is separate from the holistic claims product scorecard in
+[metrics.md](metrics.md). These approved targets apply only to the defined intake
+experiment; they are not demonstrated results or full-claims acceptance gates.
+
+| Metric | Target | Definition |
+| --- | --- | --- |
+| Correct triages per analyst-hour | At least 20% improvement over manual triage | Controlled user exercise including review/correction time |
+| Final routing correctness | No reduction versus manual | Independently scored final decisions, with uncertainty reported |
+| Automatic routing precision | At least 95% | Correct automatic routes / all automatic routes |
+| Automation coverage | At least 50%, while meeting quality gates | Automatic routes / all attempted intakes |
+| Urgency escalation recall | At least 98% | Urgent cases flagged for expedited human review / all labeled urgent cases |
+| Ambiguity escalation recall | At least 95% | Labeled review-required cases escalated / all labeled review-required cases |
+| Response latency | p95 at most two seconds | Submission to routing/review result, including retries |
+| Technical failure rate | At most 1% | Failed or invalid evaluations / all attempted evaluations |
+| Technical failure routing | 100% visibly routed to review | Failures routed to review / all technical failures |
+
+The runnable app assesses servicing intents with review-only tasks, not this
+benchmark's incident category/urgency/ambiguity contracts. The structured-output
+LLM and evaluation CLI are absent. The benchmark remains unexecuted.
+Before execution, map required judgments/routes to actual contracts, establish
+labels, freeze settings and declare measurement boundaries. Tests and UI stories
+are not held-out evidence. No correctness-degradation margin is approved.
+
 ## Providers and common task
 
 Compare deterministic rules, Jev pinned to `jev-1.13.0`, and a versioned

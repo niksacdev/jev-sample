@@ -6,6 +6,11 @@ Inputs: [product vision](product-spec.md),
 [persona journeys](persona-journeys.md), and
 [interactive design](design/intake-workbench.html).
 
+Product acceptance is defined by the proposed R01-R15 requirements and S01-S12
+scenarios, with M01-M14 measuring quality, total effort and insurer/vendor value.
+The synthetic motor reference journey and holistic scorecard remain proposals;
+this architecture does not approve their scope, targets or consequential actions.
+
 ## 1. Purpose and architectural scope
 
 Claim of Thrones services an insurance claim from customer report through evidence
@@ -128,16 +133,22 @@ Domain code imports no transport, database or provider SDKs.
 
 The approved frontend is TypeScript/React. It submits customer messages and typed
 employee/operator commands to the Rust API and renders role-scoped results.
-It does not select models, construct provider questions, hold provider credentials,
-or invoke Jev/MCP servers directly. Rust coordinates agent tasks and calls Jev.
-Model allocation and deterministic tool selection are server-side decisions.
-Provider provenance is exposed only through the operator inspection projection;
-customer responses describe work and outcomes without provider-specific fields.
+It holds no provider credentials, constructs no provider questions and does not
+invoke Jev/MCP servers directly. In the local comparison sample, users select
+configured assessor IDs; the browser submits the same message separately and
+concurrently for each selected assessor. This is a comparison control, not the
+target claims product's model-allocation policy. Rust validates selection and
+coordinates execution. The sample exposes provider identity in comparison
+results; raw exchanges require operator authentication. Target customer responses
+describe work and outcomes without provider-specific fields.
 The implemented Rust path follows
 [ADR 0011](adr/0011-provider-port-and-servicing-use-case.md): HTTP maps transport,
 `ServicingService` coordinates execution through an injected `Assessor`, adapters
 produce validated domain evidence, and an injected routing policy prepares tasks.
-Provider choice lives only in the composition root. Policy thresholds live in
+Available provider implementations are wired in the composition root; the
+sample's per-request selection follows
+[ADR 0013](adr/0013-provider-comparison-and-authenticated-inspection.md).
+Policy thresholds live in
 validated versioned configuration, not provider code or prompts.
 
 ### Customer and policy MCP boundaries
@@ -498,17 +509,20 @@ intake targets cannot substantiate end-to-end value.
 The [persona coverage matrix](persona-journeys.md#architecture-and-contract-coverage-matrix)
 is the acceptance checklist for this architecture.
 
-| Journey families | Architectural coverage |
-| --- | --- |
-| C-01/C-07 | Durable creation, deduplication, session resume, authorized status and write-failure recovery |
-| C-02/E-02/E-03 | Evidence provenance, clarification ownership, immutable revisions and reassessment |
-| C-03/E-01/E-06 | Owned exceptions, assignment conflicts, authority gates and verified resume |
-| E-04/O-03 | Typed failures, attempts, budgets, manual recovery and actionable dependency signals |
-| C-04/E-05/E-07 | Versioned proposals, deterministic amounts, distinct authority/customer records and conflict/rejection |
-| C-05/O-04 | Authorized execution, stable identity, reconciliation, cancellation boundaries and closure gates |
-| C-06/E-07 | Retained history, review ownership and reopening |
-| O-01/O-02/O-06 | Fleet/run separation, authorized lineage, version/freshness/redaction and audit |
-| O-05 | Comparable quality-adjusted baseline, declared costs/denominators and no double-counting |
+| Scenarios | Requirements | Architectural coverage |
+| --- | --- | --- |
+| S01 | R01-R07, R10 | Durable receipt, evidence, coverage/valuation, authorized proposal/response, confirmed fulfilment and closure gates |
+| S02 | R02, R08, R09 | Evidence provenance, clarification ownership, immutable revisions and reassessment |
+| S03 | R01, R08 | Preserved report, urgent/specialist routing, acknowledged handoff and retained ownership |
+| S04 | R03, R05, R06, R10 | Reviewable coverage basis, verified decision authority, explained response and recourse |
+| S05 | R04-R06, R09 | Deterministic valuation, versioned proposals, distinct authority/customer records and rejection/conflict handling |
+| S06 | R03, R05, R06, R10 | Authorized no-payment basis, explanation without coerced agreement and review-preserving closure |
+| S07 | R07, R08, R10 | Stable execution identity, containment, reconciliation, cancellation boundaries and closure gates |
+| S08 | R07, R09, R10 | Retained history, review ownership, reopening and freshly authorized financial adjustment |
+| S09 | R01, R09 | Deduplication, session resume, concurrent-write conflict and write-failure recovery |
+| S10 | R02, R08, R09, R11 | Source integrity, typed failures, attempt budgets, manual recovery and actionable dependency signals |
+| S11 | R06, R08, R11 | Accessible status/recourse, scoped lineage, freshness/redaction and explicit telemetry gaps |
+| S12 | R12-R15 | Comparable quality-adjusted baseline, declared costs/denominators, insurer/vendor viability and no double-counting |
 
 Before Rust contracts, decide supported claims/jurisdiction, authority/action
 matrix, identity/delegation, authoritative insurer integration, required evidence,
