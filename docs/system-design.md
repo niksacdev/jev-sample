@@ -1,14 +1,19 @@
-# Claim of Thrones system architecture
+# ZipClaim system architecture
 
-Status: proposed architecture for design review.
-Date: 2026-10-05.
+Status: implemented local AI-native foundation; full-insurer target remains proposed.
+Updated: 2026-10-08.
 Inputs: [product vision](product-spec.md),
 [persona journeys](persona-journeys.md), and
 [interactive design](design/intake-workbench.html).
 
+Product acceptance is defined by the proposed R01-R15 requirements and S01-S12
+scenarios, with M01-M14 measuring quality, total effort and insurer/vendor value.
+The synthetic motor reference journey and holistic scorecard remain proposals;
+this architecture does not approve their scope, targets or consequential actions.
+
 ## 1. Purpose and architectural scope
 
-Claim of Thrones services an insurance claim from customer report through evidence
+ZipClaim services an insurance claim from customer report through evidence
 collection, policy review, loss assessment, resolution, authorized payment or
 service fulfilment, and explained closure. Autonomous agents perform permitted
 work; customers and employees intervene when a defined gate requires them.
@@ -22,19 +27,96 @@ The architecture must support three experiences:
 | Employee workbench | Resolve assigned exceptions using customer context, source evidence, current guidelines and verified authority |
 | Operator dashboard | Inspect fleet/run states, dependencies and lineage; coordinate authorized recovery; measure quality and economics |
 
-The executable sample implements a React UI, local Rust servicing coordinator,
-keyword/Jev intent assessment, review-only task planning and process-local
-operator inspection. See [ADR 0010](adr/0010-react-ui-and-rust-agent-boundary.md)
-for implemented boundaries and [README](../README.md) for runnable commands.
+The executable sample now implements a React persona shell and a bounded Rust
+AI-native runtime: OpenAI Responses proposes a base plan/reply; deterministic
+read-only tools provide synthetic facts; an injected decision provider evaluates
+atomic judgments; versioned code-owned gates pause for clarification or employee
+review. Private SQLite records preserve admissions, plan revisions and events.
+See [ADR 0016](adr/0016-bounded-agent-workflows-and-durable-comparisons.md) and
+[ADR 0017](adr/0017-zipclaim-persona-journeys.md) for current boundaries,
+[ADR 0010](adr/0010-react-ui-and-rust-agent-boundary.md) for the retained
+legacy lab, and [README](../README.md) for runnable commands.
 The original HTML design still simulates full claims workflows.
 This target architecture is not deployment authorization or approval of
 autonomous financial decisions. Supported claim types, jurisdiction, legal
 authority and action limits must be agreed before implementation.
 
 The accepted [single-package ADR](adr/0007-single-package-api-and-evaluation.md)
-provides the Rust foundation. Durable storage, agent execution, background work
-and external financial integration require new decisions/ADRs before they are
-introduced. Logical components below do not imply separate microservices.
+provides the Rust foundation. ADR0016 authorizes only bounded synthetic execution
+and local SQLite, not the external financial integrations proposed below.
+Logical components below do not imply separate microservices.
+
+### Current system slice and delivery order
+
+```mermaid
+flowchart LR
+    Customer[Customer message and visible base plan] --> Submit[POST /v1/workflows]
+    Submit --> Runtime[Rust bounded workflow runtime]
+    Runtime --> Planner[OpenAI Responses: base plan, replan, reply]
+    Runtime --> Tools[Allowlisted read-only synthetic tools]
+    Runtime --> Decision[DecisionProvider: Code / Jev / OpenAI Decisions]
+    Decision --> Policy[Versioned deterministic gates]
+    Policy --> Runtime
+    Runtime --> Store[(Private SQLite: admissions, revisions, events)]
+    Employee[Employee paused-journey view] --> Auth[Server-owned operator authorization]
+    Operator[Operator matched-provider evidence] --> Auth
+    Auth --> Inspect[GET /v1/operator/workflows]
+    Store --> Inspect
+    Auth --> Resume[POST /v1/operator/workflows/id/resume]
+    Resume --> Runtime
+```
+
+| Surface | Implemented responsibility | Boundary / remaining gap |
+| --- | --- | --- |
+| Customer | Synthetic message, vendor consent, provider selection, public plan/status/reply | Explicit OpenAI configuration required. Customer-scoped identity/resume and real claims absent |
+| Employee | Authenticated paused runs, relevant evidence, revision-bound clarification/review | Local shared-key authorization, not assignment or insurer authority |
+| Operator | Authenticated durable comparisons, exact input/question identities, provenance, failures, usage/latency | Agreement/completion are not accuracy. Fleet operations, independent labels, human effort and finance feeds absent |
+| Assessment lab | Original keyword/Jev intent experiment and collapsible legacy inspection | Additive compatibility; not agent planning or actual insurer servicing |
+
+Geek Mode is a testing-focused neon view with the original ZipClaim logo: it hides marketing and brings the
+message console to the top. Configuration and recorded snapshots sit alongside
+authenticated xterm terminals streaming actual redacted tracing events through
+`GET /v1/operator/telemetry`. This diagnostic process ring is bounded separately
+from SQLite and does not establish durable audit capture or measurement completeness.
+Live model logs identify the actual actor/model at plan, reply and decision stages;
+no shell, narratives or raw HTTP bodies are forwarded. Authorization is required
+in every persona; mode changes clear and abort protected streams.
+See [ADR0018](adr/0018-live-instrumentation-and-session-preview-agreement.md)
+for bounds and component choice.
+
+The top Experimental Preview notice centralizes limitations and configured-provider
+disclosure. Data Protection acknowledgement is shared across submission surfaces
+for one browser-tab session and persisted as a versioned boolean only, never
+claim input or credentials. This is distinct from runtime authority or authentication.
+The Customer setup action **Agree and save** incorporates this acknowledgement.
+Missing OpenAI/Jev connections are constructed and installed as one memory-only
+`OnceLock` bundle, preserving startup adapters and their provenance. Masked
+ZipClaim token/API-key fields and an explicit OpenAI model-name textbox collect
+only missing configuration. A fresh options GET after save must confirm both
+connections before submission unlocks; no inference or vendor credential check
+is implied. Refresh failure preserves the draft and disabled submission.
+See [ADR0019](adr/0019-guided-memory-only-planner-setup.md).
+
+One shared component retains the customer's public result while switching roles.
+Persona changes clear protected keys, records and review drafts, and invalidate
+late requests. Protected inspection/resume is still authorized by Rust, never
+by the tab. Resuming another comparison must not replace the customer's journey.
+All progression highlights derive from observed lifecycle stages rather than
+assuming a returned result means success.
+
+The methodical implementation checklist lives on
+[issue 17](https://github.com/niksacdev/zipclaim/issues/17), with the runtime on
+[issue 16](https://github.com/niksacdev/zipclaim/issues/16) and product foundations on
+[issue 15](https://github.com/niksacdev/zipclaim/issues/15): agree boundaries ->
+brand tokens/original assets and persona integration -> reconcile architecture
+and measurement claims -> offline regression and responsive inspection ->
+candidate review/publication only within delivery authorization.
+
+The remaining sections describe the **full-insurer target**, not features made
+real by the synthetic runtime. Production identity/authority must precede
+customer/employee integration; authoritative insurer facts precede consequential
+decisions; confirmed fulfilment and reconciliation precede closure; independent
+quality, effort and finance sources precede business-value claims.
 
 ## 2. Architectural principles
 
@@ -63,7 +145,7 @@ flowchart LR
     CX --> Edge[Authenticated application boundary]
     EX --> Edge
     OX --> Edge
-    Edge --> App[Claim of Thrones application]
+    Edge --> App[ZipClaim application]
     IdP[Identity provider] --> Edge
     App --> Policy[Authoritative policy and endorsements]
     App --> Evidence[Document and inspection sources]
@@ -73,7 +155,7 @@ flowchart LR
     App --> Signals[Operational telemetry and controlled audit]
 ```
 
-Claim of Thrones is authoritative for its workflow, intents and artifact references.
+ZipClaim is authoritative for its workflow, intents and artifact references.
 The insurer remains authoritative for policy, eligibility/decision authority and
 claims records as assigned by integration contracts. Payment/fulfilment systems
 are authoritative for external execution confirmations.
@@ -87,7 +169,7 @@ flowchart TB
     UI[Three persona applications] --> API[Rust HTTP API and authorized queries]
     API --> WF[Durable workflow and authority engine]
     API --> Session[Conversation and task coordination]
-    Session --> Agents[Scoped agent runtime: Maia and specialist roles]
+    Session --> Agents[Scoped agent runtime: ZipClaim agent and specialist roles]
     Agents --> LLM[Model gateway and bounded inference]
     Agents --> MCP[MCP client]
     MCP --> Tools[Allowlisted MCP tool servers]
@@ -128,16 +210,22 @@ Domain code imports no transport, database or provider SDKs.
 
 The approved frontend is TypeScript/React. It submits customer messages and typed
 employee/operator commands to the Rust API and renders role-scoped results.
-It does not select models, construct provider questions, hold provider credentials,
-or invoke Jev/MCP servers directly. Rust coordinates agent tasks and calls Jev.
-Model allocation and deterministic tool selection are server-side decisions.
-Provider provenance is exposed only through the operator inspection projection;
-customer responses describe work and outcomes without provider-specific fields.
+It holds no provider credentials, constructs no provider questions and does not
+invoke Jev/MCP servers directly. In the local comparison sample, users select
+configured assessor IDs; the browser submits the same message separately and
+concurrently for each selected assessor. This is a comparison control, not the
+target claims product's model-allocation policy. Rust validates selection and
+coordinates execution. The sample exposes provider identity in comparison
+results; raw exchanges require operator authentication. Target customer responses
+describe work and outcomes without provider-specific fields.
 The implemented Rust path follows
 [ADR 0011](adr/0011-provider-port-and-servicing-use-case.md): HTTP maps transport,
 `ServicingService` coordinates execution through an injected `Assessor`, adapters
 produce validated domain evidence, and an injected routing policy prepares tasks.
-Provider choice lives only in the composition root. Policy thresholds live in
+Available provider implementations are wired in the composition root; the
+sample's per-request selection follows
+[ADR 0013](adr/0013-provider-comparison-and-authenticated-inspection.md).
+Policy thresholds live in
 validated versioned configuration, not provider code or prompts.
 
 ### Customer and policy MCP boundaries
@@ -170,9 +258,46 @@ change the basis of an existing decision.
 
 ## 5. Agent responsibilities and model allocation
 
+### Planner, runtime and decision-provider separation
+
+The conversational agent uses OpenAI Responses to formulate a base plan and
+choose the next supported tool or judgment task. Observed tool results and human
+responses can change its plan. The runtime owns versioned task state, bounded
+execution, dependency validation, durable evidence and recovery, not semantic
+intent routing disguised as agent planning.
+
+`DecisionProvider` is a separate injectable capability: evidence snapshot plus
+typed predicate/choice/score questions produces typed judgments and probability
+semantics. Jev translates these into System One state/questions; an OpenAI
+Decisions adapter translates them into input/questions and named answers.
+Neither provider generates arbitrary chat explanations or confers permission.
+The legacy `Assessor` experiment remains explicitly separate.
+
+Deterministic tools retrieve synthetic records and perform exact checks without
+model inference. The planner has an allowlisted tool vocabulary and cannot
+introduce arbitrary endpoints, commands, policy overrides or financial actions.
+Code verifies tool arguments, prerequisites, authority and bounded work before
+execution. An LLM explains observed results, not invented decision-model reasoning.
+Question/provider-specific thresholds need domain calibration before production
+use; no model's self-reported confidence substitutes for provider probabilities.
+
+SQLite is the user-selected local evidence store for this milestone. Its reviewed
+ADR must cover transactions, restart/interruption behavior, bounded retention,
+file permissions and authenticated inspection. Keep synthetic narrative and
+provider evidence out of ordinary logs/spans; protect records at rest and through
+the API. Local shared-key access is not production identity or tenant isolation.
+
+Comparison records freeze the query and base plan; decision evidence identities
+distinguish matched question/context from divergent continuations. Events join
+comparison, workflow, task and provider attempt, preserving schema/plan/question/
+policy/model versions, outcome, timing and available usage. A failed comparison
+member remains visible without replacing its result with another provider.
+Restart must preserve completed records and explicitly mark interrupted work,
+not fabricate completion or silently resend external actions.
+
 | Logical agent | Task / inputs -> outputs | Authority and model role |
 | --- | --- | --- |
-| Servicing / Maia | Customer conversation and claim state -> scoped tasks, status explanations, requests for intervention | Conversational LLM proposed; cannot approve coverage/payment or invent completion |
+| Servicing / ZipClaim agent | Customer conversation and claim state -> scoped tasks, status explanations, requests for intervention | Conversational LLM proposed; cannot approve coverage/payment or invent completion |
 | Evidence | Authorized sources and required facts -> provenance-bearing evidence bundle and identified gaps | Extraction/document model where needed; retrieved content is not instruction or ground truth |
 | Policy | Policy snapshot and evidence -> supported policy analysis and required decision gate | Deterministic policy checks and authorized judgement; model assistance does not establish entitlement |
 | Assessment | Incident/evidence and inspection -> bounded judgments and supported loss calculation | Jev candidate for category/urgency/ambiguity; other task-specific models as justified; amounts computed deterministically |
@@ -182,7 +307,7 @@ change the basis of an existing decision.
 An agent role can have many run instances. Fleet counts group runs by role,
 version, environment and execution state; a single role badge is not a workload
 model. Agents do not freely delegate authority to one another.
-Maia's dependency plan is represented by durable tasks, not arbitrary peer chat.
+ZipClaim agent's dependency plan is represented by durable tasks, not arbitrary peer chat.
 
 Jev is called through its documented HTTP contract; it is not assumed to be an
 MCP server. Validate required answer IDs, labels, numerical bounds and
@@ -362,7 +487,7 @@ narratives by default.
 ```mermaid
 sequenceDiagram
     actor C as Customer
-    participant R as Maia and coordinator
+    participant R as ZipClaim agent and coordinator
     participant W as Rust workflow and durable store
     participant A as Scoped specialist agents
     participant T as Authorized tools and external sources
@@ -495,26 +620,52 @@ intake targets cannot substantiate end-to-end value.
 
 ## 12. Journey coverage and design gates
 
+### Measurement architecture acceptance
+
+Implement the [measurement delivery contract](metrics.md#measurement-delivery-contract)
+as part of each workflow slice. Capture business facts durably with state changes;
+operational traces remain diagnostic, not the authoritative claims ledger.
+The reviewed persistence decision must explain atomic capture, external-effect
+reconciliation, replay/deduplication, correction and late-arrival handling.
+This requirement does not select a broker, database or new service.
+
+Controlled adapters/imports bring independent audits, human-effort records,
+fulfilment confirmations and finance/commercial evidence into versioned
+calculations. Validate provenance, units, accounting periods and source totals;
+quarantine invalid imports with explicit errors rather than silently dropping them.
+Protected evidence references join claim/decision/attempt/contract populations.
+Tenant isolation and access/retention rules apply to evidence and derived results.
+
+Reproducible cohort calculations expose completeness, freshness, uncertainty and
+cutoff/restatement policy. Reconciliation against authoritative work inventory
+and external source totals detects capture gaps that events alone cannot reveal.
+Missing sources produce unavailable/estimated results, never success-shaped
+dashboards. Owner-approved freshness budgets and alert/recovery rules are
+prerequisites for operational metric claims.
+
 The [persona coverage matrix](persona-journeys.md#architecture-and-contract-coverage-matrix)
 is the acceptance checklist for this architecture.
 
-| Journey families | Architectural coverage |
-| --- | --- |
-| C-01/C-07 | Durable creation, deduplication, session resume, authorized status and write-failure recovery |
-| C-02/E-02/E-03 | Evidence provenance, clarification ownership, immutable revisions and reassessment |
-| C-03/E-01/E-06 | Owned exceptions, assignment conflicts, authority gates and verified resume |
-| E-04/O-03 | Typed failures, attempts, budgets, manual recovery and actionable dependency signals |
-| C-04/E-05/E-07 | Versioned proposals, deterministic amounts, distinct authority/customer records and conflict/rejection |
-| C-05/O-04 | Authorized execution, stable identity, reconciliation, cancellation boundaries and closure gates |
-| C-06/E-07 | Retained history, review ownership and reopening |
-| O-01/O-02/O-06 | Fleet/run separation, authorized lineage, version/freshness/redaction and audit |
-| O-05 | Comparable quality-adjusted baseline, declared costs/denominators and no double-counting |
+| Scenarios | Requirements | Architectural coverage |
+| --- | --- | --- |
+| S01 | R01-R07, R10 | Durable receipt, evidence, coverage/valuation, authorized proposal/response, confirmed fulfilment and closure gates |
+| S02 | R02, R08, R09 | Evidence provenance, clarification ownership, immutable revisions and reassessment |
+| S03 | R01, R08 | Preserved report, urgent/specialist routing, acknowledged handoff and retained ownership |
+| S04 | R03, R05, R06, R10 | Reviewable coverage basis, verified decision authority, explained response and recourse |
+| S05 | R04-R06, R09 | Deterministic valuation, versioned proposals, distinct authority/customer records and rejection/conflict handling |
+| S06 | R03, R05, R06, R10 | Authorized no-payment basis, explanation without coerced agreement and review-preserving closure |
+| S07 | R07, R08, R10 | Stable execution identity, containment, reconciliation, cancellation boundaries and closure gates |
+| S08 | R07, R09, R10 | Retained history, review ownership, reopening and freshly authorized financial adjustment |
+| S09 | R01, R09 | Deduplication, session resume, concurrent-write conflict and write-failure recovery |
+| S10 | R02, R08, R09, R11 | Source integrity, typed failures, attempt budgets, manual recovery and actionable dependency signals |
+| S11 | R06, R08, R11 | Accessible status/recourse, scoped lineage, freshness/redaction and explicit telemetry gaps |
+| S12 | R12-R15 | Comparable quality-adjusted baseline, declared costs/denominators, insurer/vendor viability and no double-counting |
 
 Before Rust contracts, decide supported claims/jurisdiction, authority/action
 matrix, identity/delegation, authoritative insurer integration, required evidence,
 financial execution/reconciliation, review rights and named exception ownership.
-Record consequential choices in ADRs; no target component is implemented by this
-document.
+Record consequential choices in ADRs; no full-insurer target component is
+implemented by this document. The current bounded slice above has its own accepted ADRs.
 
 Next produce compile-checked boundary DTOs/domain commands/tagged outcomes and
 paired JSON examples for the agreed slice—not empty success handlers.

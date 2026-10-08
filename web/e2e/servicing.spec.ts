@@ -1,31 +1,58 @@
 import { expect, test } from "@playwright/test";
 
-test("customer assessment displays Northstar and sanitized Geek mode traces", async ({ page }) => {
+test("customer assessment displays ZipClaim and sanitized Geek mode traces", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Claim of Thrones | Insurance support");
-  await expect(page.getByText("Northstar", { exact: true })).toBeVisible();
+  await expect(page).toHaveTitle("ZipClaim | File fast. Settle faster.");
+  await expect(page.getByRole("link", { name: "ZipClaim home" })).toBeVisible();
+  await page.getByRole("button", { name: "Assessment lab", exact: true }).click();
   await expect(page.getByRole("button", { name: "Assess request" })).toBeDisabled();
-  await page.getByRole("button", { name: "Geek mode: Off" }).click();
+  await page.getByRole("button", { name: "Geek Mode: Off" }).click();
   await expect(page.locator(".conversation")).toHaveClass(/geek-mode/);
-  await page.getByRole("checkbox", { name: /fictional information/ }).check();
+  await page.getByRole("checkbox", { name: /Experimental Preview/ }).click();
   await page.getByRole("button", { name: "Assess request" }).click();
   await expect(page.getByRole("heading", { name: "Assessment results" })).toBeVisible();
   await expect(page.getByText("This message may relate to the insurance areas listed below.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Execution trace" })).toBeVisible();
-  await expect(page.locator(".provider-result .execution-trace li")).toHaveCount(5);
+  await expect(page.getByRole("heading", { name: "code execution trace" })).toBeVisible();
+  const trace = page.getByLabel("code execution trace output");
+  await expect(trace).toContainText("request admitted");
+  await expect(trace).toContainText("assessment started");
+  await expect(trace).toContainText("assessment completed");
+  await expect(trace).toContainText("routing completed");
+  await expect(trace).toContainText("run completed");
+  await page.getByLabel("Live instrumentation ZipClaim token").fill("e2e-only-operator-key-not-for-production");
+  await page.getByRole("button", { name: "Connect live logs" }).click();
+  await expect(page.getByText("Connected · streaming backend events", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Live requests text transcript")).toContainText("http_request_received");
+  await expect(page.getByLabel("Live model calls text transcript")).toContainText("assessment_attempt_started");
+  await expect(page.getByLabel("Live model calls text transcript")).toContainText("assessment_attempt_completed");
+  await expect(page.getByLabel("Live model calls terminal").locator(".xterm")).toBeVisible();
+  await expect(page.getByLabel("Live execution log text transcript")).not.toContainText("e2e-only-operator-key");
+  await page.getByLabel("Your message", { exact: true }).fill("A second fictional billing request, private-test-marker.");
+  await expect(page.getByRole("button", { name: "Assess request" })).toBeEnabled();
+  await page.getByRole("button", { name: "Assess request" }).click();
+  await expect(page.getByRole("heading", { name: "Assessment results" })).toBeVisible();
+  const reference = await page.locator(".provider-result > small").textContent();
+  const runId = reference?.match(/run-\d+/)?.[0];
+  expect(runId).toBeTruthy();
+  await expect(page.getByLabel("Live model calls text transcript")).toContainText(runId!);
+  await expect(page.getByLabel("Live execution log text transcript")).not.toContainText("private-test-marker");
+  await page.getByRole("button", { name: "Disconnect and clear live logs" }).click();
+  await expect(page.getByLabel("Live execution log text transcript")).toHaveText("");
   await expect(page.locator("body")).not.toContainText("raw provider exchange");
   await page.getByRole("button", { name: "Employee", exact: true }).click();
+  await page.getByText("Assessment lab: legacy employee summaries", { exact: true }).click();
   await expect(page.getByRole("heading", { name: /run-.*review required/ }).first()).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Customer", exact: true }).click();
+  await page.getByRole("button", { name: "Assessment lab", exact: true }).click();
   await expect(page.getByRole("button", { name: "Assess request" })).toBeVisible();
   await page.screenshot({ path: "artifacts/customer-mobile.png", fullPage: true });
 });
 
 test("unknown input reaches Rust and requires clarification instead of fabricated tasks", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "General question", exact: true }).click();
-  await page.getByRole("checkbox", { name: /fictional information/ }).check();
+  await page.getByRole("button", { name: "Assessment lab", exact: true }).click();
+  await page.getByLabel("Your message", { exact: true }).fill("Hello, I need some help.");
+  await page.getByRole("checkbox", { name: /Experimental Preview/ }).click();
   await page.getByRole("button", { name: "Assess request" }).click();
   await expect(page.getByText(/We couldn't identify a specific insurance need/)).toBeVisible();
   await expect(page.locator(".provider-result .tasks li")).toHaveCount(0);

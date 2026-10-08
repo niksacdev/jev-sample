@@ -65,7 +65,33 @@ training.
 Use synthetic, non-sensitive fixtures initially. Do not submit credentials,
 private claim files, or real claimant information as evaluation content.
 
-## Official sources
+## Agent and decision-provider integration
+
+Research refreshed on 2026-10-07. TypeSafe's
+[function-calling cookbook](https://docs.typesafe.ai/cookbooks/function_calling)
+selects tools and closed-set arguments with typed questions. Its
+[building guidance](https://docs.typesafe.ai/concepts/how-to-build-with-system-one)
+keeps execution and deterministic checks in code; Jev is not an open-ended
+planning/chat agent. The [OpenRouter agent-tool-gating example](https://openrouter.ai/docs/cookbook/building-agents/gate-tool-calls-with-jev)
+combines an LLM-proposed call, narrow Jev predicates and approve/block/review
+branches. Cookbook thresholds are examples, not validated insurance policy.
+
+The [OpenAI Decisions API](https://developers.openai.com/api/docs/guides/decisions)
+is a separate public-beta endpoint, `POST /v1/decisions`, documenting predicate,
+choice and score questions. Its question/answer arrays and input formats differ
+from Jev's question/answer maps. OpenAI Responses
+[function calling](https://developers.openai.com/api/docs/guides/function-calling)
+supports the planning/conversational loop and tool arguments; it is not the
+Decisions endpoint. Keep adapters separate and explicitly report model/version
+and supported capabilities.
+
+Both providers return bounded judgments rather than a proof of correctness.
+Jev's Choice/Score confidence summarizes the returned distribution; Noul has no
+separate confidence field. Preserve probability of false as a confident negative,
+not uncertainty. Provider substitutions require held-out domain evaluation and
+separately justified thresholds, not schema similarity alone.
+
+## Official source index
 
 - [Documentation index](https://docs.typesafe.ai/llms.txt)
 - [API reference](https://docs.typesafe.ai/api)

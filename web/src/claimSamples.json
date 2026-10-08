@@ -1,0 +1,29 @@
+[
+  {
+    "id": "simple",
+    "label": "Simple Claim",
+    "questions": [
+      "A stone cracked my windshield yesterday. I need to get it replaced and claim the cost on my car insurance. Can you start the claim and check what I'd have to pay?",
+      "Someone hit my parked car and drove off. I have photos of the damage but no registration number. I need to get the car repaired. Please open a claim and tell me whether I need a police report.",
+      "A pipe burst in my kitchen last night and ruined the floor. The leak is fixed, but I can't use the kitchen. I want to claim for the repairs and arrange somewhere to stay if they're going to take a while."
+    ]
+  },
+  {
+    "id": "multiple",
+    "label": "Multiple Queries in One",
+    "questions": [
+      "My partner was in the ER over the weekend and I need to claim the bill. I also want to add them as a beneficiary on my life policy and check whether we can add extra cover for their condition. We're moving next week, so my address needs changing too. My premium is due Friday, but I won't be paid until Monday. Can you sort these out and see if the payment can wait without a fee?",
+      "I had a car accident this morning. Nobody was hurt, but the car won't start and I need it for work. Please open a claim, arrange towing, and check whether I can get a replacement car. I've also moved, so please update my address and check that my last premium payment went through.",
+      "I'm still waiting for payment on my hospital claim, and the hospital has sent a final reminder. Can you find out what's holding it up and get it resolved? I've changed my phone number, and I also need to check whether my children are still listed as beneficiaries on my life policy."
+    ]
+  },
+  {
+    "id": "complex",
+    "label": "Complex Ambiguous Claims",
+    "questions": [
+      "My basement is flooded and I need the water removed and the damage repaired. It happened after the storm, but the plumber says a pipe has been leaking too. Your claims team said flood damage isn't covered, while the plumber says this is a pipe claim. Can you review that and get someone out? I can't wait weeks for this to be sorted.",
+      "My friend crashed my car and I need it repaired. I said they could borrow it, but I've now found out they were doing paid deliveries. They say their insurance should pay; their insurer says to claim through mine. Can you work out who should handle this and get the repairs moving? I can't afford to pay twice.",
+      "You told me my hospital claim was paid, but the hospital says it hasn't received anything and is threatening to send the bill to collections. I've got two bills for what looks like the same visit, and the date on your payment letter doesn't match either one. Please check where the money went and resolve this before I'm charged again."
+    ]
+  }
+]

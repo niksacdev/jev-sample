@@ -2,7 +2,7 @@
 
 Date: 2026-10-06
 Status: Accepted
-Tracking issue: [#6](https://github.com/niksacdev/jev-sample/issues/6)
+Tracking issue: [#6](https://github.com/niksacdev/zipclaim/issues/6)
 
 ## Context
 

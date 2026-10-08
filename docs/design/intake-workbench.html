@@ -3,35 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claim of Thrones | Insurance support</title>
+<title>ZipClaim | Full-claims design simulation</title>
+<link rel="icon" type="image/png" href="../../web/public/zipclaim-icon.png">
 <script>
   (() => {
     const param = new URLSearchParams(window.location.search).get("scoutTheme");
     const theme =
-      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      param === "dark" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", theme);
   })();
 </script>
 <style>
 :root {
   color-scheme: light;
-  --cp-bg: #f7f4ef;
-  --cp-bg-elevated: #fcfbf8;
+  --cp-bg: #ffffff;
+  --cp-bg-elevated: #fffaf7;
   --cp-surface: #ffffff;
   --cp-surface-soft: #f5f5f5;
   --cp-border: #dedede;
   --cp-border-strong: #919191;
-  --cp-text: #242424;
+  --cp-text: #321748;
   --cp-text-muted: #5c5c5c;
   --cp-text-soft: #6f6f6f;
-  --cp-accent: #b11f4b;
-  --cp-accent-hover: #9a1a41;
-  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent: #a32664;
+  --cp-accent-hover: #84204f;
+  --cp-accent-soft: rgba(163, 38, 100, 0.07);
   --cp-accent-fg: #ffffff;
   --cp-success: #16a34a;
   --cp-danger: #dc2626;
   --cp-warning: #f59e0b;
-  --cp-link: #0078d4;
+  --cp-link: #7040a3;
   --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
   --cp-overlay: rgba(255, 255, 255, 0.8);
   --cp-panel: rgba(255, 255, 255, 0.86);
@@ -89,7 +90,7 @@ blockquote { margin: 12px 0; border-left: 3px solid var(--cp-border-strong); pad
 details { margin-top: 16px; } summary { cursor: pointer; color: var(--cp-link); }
 header { display:flex; align-items:center; justify-content:space-between; padding:20px 40px; }
 .brand { display:flex; align-items:center; gap:12px; }
-.mark { display:grid; place-items:center; width:40px; height:44px; background:var(--cp-accent); color:var(--cp-accent-fg); border-radius:16px 16px 24px 24px; font-size:24px; font-weight:700; }
+.mark { width:44px; height:44px; object-fit:cover; border-radius:12px; }
 .brand strong { font-size:24px; letter-spacing:-1px; } .brand small { display:block; font-size:12px; }
 main { max-width:1280px; padding:32px; }
 .intro { margin:0 0 28px; } .intro h1 { font-size:36px; letter-spacing:-1px; font-weight:650; }
@@ -97,7 +98,7 @@ main { max-width:1280px; padding:32px; }
 .workspace { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); gap:24px; align-items:start; }
 .chat-card { padding:0; overflow:hidden; }
 .chat-top { display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid var(--cp-border); }
-.avatar { flex-shrink:0; display:grid; place-items:center; width:36px; height:36px; border-radius:0.625rem; background:var(--cp-accent-soft); color:var(--cp-accent); font-weight:700; }
+.avatar { flex-shrink:0; display:grid; place-items:center; object-fit:cover; width:36px; height:36px; border-radius:0.625rem; background:var(--cp-accent-soft); color:var(--cp-accent); font-weight:700; }
 .chat-top h2 { margin:0; font-size:17px; } .chat-top small { font-size:12px; }
 #messages { padding:24px; height:400px; overflow:auto; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; }
 .message { max-width:88%; padding:16px 20px; border-radius:16px; background:var(--cp-surface-soft); animation:appear .25s ease-out; }
@@ -142,11 +143,11 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 </head>
 <body>
 <header>
-<div class="brand"><div class="mark" aria-hidden="true">C</div><div><strong>Claim of Thrones</strong><small>Insurance support for claims, policies and billing.</small></div></div>
+<div class="brand"><img class="mark" src="../../web/public/zipclaim-icon.png" alt=""><div><strong>ZipClaim</strong><small>File fast. Settle faster.</small></div></div>
 <span class="badge">Fictional insurer / design demo</span>
 </header>
 <main>
-<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>One conversation.<br>Your whole claim journey.</h1><p class="muted">Maia coordinates your agent team from first report to resolution. Follow the work, see the evidence, and know when a person is needed.</p></div>
+<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>One conversation.<br>Your whole claim journey.</h1><p class="muted">ZipClaim agent coordinates your agent team from first report to resolution. Follow the work, see the evidence, and know when a person is needed.</p></div>
 <div class="banner">End-to-end vision / scripted simulation. Synthetic policy, evidence, decisions and payment receipts; no live AI or real financial actions. Production authority and financial controls are not yet approved.</div>
 <div class="demo-control"><label for="scenario">Try a demo story</label>
 <select id="scenario"><option value="glass">Clear glass incident</option><option value="urgent">Collision with urgent cue</option><option value="mixed">Mixed / unclear incident</option><option value="failure">Assessment service failure</option></select></div>
@@ -159,12 +160,12 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 <div id="screen-customer">
 <div class="workspace">
 <section class="card chat-card" aria-label="Customer service conversation">
-<div class="chat-top"><div class="avatar" aria-hidden="true">M</div><div><h2>Maia, your servicing agent</h2><small>Insurance support / simulated conversation</small></div></div>
+<div class="chat-top"><img class="avatar" src="../../web/public/zipclaim-icon.png" alt=""><div><h2>ZipClaim, your servicing agent</h2><small>Insurance support / simulated conversation</small></div></div>
 <div id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 <form id="chat-form" class="composer">
 <label for="query">What happened?</label>
 <textarea id="query" maxlength="4000" required rows="3" aria-describedby="input-note"></textarea>
-<div class="composer-bottom"><small id="input-note">Selected stories have scripted analysis.<br>Changed text requests human review.</small><button id="submit" type="submit">Send to Maia &rarr;</button></div>
+<div class="composer-bottom"><small id="input-note">Selected stories have scripted analysis.<br>Changed text requests human review.</small><button id="submit" type="submit">Send to ZipClaim agent &rarr;</button></div>
 </form>
 </section>
 <aside>
@@ -174,7 +175,7 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 <div class="state-box"><h3 id="assessment-heading" role="status">Ready when you are</h3><div id="assessment"></div></div>
 <h3>Next action</h3>
 <div id="customer-action" role="status">No action needed yet.</div>
-<button id="customer-resolve" type="button" hidden>Respond to Maia</button>
+<button id="customer-resolve" type="button" hidden>Respond to ZipClaim agent</button>
 <h3>Claim outcome &amp; receipts</h3>
 <div id="record" role="status">No disposition yet.</div>
 <p class="muted"><small>All outcomes here are fictional. Urgency requests specialist attention, not emergency dispatch. Human approval appears when the simulated authority policy requires it.</small></p>
@@ -183,7 +184,7 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 </div>
 <section class="card">
 <h2>Your agent team, one accountable journey</h2>
-<p>Maia coordinates servicing, evidence, policy, loss assessment, resolution and payment agents. Each has a scoped responsibility and produces inspectable artifacts. These are proposed roles, not six deployed services.</p>
+<p>ZipClaim agent coordinates servicing, evidence, policy, loss assessment, resolution and payment agents. Each has a scoped responsibility and produces inspectable artifacts. These are proposed roles, not six deployed services.</p>
 <p>The value hypothesis is less customer chasing, less repeated evidence gathering and fewer routine human touches through claim resolution. Correct outcomes, disputes, exception effort and payment accuracy matter—not just completion speed.</p>
 <details><summary>Where Jev, Rust, and an LLM fit</summary>
 <p>Jev is a candidate for bounded category, urgency, and review-required judgments. A structured-output LLM and deterministic rules must be compared on the same task. Rust validates results and applies routing policy. No provider is proven better by this mockup.</p>
@@ -196,11 +197,11 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 <section id="screen-employee" hidden>
 <div class="intro"><span class="eyebrow">Human expertise where it matters</span><h2>Exception workbench</h2><p class="muted">Review the evidence, apply the guideline, and return a bounded decision to the agent.</p></div>
 <div class="workspace">
-<div class="card chat-card"><div class="chat-top"><div class="avatar">E</div><div><h2>Employee &amp; Maia</h2><small>Claims specialist / simulated identity</small></div></div>
+<div class="card chat-card"><div class="chat-top"><div class="avatar">E</div><div><h2>Employee &amp; ZipClaim agent</h2><small>Claims specialist / simulated identity</small></div></div>
 <div id="employee-messages" role="log" aria-live="polite"></div>
 <div class="composer"><div id="exception" role="status">No intervention requested.</div>
 <button id="resolve" type="button" hidden>Resolve exception and resume agent</button>
-<form id="employee-form"><label for="employee-query">Ask about this case</label><textarea id="employee-query" maxlength="2000" rows="2" placeholder="Ask Maia about evidence or authority..." required></textarea><button type="submit">Ask Maia</button></form>
+<form id="employee-form"><label for="employee-query">Ask about this case</label><textarea id="employee-query" maxlength="2000" rows="2" placeholder="Ask ZipClaim agent about evidence or authority..." required></textarea><button type="submit">Ask ZipClaim agent</button></form>
 <small>Chat cannot approve a payment. Use the explicit, revision-bound review action above. Responses are scripted.</small></div></div>
 <aside><section class="card"><h2>Customer &amp; claim context</h2><div id="customer-data"></div><h3>Original submission</h3><blockquote id="narrative"></blockquote></section>
 <section class="card"><h2>Applicable guidelines</h2><p>Demo guideline G-01 / version 1</p><ul><li>Validate evidence and exact proposal revision before signing.</li><li>Escalate urgency to a specialist; do not infer medical severity.</li><li>Clarification must come from the customer, not employee guesswork.</li><li>Technical failure remains recorded after manual resolution.</li><li>Customer response and reviewer authority are separate records.</li></ul><p class="muted"><small>Fictional procedure, not actual policy wording or legal guidance.</small></p></section></aside>
@@ -234,14 +235,14 @@ const stageLabels = ["Claim reported", "Details checked", "Incident understood",
 let financialGate = false;
 let touches = 0, latestState = "not_submitted";
 const agentSpecs = [
-  ["Servicing / Maia","Conversational LLM proposed","Authorized claim tools","received","handoff_accepted"],
+  ["Servicing / ZipClaim agent","Conversational LLM proposed","Authorized claim tools","received","handoff_accepted"],
   ["Evidence agent","Extraction LLM proposed","Document retrieval","evidence_gathered","evidence_gathered"],
   ["Policy agent","Model assistance + authoritative rules","Versioned policy source","coverage_reviewed","coverage_reviewed"],
   ["Assessment agent","Jev for bounded judgments; deterministic amounts","Assessment / inspection","assessing","loss_assessed"],
   ["Resolution agent","Explanation model + authority controls","Versioned offer / decision","resolution_ready","settlement_authorized"],
   ["Payment agent","Deterministic tool execution","Payment / reconciliation","payment_confirmed","payment_confirmed"]
 ];
-function employeeChat(text, sender = "Maia / case coordinator") {
+function employeeChat(text, sender = "ZipClaim agent / case coordinator") {
   const bubble = document.createElement("div"); bubble.className = "message";
   const label = document.createElement("strong"); label.textContent = sender;
   const body = document.createElement("p"); body.textContent = text;
@@ -270,7 +271,7 @@ function updateActions() {
   byId("customer-resolve").hidden = !customerTurn;
   byId("resolve").hidden = !paused || customerTurn || (active && active.key === "custom");
   byId("customer-resolve").textContent = financialGate === "customer" ? (active.key === "mixed" ? "Demo: acknowledge explanation" : "Demo: accept fictional $400 offer") : "Demo: confirm towing company has the car";
-  byId("customer-action").textContent = customerTurn ? "Maia needs your response below." : paused ? "An employee is reviewing this exception. Follow progress here; employee actions are in their workbench." : latestState === "claim_closed" ? "Journey complete in this simulation. Review remains available." : "The agent team is processing your claim; no routine approval needed.";
+  byId("customer-action").textContent = customerTurn ? "ZipClaim agent needs your response below." : paused ? "An employee is reviewing this exception. Follow progress here; employee actions are in their workbench." : latestState === "claim_closed" ? "Journey complete in this simulation. Review remains available." : "The agent team is processing your claim; no routine approval needed.";
   updateOperations();
 }
 function showScreen(name) {
@@ -295,7 +296,7 @@ byId("employee-form").addEventListener("submit", e => {
   employeeChat(`Scripted case summary: ${active ? active.id : "no case submitted"}, state ${latestState}. Inspect the artifacts and G-01 guideline. Chat does not grant authority or change workflow state.`);
   byId("employee-query").value = "";
 });
-function chat(text, sender = "Maia / agent") {
+function chat(text, sender = "ZipClaim agent / agent") {
   const bubble = document.createElement("div");
   bubble.className = `message ${sender === "You" ? "customer" : sender.includes("specialist") ? "human" : ""}`;
   const label = document.createElement("strong"); label.textContent = sender;
@@ -347,10 +348,10 @@ function reset() {
   byId("employee-messages").replaceChildren();
   byId("employee-query").value = "";
   byId("customer-data").textContent = `${item.id} / Alex Demo / fictional customer / policy DEMO-AUTO-01 / source revision r1. No verified real customer or policy.`;
-  employeeChat("No intervention yet. Maia will bring a structured exception here with its required action. Customer replies must occur on the customer screen.");
+  employeeChat("No intervention yet. ZipClaim agent will bring a structured exception here with its required action. Customer replies must occur on the customer screen.");
   byId("query").disabled = false;
   progress();
-  chat("Hi, I'm Maia, your claim-servicing agent. Tell me what happened. I'll coordinate the specialist agents, gather evidence, track policy review and resolution, and keep you updated through closure. If a decision needs a person, I'll bring them in. Everything in this demo is fictional.");
+  chat("Hi, I'm ZipClaim agent, your claim-servicing agent. Tell me what happened. I'll coordinate the specialist agents, gather evidence, track policy review and resolution, and keep you updated through closure. If a decision needs a person, I'll bring them in. Everything in this demo is fictional.");
   updateActions();
 }
 function advance() {
@@ -438,7 +439,7 @@ function advance() {
     event(state,"payment agent","authorized-resolution","payment-receipt","confirmed external receipt or explicit no-payment outcome");
     chat(active.key==="mixed"?"The reviewed no-payment outcome has been explained and acknowledged in this simulation. No funds were transferred.":"The fictional payment service returned a confirmation for the demo $400 payment. A request alone would not count as a completed payment.");
   } else if (state === "claim_closed") {
-    artifact("closure-record",{inputs:["authorized-resolution","payment-receipt"],status:"closed_in_simulation",reopen_channel:"request review through Maia",outcome:active.key==="mixed"?"reviewed_no_payment":"fictional_payment_confirmed"});
+    artifact("closure-record",{inputs:["authorized-resolution","payment-receipt"],status:"closed_in_simulation",reopen_channel:"request review through ZipClaim agent",outcome:active.key==="mixed"?"reviewed_no_payment":"fictional_payment_confirmed"});
     event(state,"servicing agent","authorized-resolution + payment-receipt","closure-record","outcome explained; no unresolved simulated work");
     byId("record").textContent = active.key==="mixed"?"Simulation complete: reviewed no-payment outcome. Explanation and review channel available.":"Simulation complete: fictional $400 payment confirmed and claim closed. No real money moved.";
     byId("exception").textContent = "No open simulated exceptions. You can request further review; closure does not remove history.";
@@ -469,7 +470,7 @@ function respond(role) {
   if (financialGate === true) {
     artifact("human-decision",{proposal:"resolution-proposal",actor:"authorized claims reviewer / simulated",result:"signed fixture outcome",version:1});
     event("human_review_recorded","authorized reviewer","resolution-proposal","human-decision","distinct from customer acceptance");
-    chat("I've reviewed and signed the fictional outcome. Maia will now ask for the customer's response.", "Claims specialist / simulated");
+    chat("I've reviewed and signed the fictional outcome. ZipClaim agent will now ask for the customer's response.", "Claims specialist / simulated");
     financialGate = "customer";
     byId("resolve").textContent = active.key==="mixed"?"Demo customer: acknowledge explanation":"Demo customer: accept fictional $400 offer";
     byId("exception").textContent = "Human review complete. Waiting for customer response; financial workflow remains paused.";
