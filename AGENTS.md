@@ -53,7 +53,29 @@ and native Git Cargo/npm hook exist; use docs/development.md for commands.
 The local health API, servicing coordinator, provider-comparison UI, Jev adapter,
 operator shared-key inspection and mocked contract tests exist.
 See README for runnable commands and limitations.
-No consequential claim workflow, MCP, production identity or durable storage exists yet.
+The additive AI-native workflow uses an OpenAI planner, swappable decision
+providers, private SQLite records and an authenticated comparison/resume dashboard.
+No consequential claim workflow, MCP or production identity exists yet. Both
+clarification and employee-review resumes require operator authorization locally;
+ordinary checks use offline mocks, never live keys.
+ZipClaim's default Customer view uses this AI-native journey. Employee filters
+paused workflows; Operator compares durable provider evidence. Assessment lab
+retains earlier classification and labelled legacy inspection. Persona switches
+clear protected state; they are not authorization. See ADR0017.
+Geek Mode embeds xterm and authenticated, bounded SSE tracing metadata, not an
+OS shell/log tail. Its neon testing view keeps the original logo and hides marketing. Data Protection
+acknowledgement lasts for the browser-tab session. See ADR0018; never route raw
+prompts, keys or environment values into live instrumentation.
+Missing planner configuration opens guided operator setup (ADR0019), not a
+dead-end error or dependency on Geek Mode. Preserve drafts and acknowledgement;
+provide explicit setup/refresh/retry recovery without automatic inference or
+credential persistence. Rust owns authority and one-time initialization;
+TypeScript presents recovery through generated contracts and tested UI states.
+Customer setup uses masked ZipClaim token/OpenAI/Jev credentials and an explicit
+model-name textbox. Agree and save incorporates consent; a fresh availability
+check must confirm both connections before submission unlocks. Runtime setup
+publishes missing connections atomically without replacing startup adapters;
+refresh recovery must not resend saved credentials or trigger inference.
 The [candidate-review runbook](docs/candidate-review.md), pre-committer profile,
 and Rust CI workflow are configured. Hosted CI passed for quality-gate commit
 e2278bf; each changed candidate needs its own checks. Native profile discovery

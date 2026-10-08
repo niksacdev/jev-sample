@@ -20,6 +20,10 @@ Read relevant accepted records before changing their affected behavior.
 | [0013](0013-provider-comparison-and-authenticated-inspection.md) | Accepted | Same-query provider choices, local operator authentication and OpenTelemetry inspection |
 | [0014](0014-issue-backed-pull-requests.md) | Accepted | GitHub issues track active work; every PR explicitly links its issue |
 | [0015](0015-product-architecture-feedback-loop.md) | Accepted | Bidirectional product-metric and architecture feedback through issues and PRs |
+| [0016](0016-bounded-agent-workflows-and-durable-comparisons.md) | Accepted | Bounded AI planner, typed decision gates and durable local synthetic comparisons |
+| [0017](0017-zipclaim-persona-journeys.md) | Accepted | ZipClaim original artwork and persona-aligned primary AI-native journey with protected-state isolation |
+| [0018](0018-live-instrumentation-and-session-preview-agreement.md) | Accepted | Bounded authenticated live terminal instrumentation, testing-focused Geek Mode and session-scoped preview agreement |
+| [0019](0019-guided-memory-only-planner-setup.md) | Accepted | Authenticated memory-only planner setup and guided recovery without losing drafts or repeating inference |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,

@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Claim of Thrones | Insurance support</title>
-    <link rel="icon" type="image/svg+xml" href="/northstar.svg" />
+    <title>ZipClaim | File fast. Settle faster.</title>
+    <meta name="description" content="ZipClaim: AI-native insurance support. Plan the work, follow decisions, and stay in control. Synthetic preview." />
+    <link rel="icon" type="image/png" href="/zipclaim-icon.png" />
     <script>
       (() => {
         const param = new URLSearchParams(window.location.search).get("scoutTheme");
         const theme =
-          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+          param === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
       })();
     </script>

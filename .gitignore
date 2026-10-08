@@ -12,5 +12,8 @@ coverage/
 .env.*
 !.env.example
 
+# Protected local workflow journal and SQLite sidecars.
+.local/
+
 # OS artifacts.
 .DS_Store

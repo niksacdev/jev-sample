@@ -1,5 +1,5 @@
 {
-  "name": "reassure-ui",
+  "name": "zipclaim-ui",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,6 +12,8 @@
     "contracts": "cd .. && cargo run --bin export-contracts --locked > web/src/contracts.ts.tmp && mv web/src/contracts.ts.tmp web/src/contracts.ts"
   },
   "dependencies": {
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

@@ -5,6 +5,12 @@ import type {
   CustomerReply,
   OperatorRun,
   OperatorRunDetail,
+  WorkflowOptions,
+  WorkflowSubmission,
+  WorkflowComparison,
+  WorkflowResume,
+  OperatorWorkflow,
+  PlannerSetup,
 } from "./contracts";
 
 export async function getAssessors(): Promise<AssessorOption[]> {
@@ -29,10 +35,38 @@ export async function getOperatorRuns(operatorKey: string): Promise<OperatorRunD
   });
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export function getWorkflowOptions(): Promise<WorkflowOptions> {
+  return request("/v1/workflows/options");
+}
+
+export function configurePlanner(input: PlannerSetup, operatorKey: string): Promise<WorkflowOptions> {
+  return request("/v1/operator/workflows/setup", {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${operatorKey}` },
+    body: JSON.stringify(input), cache: "no-store",
+  });
+}
+
+export function submitWorkflow(input: WorkflowSubmission): Promise<WorkflowComparison> {
+  return request("/v1/workflows", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input),
+  }, 125000);
+}
+
+export function getWorkflowDetails(key: string): Promise<OperatorWorkflow[]> {
+  return request("/v1/operator/workflows", { headers: { Authorization: `Bearer ${key}` } });
+}
+
+export function resumeWorkflow(id: string, input: WorkflowResume, key: string): Promise<WorkflowComparison> {
+  return request(`/v1/operator/workflows/${encodeURIComponent(id)}/resume`, {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify(input),
+  }, 125000);
+}
+
+async function request<T>(url: string, init?: RequestInit, timeout = 20000): Promise<T> {
   const response = await fetch(url, {
     ...init,
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(timeout),
   });
   if (!response.ok) {
     // Treat errors as untrusted input; never show arbitrary backend/provider HTML.

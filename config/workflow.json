@@ -1,0 +1,18 @@
+{
+  "version": "synthetic-workflow-1",
+  "max_tasks": 8,
+  "max_steps": 24,
+  "deadline_ms": 45000,
+  "max_comparisons": 200,
+  "max_storage_bytes": 8388608,
+  "max_concurrent": 2,
+  "rules": [
+    {"provider":"code","question_id":"synthetic_complete","min_probability":0.9,"min_confidence":null},
+    {"provider":"jev","question_id":"synthetic_complete","min_probability":0.9,"min_confidence":null},
+    {"provider":"openai","question_id":"synthetic_complete","min_probability":0.9,"min_confidence":null},
+    {"provider":"jev","question_id":"synthetic_route","min_probability":0.9,"min_confidence":0.8},
+    {"provider":"openai","question_id":"synthetic_route","min_probability":0.9,"min_confidence":null},
+    {"provider":"jev","question_id":"synthetic_priority","min_probability":0.9,"min_confidence":0.8},
+    {"provider":"openai","question_id":"synthetic_priority","min_probability":0.9,"min_confidence":null}
+  ]
+}

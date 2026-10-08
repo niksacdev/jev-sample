@@ -14,6 +14,9 @@ ts-rs = "12.0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json"] }
 dotenvy = "0.15.7"
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+rusqlite = { version = "0.38", features = ["bundled"] }
+sha2 = "0.10"
 subtle = "2.6.1"
 tracing-opentelemetry = "0.34.0"
 opentelemetry = { version = "0.33.0", default-features = false, features = ["trace"] }

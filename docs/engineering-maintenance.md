@@ -39,3 +39,15 @@ and reruns applicable checks. Later reviews assess whether the correction helped
 Git hooks remain bypassable. Rust CI and explicit separate-context pre-committer
 review are configured in the [candidate-review runbook](candidate-review.md);
 they do not automate learning analysis. No hosted AI or Codex hook exists.
+
+## Accepted application lesson: guided recovery (2026-10-08)
+
+The user rejected missing-configuration messaging that disabled submission and
+sent customers to Geek Mode with no setup interaction. They explicitly requested
+graceful recovery and memory-only credential setup. Assessment: missing UI
+recovery behavior/enforcement, not a reason to weaken typed failures or authority.
+[ADR0019](adr/0019-guided-memory-only-planner-setup.md) records the bounded remedy;
+AGENTS contains scoped guidance accepted by this user direction. Rust and
+TypeScript regressions exercise setup, failure categories, draft preservation,
+secret isolation and explicit retry. No standard amendment or automated learning
+hook is claimed. Owner niksacdev assesses the lesson at the first setup walkthrough.

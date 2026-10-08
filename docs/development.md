@@ -70,6 +70,71 @@ remains a separate pending integration.
 
 ## Integration tests
 
+The additive `src/workflow/` slice uses an object-safe `Planner` for Responses
+planning/replies and a separate `DecisionProvider` for bounded judgments.
+`planner.rs` validates the allowlisted DAG; `decision.rs` translates vendor
+protocols and validates results; `policy.rs` owns confidence gates;
+`service.rs` owns admission, bounded execution, per-provider continuation and
+grounded replies; `store.rs` serializes protected SQLite transactions through
+`spawn_blocking`. `http.rs` exposes additive routes, not provider-specific logic.
+`src/contracts.rs` includes the workflow declarations in the single TS exporter.
+
+```sh
+cargo test --test agent_workflow --locked
+npm test --prefix web -- src/WorkflowConsole.test.tsx src/WorkflowEvidence.test.tsx
+```
+
+`GET /v1/workflows/options` reports configuration without keys. Submit one shared
+plan with `POST /v1/workflows` using `message`, unique `providers` (`code`, `jev`,
+`openai`) and a unique `client_request_id`. Identical resubmissions observe the
+durable state; conflicting reuse is rejected. Protected
+`GET /v1/operator/workflows` lists evidence; authenticated
+`POST /v1/operator/workflows/{comparison_id}/resume` takes `run_id`, a new
+`client_request_id`, `expected_plan_id`, `expected_task_id`, `message` and
+`employee_review`. The expected plan revision and paused task must still match;
+stale tabs cannot review a newer task. Both resume kinds require
+the local operator key. This deliberate preview restriction is not a production
+customer-session system. No completed, failed or interrupted run is blindly replayed.
+
+Production composition fixes vendor URLs. Test constructors accept loopback
+mocks only. E2E explicitly blanks both vendor keys and both OpenAI model settings
+and uses a separate `.local/e2e-workflows.sqlite3` so `.env` cannot activate paid
+inference. Never copy a production key into a test environment.
+See README and ADR 0016 for persistence permissions, retention and limitations.
+
+Geek Mode connects an authenticated SSE diagnostic stream at
+`GET /v1/operator/telemetry`. `src/telemetry.rs` is a tracing layer, not a stdout
+tailer: only allowlisted events/fields reach its 256-entry ring. Four streams and
+15-minute sessions are enforced; lag frames are explicit. `web/src/liveTelemetry.ts`
+validates/bounds the stream; `LiveLogs` aborts and clears data on unmount; `TerminalScreen`
+embeds pinned official xterm/FitAddon with no stdin or shell and strips control
+characters. Use dummy keys for tests, never browser test fixtures with live secrets.
+
+```sh
+cargo test --test live_telemetry --locked
+cargo test --test live_workflow_instrumentation --locked
+npm test --prefix web -- src/liveTelemetry.test.ts src/LiveLogs.test.tsx
+```
+
+The Data Protection acknowledgement applies across Customer/Assessment lab and
+refreshes for one browser-tab session; storage failure is explicit. Changing a
+message/provider does not reset it. Ordinary E2E uses click (not check) on the
+agreement because acceptance replaces the checkbox with completed status.
+
+`POST /v1/operator/workflows/setup` takes `api_key`, `model` and `jev_api_key` under the existing
+operator Bearer authorization and loopback-origin boundary. It initializes only
+missing planner/Jev connections atomically, once per API process, with no disk/browser credential
+persistence and no model call. Concurrent or repeated setup returns a conflict;
+refresh options rather than retrying automatically. The panel preserves the
+message and clears password fields after success/failure. Use empty strings for
+already configured connections; replacement credentials are rejected. Startup
+connections remain immutable. **Agree and save** acknowledges the terms and
+automatically refreshes options before enabling submission; both OpenAI and Jev
+must be configured. A refresh failure leaves submission disabled and supports an
+explicit check without repeating setup. Credentials are labelled ZipClaim token,
+OpenAI API key and Jev API key, all password fields; the model remains a textbox.
+See ADR0019. Runtime Jev setup applies only to the AI-native workflow, not Assessment lab.
+
 Follow the [mocked contract testing decision](adr/0008-mocked-provider-contract-tests.md).
 Provider tests use real adapters against per-test local wiremock servers;
 inbound routes use in-process Axum/Tower tests. Inject endpoints and dummy

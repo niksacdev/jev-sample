@@ -142,8 +142,12 @@ pub fn typescript() -> String {
             crate::assessment::ProviderExchange::decl(&config),
             OperatorRun::decl(&config),
             OperatorRunDetail::decl(&config),
+            crate::telemetry::LiveLog::decl(&config),
         ]
+        .into_iter()
+        .chain(crate::workflow::contracts::declarations(&config))
         .map(|declaration| format!("export {declaration}"))
+        .collect::<Vec<_>>()
         .join("\n")
     )
 }

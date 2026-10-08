@@ -1,237 +1,299 @@
-# Claim of Thrones: end-to-end autonomous claims vision
+# ZipClaim: product requirements
 
-Status: Proposed, not approved for contract implementation.
-Scope update 2026-10-05: the user requested the complete claims journey, not
-intake-to-handoff alone. This supersedes the draft's intake-only product framing.
-The earlier intake evaluation remains a bounded component experiment, not proof
-of end-to-end claims quality. The backend implements review-only servicing
-assessment and provider comparison, not the full claims journey.
+**Status:** proposed; pending human product, claims, customer/recourse, finance
+and technical-risk signoff. Purpose: correct, accountable resolution with less
+avoidable claimant and handling effort.
+[Scope](product-scope.md) fixes boundaries; [jobs/scenarios](persona-journeys.md)
+supply acceptance cases; [metrics](metrics.md) define measurement.
+This specification does not approve real decisions/payments or prescribe APIs,
+services or agent topology.
 
-## Current end-to-end vision
+## Outcomes and operating model
 
-The [persona journey specifications](persona-journeys.md) define customer,
-employee and operator flows, acceptance conditions, exception ownership and
-architecture/contract coverage. They are the scenario input for further design,
-not a claim that every branch in the mockup is complete.
+The proposed first exercise is a synthetic motor-claims reference journey.
+Success means independently supported outcomes and effective recourse, not
+denials, accepted suggestions, fewer necessary interventions or raw closures.
+M02 verified resolutions per total handling hour is gated by M01 material decision
+error rate, M06 fulfilment, M07 recourse and safety. M03/M04 protect claimant
+time/effort; M05-M09 protect escalation, reliability and bounded autonomy;
+M10/M11 measure insurer value; M12-M14 measure vendor viability and commercial fit.
 
-The mockup now has three distinct persona screens sharing one simulated case:
-customer chat/progress with customer clarification and offer response; employee
-exception chat with synthetic customer/policy context and versioned demo guidelines;
-operator dashboard with all six logical agents, states, boundaries and audit
-artifacts. Employee review actions are not customer buttons. Persona switching
-is design navigation only, not authentication or production RBAC.
+Agents prepare information and coordinate bounded work. Consequential judgement
+requires verified insurer authority. Evidence, coverage/loss analysis, proposal,
+insurer decision, claimant response and fulfilment confirmation remain distinct.
+A conversational statement cannot establish receipt, ownership, payment or closure.
 
-The dashboard counts current-session transitions/interventions, not production
-quality or savings. Its editable volume, net effort, labor and incremental-cost
-assumptions compute an illustrative capacity scenario; realized savings,
-quality, model consumption and production latency are explicitly unmeasured.
-Switching a story resets the single-case demo rather than accumulating a fictional
-portfolio. Production portfolio filters, workloads and role-scoped telemetry
-need contract design.
+## Agent planning and decision checkpoints
 
-The customer reports a claim to Northstar, the servicing orchestrator. Scoped evidence,
-policy, loss assessment, resolution and payment agents progress work using
-appropriate models and deterministic controls. They are proposed logical roles,
-not a requirement for six services or unrestricted peer delegation.
-Jev supplies bounded semantic judgments; document/conversation models serve
-other roles. Coverage authority, valuations, exact amounts and payment permission
-are never inferred from Jev confidence.
+### Experimental setup acceptance
 
-The revised mockup shows fourteen stages from report through evidence gathering,
-policy review, loss assessment, proposed resolution, authority/customer gates,
-confirmed payment or explicit no-payment outcome, and closure. Early clarification,
-urgent intervention and technical-failure states remain inspectable.
-The illustrated financial authority is deliberately not predelegated: a simulated
-authorized reviewer signs a proposal, then a separate customer response is recorded.
-No-payment acknowledgement is not acceptance of denial or waiver of review rights.
-Real autonomous decision/payment bounds need a requirements-driven authority policy.
+The preview collects missing OpenAI and Jev connections with masked API-key
+fields and a masked **ZipClaim token**. An explicit **OpenAI model name**
+textbox remains available; no model identifier is guessed. **Agree and save**
+incorporates the session Data Protection acknowledgement and automatically
+refreshes setup availability. **Submit a Claim** stays disabled until both
+connections and acknowledgement are ready. Setup/refresh failures preserve the
+draft and provide recovery without inference or automatic claim submission.
+Credentials remain in API memory until restart, never browser storage or
+workflow records. Configuration readiness does not verify vendor account access.
 
-Every stage exposes actors, inputs, source revisions, decisions, tool results and
-artifacts. The customer receives a plain-language explanation and an ongoing review
-channel. Production must role-scope internal lineage and protect sensitive records.
-The demo uses invented policy/documents/amounts and does not assess real coverage,
-contact people, transfer funds, or implement the expanded backend.
+The conversational LLM interprets the customer request and produces a versioned
+base plan with tasks, dependencies, required context and expected outputs.
+The agent can revise that plan after tool results, decisions or human responses.
+This is not a fixed intent-to-task script. Task execution uses deterministic
+tools where facts, arithmetic or state checks suffice; judgment tasks invoke a
+replaceable decision provider against bounded, typed questions.
 
-Product review must next include contested coverage, insufficient evidence,
-customer rejection of an offer, unknown/failed payment, reopening and appeals.
-The current prototype illustrates routine completion and selected exceptions,
-not every production branch. End-to-end success metrics and legal/operational
-authority require new review; existing intake targets cannot establish them.
+Decision requests identify their question/rubric version, permitted outcomes and
+exact evidence snapshot. Results preserve predicate probabilities, choice/score
+distributions and provider confidence semantics; confidence is not authority or
+proof of correctness. Jev Noul returns probability of yes, not a separate
+confidence value. A confident no must not be treated as uncertain. OpenAI's
+Decisions API is a separate capability from the Responses planning/chat API.
+Refusal, unsupported question, missing evidence and technical failure remain
+distinct. Validated decision-specific policy selects continuation, clarification
+or employee review; mandatory authority gates remain outside the model.
 
-## Earlier intake-component discovery (historical framing)
+Customer clarification supplies missing facts. Employee intervention resolves
+judgment or authority questions and requires authenticated action. Both responses
+are bound to the paused run/task and revision; stale responses cannot resume a
+different plan. The runtime records who/what supplied evidence and prevents
+duplicate task effects across repeated requests or restarts.
 
-The sections below preserve the original intake component assumptions and its
-evaluation context. Intake-only non-goals no longer describe the whole product
-vision; they still delimit the approved component benchmark. Do not use these
-historical sections to derive full-claims contracts.
-Direction update: autonomous-first intake-to-handoff requested by the user;
-human intervention by exception, with continuous state/lineage/artifact access.
-Date: 2026-10-05.
-Primary persona approved: insurance intake analyst.
-Design: [interactive mockup](design/intake-workbench.html).
-System design: [first-level architecture and contracts](system-design.md).
+### Provider-comparison acceptance
 
-## Problem and customer value
+A comparison has one query and one frozen base plan, with separately identified
+runs for selected decision providers. A matched-decision comparison evaluates
+the same question and evidence snapshot against each provider. Independent
+continuations may diverge after those decisions; they are not matched inputs
+merely because they started with the same customer message.
 
-An intake analyst receives a narrative and needs to decide the next handling
-queue, whether expedited human attention is needed, and whether the available
-information supports that decision. Our hypothesis is that reading, interpreting,
-and correcting routing consumes time and that ambiguous information is easy to
-miss. This is a discovery assumption, not observed customer research.
+The dashboard must distinguish matched questions from divergent flow outcomes.
+Each event identifies comparison/run/task/decision/attempt, sequence, timestamp,
+provider/model and relevant question, plan and policy versions. Record plan
+creation/revision, tool and decision starts/results/failures, pauses, resumptions
+and terminal outcomes. Missing usage/cost is unknown, not zero. Durable capture
+and controlled inspection are required for replay after restart.
 
-The job: "Help me route this intake correctly without hiding uncertainty or
-making me redo the assessment." The intended beneficiary is the intake team;
-claimants may benefit from appropriate handling, but no reduction in claim
-settlement time has been demonstrated.
+Compare latency, usage, failure/refusal, answer completeness and workflow outcome
+separately. Provider agreement measures consistency, not accuracy. Accuracy needs
+independent versioned labels and adjudication; human handling effort, customer
+outcomes and finance records remain additional inputs to M01-M14.
+Synthetic tool completion does not establish an insurer outcome.
 
-Before assistance, the analyst reads the narrative, selects a category, assesses
-urgency, identifies missing information, and records the next handling action.
-With assistance, narrow judgments organize the same task; the analyst can inspect
-the original narrative, correct suggestions, and retain review ownership.
-Assistance is valuable only if reading/checking/correction effort is lower while
-final correctness remains intact.
+## Requirements and acceptance
 
-## End-to-end value creation map
+Owners below are accountable roles, not assigned people. Assign teams and
+obligations before a pilot. "Record" means recoverable, reviewable target
+behaviour; the process-local sample does not implement durable claims.
+Acceptance uses synthetic fixtures unless a separately approved pilot permits
+real data.
 
-All benefits below are hypotheses. No customer study or production outcome has
-been measured. The mechanism must improve the complete job, not merely one screen.
+### R01 - Usable, nonduplicated report
 
-| Journey stage / friction | Product mechanism | Immediate useful output | Intended customer value | Evidence and countermeasure |
-| --- | --- | --- | --- | --- |
-| Intake arrives; facts may be missing | Validate input and preserve source identity | Traceable intake or actionable validation error | Less downstream rework | Completeness/rework; do not reject useful partial narratives without an approved rule |
-| Analyst selects work; responsibility unclear | Explicit assignment and work status | Named owner and visible next action | Fewer lost intakes | Unowned time/queue age; measure against current workflow |
-| Analyst reads and categorizes | Bounded semantic assessment of the same narrative | Proposed category, urgent cue, review requirement | Less repetitive interpretation effort | Total read/check time and correctness; not inference speed alone |
-| Suggestion is wrong or uncertain | Visible source and editable disposition | Corrected analyst decision or clarification request | Appropriate reliance, fewer misroutes | Corrections, unnoticed wrong suggestions, review burden |
-| Urgent case needs attention | Expedited human-review disposition | Accountable priority handoff | Earlier appropriate human attention | Urgency recall plus false-alert load and time to human attention; no medical-response claim |
-| Assessment fails | Distinct failure state and manual route | Intake remains actionable with failure recorded | Continuity without false certainty | Failure rate and manual completion effort; failure still counts |
-| Analyst records next action | Versioned disposition with duplicate/stale-write protection | Durable decision and pending handoff | Less repeat work, clear accountability | Lost/duplicate decisions and recording failures |
-| Receiving team takes ownership | Acknowledged handoff and visible rejection/recovery | Accepted destination or owned exception | Fewer silently dropped/misrouted intakes | Acknowledgement time, rejected handoffs, downstream rework |
-| Team learns from outcomes | Separate operational facts from independently scored quality | Corrections/rework and effort measurements | Evidence for improvement or reduced automation | Correct triages per analyst-hour and final correctness; clicks/acceptance are not ground truth |
+**Input/output:** entitled claimant/session, supplied loss facts and submission
+reference -> acknowledged report with stable reference, preserved facts and next
+owner; no coverage promise.
+**Exception owner:** intake/verification handles invalid identity/input, failed
+recording and uncertain duplicates. Failed write is not receipt.
+**Acceptance:** S01/S03/S09 retain useful partial facts, distinguish other from
+unclear, recover recorded receipt after reconnect and return prior result for
+exact retry without creating another claim.
+**Trace:** J-C1, J-O1; M03, M04, M08.
 
-Value to the analyst is reduced total effort per correct handoff. Value to the
-operations lead is accountable flow and less rework. Claimant benefit is only an
-indirect hypothesis until downstream handling is measured. Model cost reductions
-do not count as customer value if review labor or errors increase.
+### R02 - Evidence without fabricated completeness
 
-## Product review scope
+**Input/output:** facts, reviewed evidence needs and permitted source revisions
+-> inventory of provenance, conflicts, missing items and purposeful requests.
+**Exception owner:** handler records inaccessible/unsafe/contradictory material
+and next inquiry; claimant inability is not invented evidence.
+**Acceptance:** S02/S10 retain original sources and corrections, explain rejected
+attachments, identify repeated requests and reassess affected analysis.
+**Trace:** J-C1, J-H1; M01, M04, M05, M08.
 
-Walk five complete stories from arrival to accepted handoff: clear incident,
-urgent cue, ambiguous intake followed by clarification, wrong suggestion followed
-by correction, and technical failure followed by manual handling. Include a
-rejected handoff and a stale concurrent edit in these stories.
-For every transition review actor, input, output, owner, recovery action, and
-measurement. An analyst clicking "record" is not yet a completed customer outcome.
+### R03 - Reviewable coverage basis
 
-The updated mockup simulates submission, validation, assessment, policy checking,
-recording, pending handoff and acknowledgement. Routine processing advances
-automatically. Urgent attention, conflicting information and technical failures
-pause with an owner and required action; a scripted intervention resumes the run.
-Every transition exposes lineage and expandable input/assessment/exception/
-disposition/handoff artifacts. These are observable audit facts, not private
-model reasoning. Persistence, authorization and tool execution are simulated,
-not implemented. No arbitrary-input interpretation or live model is provided.
+**Input/output:** applicable policy/endorsement revision, loss and evidence ->
+sourced analysis and authorized determination or unresolved question.
+**Exception owner:** authorized coverage reviewer handles missing/conflicting
+policy, uncertain applicability and disputes. Retrieval failure is not denial.
+**Acceptance:** S04/S06 expose basis/uncertainty, independently verify authority
+and retain disagreement. Without real policy/jurisdiction, analysis is synthetic.
+**Trace:** J-C2, J-C3, J-H2, J-T1; M01, M05, M07.
 
-The intended experience is agentic: the customer submits an intake; an agent
-progresses permitted workflow without routine analyst confirmation. Customers or
-operators intervene only when required by an explicit exception. Operators can
-inspect current state, source revisions, tool outcomes and artifacts at all stages.
-Structured assessment/action cards and recorded state remain visible alongside
-conversation. The mockup includes scripted customer status updates, not an open-ended chat.
-Presentation update: fictional insurer **Claim of Thrones**, with **Northstar** as the
-customer-servicing agent. Customers submit through an editable chat composer,
-receive stage-specific messages, and follow a seven-stage intake progress tracker.
-The design-review inspection drawer exposes lineage/artifacts, not private model
-reasoning or an approved customer entitlement to internal audit data.
-Only exact selected synthetic stories have scripted assessments. Changed text
-is preserved as input and pauses for a human rather than inventing a judgment.
-No real specialist is contacted. Changing the story resets the local simulation.
-The agent must not claim completion from its own prose or act beyond delegated
-authority. The [agent/MCP design](system-design.md#7-public-api-mcp-and-delegated-task-contracts)
-proposes identity, tool, confirmation, and message boundaries for review.
+### R04 - Supported loss assessment
 
-## Mockup journey and decisions to review
+**Input/output:** current valuation evidence, approved method and coverage
+context -> traceable assessment, exact amounts/currency, assumptions and gaps.
+**Exception owner:** authorized assessor/handler corrects unsupported valuation,
+contradictions or calculation errors; model confidence cannot determine money.
+**Acceptance:** S01/S05 expose calculation basis, investigate challenges and
+recompute after material changes without overwriting prior assessment.
+**Trace:** J-C2, J-H1, J-H2; M01, M04, M05.
 
-The mockup contains synthetic scenarios, not model output or evaluation data.
-Submit a selected synthetic customer narrative and observe autonomous progress.
-Resolve the scripted exception when one appears, then inspect resumed processing
-and acknowledged handoff. No real queue is updated. Switching cases resets the
-simulation and cancels its pending timer; nothing persists across reloads.
+### R05 - Proposal and decision bound to actual authority
 
-| State | Intended experience | Value or safeguard |
-| --- | --- | --- |
-| Clear incident | Suggested category and source cue, editable disposition | Reduce repetitive categorization |
-| Urgent cue | Explicit expedited human-review cue | Bring attention to a potentially time-sensitive intake, not emergency automation |
-| Ambiguous/mixed incident | No automatic route; visible uncertainty and missing-information cue | Prevent confident-looking misrouting |
-| Technical failure | Assessment unavailable, separate failure label and manual review | Preserve service continuity without disguising a failed model call |
-| Analyst correction | Editable category/attention/review; original suggestion remains visible | Allow disagreement and measure correction burden |
+**Input/output:** current coverage/loss basis and verified delegation ->
+versioned payment/service/no-payment proposal and separate authorized decision.
+**Exception owner:** claims-authority owner resolves absent/expired/insufficient
+delegation; employee title, confidence and dashboard access cannot substitute.
+**Acceptance:** S01/S04-S06 block consequence without authority; material changes
+require fresh affected approvals; authorized terms remain inspectable.
+**Trace:** J-H2, J-T1; M01, M05, M06, M09.
 
-The source cue in the mockup is hand-authored. Whether production supports
-validated evidence spans remains undecided; do not ask a model to invent
-explanations or treat these excerpts as a promised API field.
+### R06 - Informed claimant response
 
-Autonomous-first operation is the requested product direction. The exact action
-allowlist, predelegated scopes, automation eligibility and exception thresholds
-still need approval and evidence. Routine autonomy is not authority for coverage,
-settlement, payment, or emergency actions. The approved automatic-route quality
-and coverage targets remain experiment gates, not proven deployment eligibility.
+**Input/output:** authorized proposal/basis and applicable response rules ->
+accessible explanation, actual status, accept/reject/question/review choices
+and revision-bound response where required.
+**Exception owner:** handler/customer service assists with disputes,
+inaccessibility, missing estimate or nonresponse; silence is not acceptance.
+**Acceptance:** S04-S06/S11 distinguish insurer approval from claimant response;
+revised offers cannot reuse acceptance; no-payment acknowledgement does not waive
+review; status does not invent timing.
+**Trace:** J-C2, J-C3; M01, M03, M04, M07.
 
-## Model role: why Jev is plausible, not yet proven
+### R07 - Confirm fulfilment and reconcile uncertainty
 
-Jev can make bounded semantic judgments from the narrative: incident category,
-urgency cues, and review-required ambiguity. A structured-output LLM must receive
-the same evidence and judgment task; deterministic rules are a third comparator.
-Provider choice is not an analyst responsibility and is absent from the workbench.
+**Input/output:** current authorized terms, required response and verified
+destination -> execution identity, pending/unknown/failed/confirmed result and
+supported receipt.
+**Exception owner:** fulfilment/reconciliation investigates unknown delivery
+before resend and contains wrong amount/recipient or duplicate execution.
+**Acceptance:** S07/S08 require confirmation, not sent instructions; retries
+cannot duplicate effects; adjustments need fresh authority; unknown required
+fulfilment blocks closure.
+**Trace:** J-C2, J-O2, J-T1; M06, M08.
 
-Rust validates contracts and applies explicit routing policy. A probability is
-not proof of correctness, so the mockup displays no fabricated confidence score.
-Provider-specific uncertainty must be evaluated before gating automation.
+### R08 - Owned exceptions and recovery
 
-Jev is not selected here for arithmetic, coverage/payout decisions, generating
-claim advice, or open-ended conversations. Optional generation would be a
-different feature and comparison. The design must demonstrate a customer task,
-not assume a fast narrow model automatically creates business value.
+**Input/output:** blocked work, specialist/urgent cues or dependency failure ->
+reason, accountable owner, next action, acknowledgement and resume condition.
+**Exception owner:** operations retains responsibility when receiving team is
+unavailable or retries/assignment stall.
+**Acceptance:** S02/S03/S07/S10 retain failures after recovery, preserve gates,
+bound retries and never claim dispatch or completed unacknowledged handoff.
+**Trace:** J-H1, J-O1, J-O2; M03, M05, M08.
 
-## Validation before contracts
+### R09 - Revisions, conflict and restart
 
-Ask representative analysts to complete manual and assisted tasks on synthetic
-development scenarios. Counterbalance order and avoid showing the same case
-twice to the same person where memory would bias results. Include clear, urgent,
-ambiguous, wrong-suggestion, and technical-failure tasks; measure reading,
-checking, correction, and completion time, not only model latency.
+**Input/output:** claim/action reference, recorded revisions and update ->
+recoverable current state/history or explicit reconciliation conflict.
+**Exception owner:** case owner with technical support handles stale edits,
+ambiguous duplicates, failed writes and interruption.
+**Acceptance:** S05/S08-S10 preserve acknowledged state and prior decisions,
+invalidate affected approvals/responses after material changes and prevent
+silent overwrites, unsafe merges and duplicate financial effects.
+**Trace:** J-C1, J-H2, J-O2, J-T2; M01, M06, M08.
 
-Review questions: Is the next action clear? Does the analyst notice uncertainty
-and failure? Can they reject a suggestion? Which information is missing from
-their actual workflow? Does assistance add checking work instead of saving it?
-Recruitment, labeling, task count, and study power need definition before execution.
-No analyst study has occurred.
+### R10 - Evidence-based closure and effective review
 
-Use the [approved metrics](metrics.md): correct triages per analyst-hour,
-final routing correctness, correction/review burden, and quality gates.
-The mockup has no performance dashboard: synthetic examples cannot establish
-the >=20% throughput hypothesis or model superiority. Offline model evaluation
-and a user exercise answer different questions.
+**Input/output:** authorized decision, required response and correct confirmed
+fulfilment or authorized no-payment basis -> explained closure and review route.
+**Exception owner:** fulfilment/review owner handles missing confirmation,
+challenge or new evidence; review does not require agreeing with the outcome.
+**Acceptance:** S06-S08 acknowledge review before/after closure, retain original
+decision and receipt, apply independence rules and record reassessment without
+promising reversal or erasing financial history.
+**Trace:** J-C3, J-H2, J-O1; M01, M06, M07.
 
-## Proposed acceptance and non-goals
+### R11 - Inspectable, scoped operation
 
-- Original narrative remains visible through assessment and recording.
-- Analyst can correct all suggested dispositions; suggestions are not authority.
-- Ambiguity and technical failure have distinct visible states.
-- A recorded decision exposes category, attention, and review disposition.
-- No coverage, liability, payout, eligibility, or emergency actions.
-- No live model calls, real personal data, persistence, backend API integration,
-  telemetry measurements, or real queue assignment in this design artifact.
+**Input/output:** authenticated scope, permitted metadata, versions and
+observation window -> appropriate status/lineage/workload with freshness/gaps.
+**Exception owner:** technical/risk and operations contain access/authority
+breaches and arrange recovery for missing monitoring.
+**Acceptance:** S10/S11 prevent cross-case disclosure and unauthorized controls;
+counts reconcile to declared population; missing data is not zero; lineage is
+observable evidence, not hidden reasoning. Monitoring grants no decision rights.
+**Trace:** J-O1, J-T1, J-T2; M01, M08, M09.
 
-## Contract handoff after design approval
+### R12 - Quality and total-job improvement
 
-Resolve queue taxonomy, required narrative fields, "other" versus "unclear",
-urgency semantics, review reasons, correction handling, automation policy,
-technical failure/retry UX, and whether evidence spans are required.
-Then define validated domain types and explicit HTTP outcomes around those
-decisions. Derive domain, route, and wiremock contract tests from the approved
-states. Do not reverse-engineer production contracts from the mockup's JS objects.
+**Input/output:** predeclared cohorts/scenarios, independent rubric, manual
+comparator and measured effort/waits -> M01-M09 findings with counts/uncertainty.
+**Exception owner:** claims-quality/product records insufficient evidence or
+regression and revises/stops the exercise, not definitions after seeing results.
+**Acceptance:** S12 includes adverse branches and all cohort effort, including
+unresolved/failed/in-progress work, review, correction, oversight and recovery.
+Later corrections remain visible; sampled quality is not population truth.
+**Trace:** J-O2, J-B1, J-T2; M01-M09.
 
-The [current scope](product-scope.md), [evaluation design](evaluation-design.md),
-and [architecture](adr/0007-single-package-api-and-evaluation.md) still apply.
-This draft refines the persona and workflow; it does not silently amend targets
-or approve implementation. Review the mockup and product assumptions before
-starting the next backend milestone.
+### R13 - Insurer value without double-counting
+
+**Input/output:** matched workload, approved cost boundary, retained labour,
+fees, implementation spend and attributable cash changes -> M10/M11 analysis
+separating cash, capacity and service value.
+**Exception owner:** insurer finance withholds ROI conclusions for unknown
+inputs, unsupported attribution or inconsistent horizon/allocation.
+**Acceptance:** S12 excludes appropriate indemnity as savings, includes relevant
+support/rework, does not count avoided rework twice and never calls saved minutes
+alone realized cash. Cohort maturity and actuarial limits remain explicit.
+**Trace:** J-B1; M01, M02, M10, M11.
+
+### R14 - Sustainable vendor delivery economics
+
+**Input/output:** contract/price scenario, recognized revenue policy, delivery,
+support, acquisition and onboarding costs -> M12/M13 margin/contribution/payback.
+**Exception owner:** vendor finance labels unknown/undefined/not-reached results
+for unselected pricing, zero revenue or nonpositive contribution.
+**Acceptance:** S12 includes inference/retries, tools, hosting, vendor-paid human
+support and incidents; separates bookings/cash/revenue and development/sales
+from delivery cost; reconciles revenue basis across M12/M13. Insurer fee/vendor
+revenue is a transfer, not twice the shared benefit.
+**Trace:** J-B2; M12, M13.
+
+### R15 - Commercial fit and governed expansion
+
+**Input/output:** sponsor/payer, researched alternatives, scoped pilot,
+candidate pricing and quality/value evidence -> willingness-to-pay evidence
+and continue/revise/stop decision.
+**Exception owner:** product/commercial obtains claims/finance/risk review for
+absent value, harmful pricing incentives or expansion.
+**Acceptance:** S12 separates interest from paid adoption/renewal, does not infer
+retention from a demo, defines reversals/disputes for outcome pricing and does
+not approve other lines/general servicing by implication.
+**Trace:** J-B1, J-B2; M01, M10-M14.
+
+## Measurement is part of feature acceptance
+
+R01-R11 must produce the business records needed by the
+[M01-M14 measurement delivery contract](metrics.md#measurement-delivery-contract).
+R12-R15 must join those facts with independent quality, human-effort, finance
+and commercial evidence; application logs alone cannot establish these outcomes.
+Missing evidence is an explicit result, not a default zero.
+
+Before implementing a slice, specify its event/record schema, exact collection
+boundary, source owner, calculation and expected-result fixtures. Acceptance
+includes durable capture with business state, safe replay/deduplication,
+late-arrival/correction handling, source reconciliation and controlled access.
+Results expose calculation version, cohort/cutoff, coverage and freshness.
+Attempt IDs are not claim IDs; elapsed workflow time is not staff effort;
+instructions are not confirmed fulfilment.
+
+R12 acceptance includes all M01-M09 fixture cases in the measurement contract;
+R13 includes M10/M11 cost/cash reconciliation; R14 includes M12/M13 usage,
+revenue and payback reconciliation; R15 includes M14 contract/cohort checks.
+Until required independent sources are available, reports show unavailable,
+estimated or scenario status and an owned evidence gap. Passing synthetic
+calculation tests does not authorize measured-value or ROI claims.
+
+## Validation and release decisions
+
+Human representatives walk S01-S12 and approve unresolved assumptions before
+implementation commitments. Deterministic calculations, source fixtures and
+mocked failures verify requirements, not live-provider or real claims quality.
+Matched manual/assisted exercises require approved eligibility, rubric,
+measurement, sample and decision criteria.
+
+Evaluate provider components separately. Code/Jev intent comparison cannot
+establish coverage accuracy, payment quality or claims throughput.
+Preserve the [approved intake benchmark](evaluation-design.md#approved-intake-component-scorecard)
+without applying its targets to M01-M14. Assign metric owners, maturity rules,
+tolerances and breach responses before a pilot; holistic numerical targets remain
+unset. Material authority/privacy/fulfilment breaches require containment and
+human review; insufficient evidence is not success.
+
+Derive architecture from jobs and requirements, not mockup controls. Keep
+implementation choices in [system design](system-design.md) and consequential
+decisions in ADRs. Track product/architecture feedback through linked issues/PRs.
