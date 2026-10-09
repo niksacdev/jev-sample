@@ -91,6 +91,10 @@ details { margin-top: 16px; } summary { cursor: pointer; color: var(--cp-link); 
 header { display:flex; align-items:center; justify-content:space-between; padding:20px 40px; }
 .brand { display:flex; align-items:center; gap:12px; }
 .mark { width:44px; height:44px; object-fit:cover; border-radius:12px; }
+.lockup { display:block; max-width:220px; width:100%; height:auto; margin-bottom:16px; }
+.pillars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:8px; }
+.pillars div { padding:12px; border:1px solid var(--cp-border); border-radius:16px; background:var(--cp-surface); }
+.pillars strong { display:block; color:var(--cp-accent); } .pillars small { color:var(--cp-text-muted); }
 .brand strong { font-size:24px; letter-spacing:-1px; } .brand small { display:block; font-size:12px; }
 main { max-width:1280px; padding:32px; }
 .intro { margin:0 0 28px; } .intro h1 { font-size:36px; letter-spacing:-1px; font-weight:650; }
@@ -138,17 +142,17 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 #employee-messages { padding:24px; min-height:260px; max-height:400px; overflow:auto; display:flex; flex-direction:column; gap:16px; }
 @keyframes appear { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 @media(prefers-reduced-motion:reduce) { .message { animation:none; } #messages { scroll-behavior:auto; } }
-@media(max-width: 850px) { .workspace { grid-template-columns:1fr; } main { padding:20px; } header { padding:16px 20px; } .intro h1 { font-size:28px; } .demo-control { flex-wrap:wrap; } #messages { height:360px; } }
+@media(max-width: 850px) { .workspace { grid-template-columns:1fr; } main { padding:20px; } header { padding:16px 20px; } .intro h1 { font-size:28px; } .pillars { grid-template-columns:1fr; } .demo-control { flex-wrap:wrap; } #messages { height:360px; } }
 </style>
 </head>
 <body>
 <header>
 <div class="brand"><img class="mark" src="../../web/public/zipclaim-icon.png" alt=""><div><strong>ZipClaim</strong><small>File fast. Settle faster.</small></div></div>
-<span class="badge">Fictional insurer / design demo</span>
+<span class="badge">Experimental Preview</span>
 </header>
 <main>
-<div class="intro"><span class="eyebrow">Your claim, without the guesswork</span><h1>One conversation.<br>Your whole claim journey.</h1><p class="muted">ZipClaim agent coordinates your agent team from first report to resolution. Follow the work, see the evidence, and know when a person is needed.</p></div>
-<div class="banner">End-to-end vision / scripted simulation. Synthetic policy, evidence, decisions and payment receipts; no live AI or real financial actions. Production authority and financial controls are not yet approved.</div>
+<div class="intro"><img class="lockup" src="../../web/public/zipclaim-lockup.png" alt="ZipClaim. File fast. Settle faster."><div class="pillars"><div><strong>Reliable</strong><small>We use Decision Models (Jev and others) and AI to ensure verification and validation at each step.</small></div><div><strong>Autonomous</strong><small>Intelligent AI agents make your claim-processing journey smoother.</small></div><div><strong>Human in the Loop</strong><small>Human judgment when it matters. You stay in control.</small></div></div></div>
+<div class="banner"><strong>Experimental Preview / design simulation.</strong> This experimental solution demonstrates an AI-assisted claims-processing journey; ZipClaim does not process insurance claims, determine coverage, settle claims or execute payments. This page is scripted: no live AI calls or financial actions. The runnable app is the source of truth for current behavior.</div>
 <div class="demo-control"><label for="scenario">Try a demo story</label>
 <select id="scenario"><option value="glass">Clear glass incident</option><option value="urgent">Collision with urgent cue</option><option value="mixed">Mixed / unclear incident</option><option value="failure">Assessment service failure</option></select></div>
 <nav class="screen-nav" aria-label="Persona screens">
@@ -165,7 +169,7 @@ pre { background:var(--cp-surface-soft); padding:12px; border-radius:0.625rem; f
 <form id="chat-form" class="composer">
 <label for="query">What happened?</label>
 <textarea id="query" maxlength="4000" required rows="3" aria-describedby="input-note"></textarea>
-<div class="composer-bottom"><small id="input-note">Selected stories have scripted analysis.<br>Changed text requests human review.</small><button id="submit" type="submit">Send to ZipClaim agent &rarr;</button></div>
+<div class="composer-bottom"><small id="input-note">Selected stories have scripted analysis.<br>Changed text requests human review.</small><button id="submit" type="submit">Submit a Claim &rarr;</button></div>
 </form>
 </section>
 <aside>

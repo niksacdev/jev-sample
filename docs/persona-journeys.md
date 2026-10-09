@@ -10,7 +10,7 @@ Employee surfaces authenticated paused workflows; Operator surfaces matched
 provider evidence. Assessment lab preserves the earlier intent experiment.
 These local views implement only the bounded synthetic foundation, not the
 full claims scenarios below. See [current architecture](system-design.md#current-system-slice-and-delivery-order).
-Both clarification and employee review require the local operator key; real
+Both clarification and employee review require the ZipClaim token; real
 customer sessions, assignments and delegated insurer authority remain absent.
 
 ## Jobs, pains and alternatives

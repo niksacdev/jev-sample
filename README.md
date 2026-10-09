@@ -151,7 +151,7 @@ available only in the authenticated Operator view.
 ### Live instrumentation
 
 Geek Mode embeds [xterm.js](https://xtermjs.org/) 6.0.0 and its official FitAddon
-0.11.0 (MIT). Connect **Live logs** with the local operator key to watch actual
+0.11.0 (MIT). Connect **Live logs** with the ZipClaim token to watch actual
 API request, planner/replan/reply, tool, decision-attempt and failure events as
 Rust emits them—even before the originating request finishes. Separate read-only
 terminals show requests, model calls and the combined execution log. No shell or

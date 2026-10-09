@@ -93,7 +93,7 @@ durable state; conflicting reuse is rejected. Protected
 `client_request_id`, `expected_plan_id`, `expected_task_id`, `message` and
 `employee_review`. The expected plan revision and paused task must still match;
 stale tabs cannot review a newer task. Both resume kinds require
-the local operator key. This deliberate preview restriction is not a production
+the ZipClaim token. This deliberate preview restriction is not a production
 customer-session system. No completed, failed or interrupted run is blindly replayed.
 
 Production composition fixes vendor URLs. Test constructors accept loopback
