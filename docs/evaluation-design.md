@@ -23,8 +23,10 @@ experiment; they are not demonstrated results or full-claims acceptance gates.
 | Technical failure routing | 100% visibly routed to review | Failures routed to review / all technical failures |
 
 The runnable app assesses servicing intents with review-only tasks, not this
-benchmark's incident category/urgency/ambiguity contracts. The structured-output
-LLM and evaluation CLI are absent. The benchmark remains unexecuted.
+benchmark's incident category/urgency/ambiguity contracts. The AI-native
+workflow's structured-output planner selects claim tasks and decision questions,
+not these intake judgments, and the evaluation CLI is absent. The benchmark
+remains unexecuted; see [current evidence boundaries](metrics.md#assessment-lab-measurement-boundary).
 Before execution, map required judgments/routes to actual contracts, establish
 labels, freeze settings and declare measurement boundaries. Tests and UI stories
 are not held-out evidence. No correctness-degradation margin is approved.

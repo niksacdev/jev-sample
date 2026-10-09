@@ -241,6 +241,38 @@ claimant experience, external confirmations and financial evidence still apply.
 Provider token counts do not establish cash cost without a versioned price basis
 and invoice reconciliation.
 
+### Assessment lab measurement boundary
+
+Assessment lab preserves the earlier servicing-intent experiment: it assesses
+`claim`, `policy_change`, `customer_details` and `billing` with Jev rubric
+`servicing-intents-v1` and routing policy `experiment-review-only-v1`. Matching
+intents create review-required tasks; no-match results request clarification.
+Neither is an automatic intake route, urgency judgment, completed human review or
+completed claim.
+
+Operator run/failure counts are process-local assessor runs, not distinct customer
+requests or scored outcomes. Selecting two assessors creates two runs for one
+submission; restart loses history and rejected requests create no run. Assessor
+`elapsed_ms` ends before routing and response delivery; it is not
+submission-to-visible-result latency. Diagnostic reports declare workload, window,
+provider, versions, attempted/admitted/rejected/completed/failed counts and missing
+observations. These are diagnostic definitions, not new approved targets.
+
+| Approved intake measure ([evaluation design](evaluation-design.md#approved-intake-component-scorecard)) | Current evidence boundary |
+| --- | --- |
+| Correct triages per analyst-hour | Unmeasured: no timed manual/assisted exercise |
+| Final routing correctness | Unmeasured: no independent labels or manual baseline |
+| Automatic routing precision | Undefined: review-only tasks give a zero automatic-route denominator |
+| Automation coverage | No automatic routes implemented |
+| Urgency escalation recall | Intake urgency judgment and expedited-review route not implemented |
+| Ambiguity escalation recall | No-match clarification is not labeled ambiguity detection |
+| Response latency | End-to-end p95 unmeasured; assessor elapsed time is a different boundary |
+| Technical failure rate | Unmeasured over a declared workload/window; failure tests are not a rate |
+| Technical failure routing | Visible failed run exists; owned review queue/handoff not implemented |
+
+The AI-native workflow's planner and decision-provider traces do not fill these
+gaps: they follow the decision-provider experiment boundaries above.
+
 Issues hold the problem, JTBD, requirement/metric IDs, baseline, expected mechanism,
 measurement owner and review trigger. Architectural choices compare total effort,
 cost, quality, authority and recovery, not model latency alone. PRs report actual
