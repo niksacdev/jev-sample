@@ -1,5 +1,6 @@
 use super::{
     contracts::{ProviderId, WorkflowUsage},
+    gateway::{Gateway, OPENAI_DECISIONS, OPENROUTER_DECISIONS, TYPESAFE_SYSTEMONE},
     policy::probability,
 };
 use serde::{Deserialize, Serialize};
@@ -187,6 +188,7 @@ impl DecisionValue {
 #[serde(rename_all = "snake_case")]
 pub enum ProviderFailure {
     Authentication,
+    InsufficientCredits,
     RateLimited,
     Timeout,
     Transport,
@@ -199,6 +201,7 @@ impl ProviderFailure {
     pub fn code(&self) -> &'static str {
         match self {
             Self::Authentication => "authentication",
+            Self::InsufficientCredits => "insufficient_credits",
             Self::RateLimited => "rate_limited",
             Self::Timeout => "timeout",
             Self::Transport => "transport",
@@ -334,6 +337,7 @@ impl JsonVendor {
         if status != 200 {
             return Err(match status {
                 401 | 403 => ProviderFailure::Authentication,
+                402 => ProviderFailure::InsufficientCredits,
                 429 | 529 => ProviderFailure::RateLimited,
                 _ => ProviderFailure::Provider,
             });
@@ -346,23 +350,37 @@ pub struct VendorDecisions {
     transport: JsonVendor,
     id: ProviderId,
     model: String,
+    gateway: Gateway,
 }
 impl VendorDecisions {
     pub fn openai(key: &str, model: &str, timeout: Duration) -> Result<Self, String> {
         Self::new(
-            "https://api.openai.com/v1/decisions".into(),
+            OPENAI_DECISIONS.into(),
             key,
             model,
             ProviderId::Openai,
+            Gateway::Direct,
             timeout,
         )
     }
     pub fn jev(key: &str, timeout: Duration) -> Result<Self, String> {
         Self::new(
-            "https://api.typesafe.ai/v1/systemone".into(),
+            TYPESAFE_SYSTEMONE.into(),
             key,
             "jev-1.13.0",
             ProviderId::Jev,
+            Gateway::Direct,
+            timeout,
+        )
+    }
+    /// Jev through OpenRouter's alpha Decisions API, which keeps the TypeSafe wire format.
+    pub fn jev_openrouter(key: &str, model: &str, timeout: Duration) -> Result<Self, String> {
+        Self::new(
+            OPENROUTER_DECISIONS.into(),
+            key,
+            model,
+            ProviderId::Jev,
+            Gateway::OpenRouter,
             timeout,
         )
     }
@@ -374,16 +392,27 @@ impl VendorDecisions {
         id: ProviderId,
         timeout: Duration,
     ) -> Result<Self, String> {
-        if !endpoint.starts_with("http://127.0.0.1:") {
+        Self::for_test_via(endpoint, key, model, id, Gateway::Direct, timeout)
+    }
+    pub fn for_test_via(
+        endpoint: String,
+        key: &str,
+        model: &str,
+        id: ProviderId,
+        gateway: Gateway,
+        timeout: Duration,
+    ) -> Result<Self, String> {
+        if !crate::workflow::gateway::is_loopback_test_endpoint(&endpoint) {
             return Err("test_endpoint_must_be_loopback".into());
         }
-        Self::new(endpoint, key, model, id, timeout)
+        Self::new(endpoint, key, model, id, gateway, timeout)
     }
     fn new(
         endpoint: String,
         key: &str,
         model: &str,
         id: ProviderId,
+        gateway: Gateway,
         timeout: Duration,
     ) -> Result<Self, String> {
         if model.is_empty() || model.len() > 100 || id == ProviderId::Code {
@@ -393,6 +422,7 @@ impl VendorDecisions {
             transport: JsonVendor::new(endpoint, key, timeout)?,
             id,
             model: model.into(),
+            gateway,
         })
     }
     async fn run(&self, context: &str, questions: &[Question]) -> DecisionAttempt {
@@ -426,10 +456,13 @@ impl VendorDecisions {
                 serde_json::json!({"model":self.model,"input":context,"questions":questions})
             };
             let response=self.transport.post(&request).await?;
-            if response.get("model").and_then(|v|v.as_str())!=Some(self.model.as_str()){return Err(ProviderFailure::InvalidResponse)}
+            let served=response.get("model").and_then(|v|v.as_str());
+            if !served.is_some_and(|served|self.gateway.served_model_matches(&self.model,served)){return Err(ProviderFailure::InvalidResponse)}
+            tracing::info!(event="vendor_decision_served",gateway=self.gateway.label(),configured_model=%self.model,served_model=served,served_by=response.get("provider").and_then(|v|v.as_str()));
             if let Some(wire_usage)=response.get("usage").filter(|v|!v.is_null()) {
                 usage.input_tokens=optional_u32(wire_usage,"input_tokens")?;
                 usage.output_tokens=optional_u32(wire_usage,"output_tokens")?;
+                usage.cost_usd=optional_cost(wire_usage)?;
             }
             let answer_values: BTreeMap<String,serde_json::Value>=if self.id==ProviderId::Jev {
                 serde_json::from_value(response.get("answers").cloned().ok_or(ProviderFailure::InvalidResponse)?).map_err(|_|ProviderFailure::InvalidResponse)?
@@ -456,6 +489,18 @@ impl VendorDecisions {
             elapsed_ms: started.elapsed().as_millis().min(u32::MAX as u128) as u32,
         }
     }
+}
+/// Gateway-reported spend in US dollars; absent or null when the route does not report cost.
+pub(crate) fn optional_cost(value: &serde_json::Value) -> Result<Option<f64>, ProviderFailure> {
+    value
+        .get("cost")
+        .filter(|v| !v.is_null())
+        .map(|v| {
+            v.as_f64()
+                .filter(|cost| cost.is_finite() && *cost >= 0.0)
+                .ok_or(ProviderFailure::InvalidResponse)
+        })
+        .transpose()
 }
 fn optional_u32(value: &serde_json::Value, key: &str) -> Result<Option<u32>, ProviderFailure> {
     value

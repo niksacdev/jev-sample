@@ -79,6 +79,8 @@ async fn main() -> io::Result<()> {
     use jev_sample::workflow::{
         contracts::ProviderId,
         decision::{DecisionProvider, DeterministicProvider, VendorDecisions},
+        gateway::{OpenRouterModels, valid_model_id},
+        llm_decision::LlmDecisions,
         planner::{OpenAiPlanner, Planner},
         policy::WorkflowPolicy,
         service::WorkflowService,
@@ -115,13 +117,61 @@ async fn main() -> io::Result<()> {
             ),
         );
     }
+    // Direct vendor keys win; one OpenRouter key fills whatever is still missing.
+    let mut openrouter_models = OpenRouterModels::checked_in();
+    for (name, slot) in [
+        (
+            "OPENROUTER_PLANNER_MODEL",
+            &mut openrouter_models.planner_model,
+        ),
+        (
+            "OPENROUTER_DECISION_MODEL",
+            &mut openrouter_models.decision_model,
+        ),
+        ("OPENROUTER_JEV_MODEL", &mut openrouter_models.jev_model),
+    ] {
+        if let Some(model) = optional_env(name)? {
+            if !valid_model_id(&model) {
+                return Err(io::Error::other(format!("{name} is not a valid model ID")));
+            }
+            *slot = model;
+        }
+    }
+    let mut planner = planner;
+    if let Some(key) = optional_env("OPENROUTER_API_KEY")? {
+        if planner.is_none() {
+            planner = Some(Arc::new(
+                OpenAiPlanner::openrouter(&key, &openrouter_models.planner_model, provider_timeout)
+                    .map_err(io::Error::other)?,
+            ));
+        }
+        if let std::collections::btree_map::Entry::Vacant(slot) = decisions.entry(ProviderId::Jev) {
+            slot.insert(Arc::new(
+                VendorDecisions::jev_openrouter(
+                    &key,
+                    &openrouter_models.jev_model,
+                    provider_timeout,
+                )
+                .map_err(io::Error::other)?,
+            ));
+        }
+        if let std::collections::btree_map::Entry::Vacant(slot) =
+            decisions.entry(ProviderId::Openai)
+        {
+            slot.insert(Arc::new(
+                LlmDecisions::openrouter(&key, &openrouter_models.decision_model, provider_timeout)
+                    .map_err(io::Error::other)?,
+            ));
+        }
+    }
     let database =
         optional_env("REASSURE_WORKFLOW_DB")?.unwrap_or_else(|| ".local/workflows.sqlite3".into());
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
     let store = WorkflowStore::open(Path::new(&database), &workflow_policy)
         .await
         .map_err(io::Error::other)?;
-    let workflows = WorkflowService::new(planner, decisions, workflow_policy, store);
+    let workflows = WorkflowService::new(planner, decisions, workflow_policy, store)
+        .with_openrouter_models(openrouter_models);
     eprintln!(
         "Synthetic workflow planner configured={}; durable SQLite records enabled; no automatic replay.",
         workflows.options().planner.available

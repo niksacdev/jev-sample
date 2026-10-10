@@ -11,6 +11,8 @@ use tracing::{Instrument, instrument::WithSubscriber};
 use super::{
     contracts::*,
     decision::{DecisionProvider, DecisionValue, ProviderFailure, Question, VendorDecisions},
+    gateway::OpenRouterModels,
+    llm_decision::LlmDecisions,
     planner::{OpenAiPlanner, Planner, validate_plan},
     policy::{Gate, WorkflowPolicy},
     store::{Admission, Snapshot, StoreError, WorkflowStore, epoch_ms, identity},
@@ -45,15 +47,17 @@ struct Runtime {
     planner: Option<Arc<dyn Planner>>,
     providers: BTreeMap<ProviderId, Arc<dyn DecisionProvider>>,
     setup: OnceLock<SetupConnections>,
+    openrouter: OpenRouterModels,
     policy: WorkflowPolicy,
     store: WorkflowStore,
     capacity: Arc<Semaphore>,
     resume_lock: Mutex<()>,
 }
 
+/// Connections added once at runtime from a single OpenRouter key; startup connections always win.
 struct SetupConnections {
     planner: Option<Arc<dyn Planner>>,
-    jev: Option<Arc<dyn DecisionProvider>>,
+    providers: BTreeMap<ProviderId, Arc<dyn DecisionProvider>>,
 }
 
 impl Runtime {
@@ -63,13 +67,9 @@ impl Runtime {
             .or_else(|| self.setup.get()?.planner.as_ref())
     }
     fn provider(&self, id: &ProviderId) -> Option<&Arc<dyn DecisionProvider>> {
-        self.providers.get(id).or_else(|| {
-            if *id == ProviderId::Jev {
-                self.setup.get()?.jev.as_ref()
-            } else {
-                None
-            }
-        })
+        self.providers
+            .get(id)
+            .or_else(|| self.setup.get()?.providers.get(id))
     }
 }
 
@@ -86,12 +86,20 @@ impl WorkflowService {
                 planner,
                 providers,
                 setup: OnceLock::new(),
+                openrouter: OpenRouterModels::checked_in(),
                 policy,
                 store,
                 capacity,
                 resume_lock: Mutex::new(()),
             }),
         }
+    }
+    /// Overrides checked-in OpenRouter models; only effective before the service is cloned.
+    pub fn with_openrouter_models(mut self, models: OpenRouterModels) -> Self {
+        if let Some(runtime) = Arc::get_mut(&mut self.inner) {
+            runtime.openrouter = models;
+        }
+        self
     }
     pub fn options(&self) -> WorkflowOptions {
         WorkflowOptions {
@@ -108,7 +116,7 @@ impl WorkflowService {
                         available: provider.is_some(),
                         model: provider.and_then(|p| p.model()),
                         capability: provider.map(|p| p.capability()).unwrap_or_else(|| {
-                            "Not configured; configure key and explicit model, then restart.".into()
+                            "Not configured; add an OpenRouter key in setup or a direct vendor key at startup.".into()
                         }),
                     }
                 })
@@ -121,30 +129,21 @@ impl WorkflowService {
             synthetic_only: true,
         }
     }
+    /// One OpenRouter key fills every missing connection: planner, Jev, and the LLM comparison slot.
     pub fn configure_planner(
         &self,
         input: PlannerSetup,
     ) -> Result<WorkflowOptions, PlannerSetupError> {
+        let key = input.openrouter_api_key.as_str();
         let needs_planner = self.inner.planner().is_none();
-        let needs_jev = self.inner.provider(&ProviderId::Jev).is_none();
-        if self.inner.setup.get().is_some() || (!needs_planner && !needs_jev) {
+        let missing: Vec<ProviderId> = [ProviderId::Jev, ProviderId::Openai]
+            .into_iter()
+            .filter(|id| self.inner.provider(id).is_none())
+            .collect();
+        if self.inner.setup.get().is_some() || (!needs_planner && missing.is_empty()) {
             return Err(PlannerSetupError::AlreadyConfigured);
         }
-        let valid_key = |key: &str| {
-            !key.is_empty() && key.len() <= 512 && key.bytes().all(|b| b.is_ascii_graphic())
-        };
-        if (needs_planner
-            && (!valid_key(&input.api_key)
-                || input.model.is_empty()
-                || input.model.len() > 100
-                || !input
-                    .model
-                    .bytes()
-                    .all(|b| b.is_ascii_alphanumeric() || b"-_.".contains(&b))))
-            || (needs_jev && !valid_key(&input.jev_api_key))
-            || (!needs_planner && (!input.api_key.is_empty() || !input.model.is_empty()))
-            || (!needs_jev && !input.jev_api_key.is_empty())
-        {
+        if key.is_empty() || key.len() > 512 || !key.bytes().all(|b| b.is_ascii_graphic()) {
             return Err(PlannerSetupError::Invalid);
         }
         let transport_error = |code: String| {
@@ -155,24 +154,32 @@ impl WorkflowService {
             }
         };
         let timeout = Duration::from_millis(u64::from(self.inner.policy.deadline_ms));
+        let models = &self.inner.openrouter;
         let planner: Option<Arc<dyn Planner>> = if needs_planner {
             Some(Arc::new(
-                OpenAiPlanner::new(&input.api_key, &input.model, timeout)
+                OpenAiPlanner::openrouter(key, &models.planner_model, timeout)
                     .map_err(transport_error)?,
             ))
         } else {
             None
         };
-        let jev: Option<Arc<dyn DecisionProvider>> = if needs_jev {
-            Some(Arc::new(
-                VendorDecisions::jev(&input.jev_api_key, timeout).map_err(transport_error)?,
-            ))
-        } else {
-            None
-        };
+        let mut providers: BTreeMap<ProviderId, Arc<dyn DecisionProvider>> = BTreeMap::new();
+        for id in missing {
+            let provider: Arc<dyn DecisionProvider> = match id {
+                ProviderId::Jev => Arc::new(
+                    VendorDecisions::jev_openrouter(key, &models.jev_model, timeout)
+                        .map_err(transport_error)?,
+                ),
+                _ => Arc::new(
+                    LlmDecisions::openrouter(key, &models.decision_model, timeout)
+                        .map_err(transport_error)?,
+                ),
+            };
+            providers.insert(id, provider);
+        }
         self.inner
             .setup
-            .set(SetupConnections { planner, jev })
+            .set(SetupConnections { planner, providers })
             .map_err(|_| PlannerSetupError::AlreadyConfigured)?;
         Ok(self.options())
     }
@@ -485,6 +492,7 @@ impl WorkflowService {
                     provider=?provider_id,model=provider.model().as_deref(),policy_version=%snapshot.policy.version,
                     attempt=1,elapsed_ms=attempt.elapsed_ms,
                     input_tokens=attempt.usage.input_tokens,output_tokens=attempt.usage.output_tokens,
+                    cost_usd=attempt.usage.cost_usd,
                     failure=attempt.answers.as_ref().err().map(ProviderFailure::code),
                 );
                 add_usage(
@@ -879,6 +887,11 @@ fn add_usage(total: &mut WorkflowUsage, usage: &WorkflowUsage) -> Result<(), Wor
     };
     total.input_tokens = add(total.input_tokens, usage.input_tokens)?;
     total.output_tokens = add(total.output_tokens, usage.output_tokens)?;
+    total.cost_usd = match (total.cost_usd, usage.cost_usd) {
+        (Some(a), Some(b)) => Some(a + b),
+        (None, Some(b)) if total.attempts == usage.attempts => Some(b),
+        _ => None,
+    };
     Ok(())
 }
 fn event(

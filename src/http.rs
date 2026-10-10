@@ -284,7 +284,7 @@ async fn workflow_setup(
         error(
             r.status(),
             "invalid_setup_request",
-            "Enter the missing OpenAI and Jev connection details.",
+            "Enter your OpenRouter API key.",
             None,
         )
     })?;
@@ -292,7 +292,7 @@ async fn workflow_setup(
     let options = state.service.configure_planner(input).map_err(|failure| {
         let (status, code, message) = match failure {
             PlannerSetupError::Invalid => (StatusCode::UNPROCESSABLE_ENTITY, "invalid_planner_setup",
-                "Enter valid keys for missing connections and a valid OpenAI model ID (letters, numbers, dots, underscores and hyphens). Already connected services cannot be replaced."),
+                "Enter a valid OpenRouter API key (no spaces, up to 512 characters). Already connected services cannot be replaced."),
             PlannerSetupError::AlreadyConfigured => (StatusCode::CONFLICT, "planner_already_configured",
                 "Setup is already configured. Refresh availability to continue. Restart the API to change credentials."),
             PlannerSetupError::TransportUnavailable => (StatusCode::SERVICE_UNAVAILABLE, "setup_transport_unavailable",

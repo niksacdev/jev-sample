@@ -20,9 +20,7 @@ pub struct WorkflowSubmission {
 #[derive(Deserialize, TS)]
 #[serde(deny_unknown_fields)]
 pub struct PlannerSetup {
-    pub api_key: String,
-    pub model: String,
-    pub jev_api_key: String,
+    pub openrouter_api_key: String,
 }
 
 #[derive(Clone, Deserialize, Serialize, TS)]
@@ -112,6 +110,9 @@ pub struct WorkflowUsage {
     pub input_tokens: Option<u32>,
     pub output_tokens: Option<u32>,
     pub attempts: u32,
+    /// Gateway-reported spend (OpenRouter `usage.cost`); `None` when the route does not report it.
+    #[serde(default)]
+    pub cost_usd: Option<f64>,
 }
 #[derive(Clone, Deserialize, Serialize, TS)]
 pub struct WorkflowRun {

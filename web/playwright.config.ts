@@ -10,7 +10,7 @@ export default defineConfig({
       command: "cd .. && cargo run --bin api --locked",
       url: "http://127.0.0.1:3000/health",
       env: {
-        TYPESAFE_API_KEY: "", OPENAI_API_KEY: "", OPENAI_PLANNER_MODEL: "", OPENAI_DECISION_MODEL: "",
+        TYPESAFE_API_KEY: "", OPENAI_API_KEY: "", OPENROUTER_API_KEY: "", OPENAI_PLANNER_MODEL: "", OPENAI_DECISION_MODEL: "",
         REASSURE_WORKFLOW_DB: ".local/e2e-workflows.sqlite3",
         REASSURE_OPERATOR_KEY: "e2e-only-operator-key-not-for-production",
       },

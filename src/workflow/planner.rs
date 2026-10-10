@@ -5,7 +5,9 @@ use serde_json::{Value, json};
 
 use super::{
     contracts::{WorkflowPlan, WorkflowTask, WorkflowTaskKind, WorkflowUsage},
-    decision::{JsonVendor, ProviderFailure, Question},
+    decision::{ProviderFailure, Question},
+    gateway::{Gateway, OPENAI_RESPONSES, OPENROUTER_RESPONSES},
+    responses::ResponsesClient,
 };
 
 pub type PlannerFuture<'a, T> =
@@ -19,16 +21,27 @@ pub trait Planner: Send + Sync {
 
 #[derive(Clone)]
 pub struct OpenAiPlanner {
-    transport: JsonVendor,
-    model: String,
+    client: ResponsesClient,
 }
 
 impl OpenAiPlanner {
     pub fn new(key: &str, model: &str, timeout: Duration) -> Result<Self, String> {
         Self::build(
-            "https://api.openai.com/v1/responses".into(),
+            OPENAI_RESPONSES.into(),
             key,
             model,
+            Gateway::Direct,
+            timeout,
+        )
+    }
+
+    /// OpenAI-compatible, stateless Responses API routed through OpenRouter.
+    pub fn openrouter(key: &str, model: &str, timeout: Duration) -> Result<Self, String> {
+        Self::build(
+            OPENROUTER_RESPONSES.into(),
+            key,
+            model,
+            Gateway::OpenRouter,
             timeout,
         )
     }
@@ -39,20 +52,37 @@ impl OpenAiPlanner {
         model: &str,
         timeout: Duration,
     ) -> Result<Self, String> {
-        if !endpoint.starts_with("http://127.0.0.1:") {
-            return Err("test_endpoint_must_be_loopback".into());
-        }
-        Self::build(endpoint, key, model, timeout)
+        Self::for_test_via(endpoint, key, model, Gateway::Direct, timeout)
     }
 
-    fn build(endpoint: String, key: &str, model: &str, timeout: Duration) -> Result<Self, String> {
-        if model.trim().is_empty() || model.len() > 100 {
-            return Err("invalid_planner_model".into());
+    pub fn for_test_via(
+        endpoint: String,
+        key: &str,
+        model: &str,
+        gateway: Gateway,
+        timeout: Duration,
+    ) -> Result<Self, String> {
+        if !crate::workflow::gateway::is_loopback_test_endpoint(&endpoint) {
+            return Err("test_endpoint_must_be_loopback".into());
         }
-        Ok(Self {
-            transport: JsonVendor::new(endpoint, key, timeout)?,
-            model: model.into(),
-        })
+        Self::build(endpoint, key, model, gateway, timeout)
+    }
+
+    fn build(
+        endpoint: String,
+        key: &str,
+        model: &str,
+        gateway: Gateway,
+        timeout: Duration,
+    ) -> Result<Self, String> {
+        let client = ResponsesClient::new(endpoint, key, model, gateway, timeout).map_err(|e| {
+            if e == "invalid_model" {
+                "invalid_planner_model".to_string()
+            } else {
+                e
+            }
+        })?;
+        Ok(Self { client })
     }
 
     async fn structured(
@@ -62,65 +92,9 @@ impl OpenAiPlanner {
         name: &str,
         schema: Value,
     ) -> Result<(Value, WorkflowUsage), ProviderFailure> {
-        let response = self
-            .transport
-            .post(&json!({
-                "model": self.model, "store": false, "max_output_tokens": 1600,
-                "instructions": instructions, "input": context,
-                "text": {"format": {"type":"json_schema","name":name,"strict":true,"schema":schema}}
-            }))
-            .await?;
-        if response.get("status").and_then(Value::as_str) != Some("completed")
-            || response.get("model").and_then(Value::as_str) != Some(self.model.as_str())
-        {
-            return Err(ProviderFailure::InvalidResponse);
-        }
-        let mut texts = Vec::new();
-        for item in response
-            .get("output")
-            .and_then(Value::as_array)
-            .ok_or(ProviderFailure::InvalidResponse)?
-        {
-            if item.get("type").and_then(Value::as_str) != Some("message") {
-                continue;
-            }
-            for part in item
-                .get("content")
-                .and_then(Value::as_array)
-                .ok_or(ProviderFailure::InvalidResponse)?
-            {
-                match part.get("type").and_then(Value::as_str) {
-                    Some("refusal") => return Err(ProviderFailure::Provider),
-                    Some("output_text") => texts.push(
-                        part.get("text")
-                            .and_then(Value::as_str)
-                            .ok_or(ProviderFailure::InvalidResponse)?,
-                    ),
-                    _ => return Err(ProviderFailure::InvalidResponse),
-                }
-            }
-        }
-        if texts.len() != 1 {
-            return Err(ProviderFailure::InvalidResponse);
-        }
-        let usage = response
-            .get("usage")
-            .ok_or(ProviderFailure::InvalidResponse)?;
-        let tokens = |key| {
-            usage
-                .get(key)
-                .and_then(Value::as_u64)
-                .and_then(|n| u32::try_from(n).ok())
-                .ok_or(ProviderFailure::InvalidResponse)
-        };
-        Ok((
-            serde_json::from_str(texts[0]).map_err(|_| ProviderFailure::InvalidResponse)?,
-            WorkflowUsage {
-                input_tokens: Some(tokens("input_tokens")?),
-                output_tokens: Some(tokens("output_tokens")?),
-                attempts: 1,
-            },
-        ))
+        self.client
+            .structured(context, instructions, name, schema, 1600)
+            .await
     }
 }
 
@@ -135,7 +109,7 @@ struct TaskProposal {
 
 impl Planner for OpenAiPlanner {
     fn model(&self) -> String {
-        self.model.clone()
+        self.client.model().to_string()
     }
     fn plan<'a>(&'a self, context: &'a str) -> PlannerFuture<'a, WorkflowPlan> {
         Box::pin(async move {
