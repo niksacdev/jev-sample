@@ -16,12 +16,31 @@ export type OperatorRunDetail = { run: OperatorRun, provider_exchange: ProviderE
 export type LiveLog = { sequence: number, occurred_at_ms: number, level: string, fields: { [key in string]: string }, };
 export type ProviderId = "code" | "jev" | "openai";
 export type WorkflowSubmission = { message: string, providers: Array<ProviderId>, client_request_id: string, };
-export type PlannerSetup = { openrouter_api_key: string, };
+export type RouterId = "openrouter" | "azure_foundry";
+export type PlannerChoice = "openai";
+export type DecisionChoice = "jev" | "openai_decisions" | "microsoft_decisions";
+export type RouterOption = { id: RouterId, label: string, needs_endpoint: boolean, endpoint_hint: string | null, help: string, };
+export type PlannerChoiceOption = { id: PlannerChoice, label: string, 
+/**
+ * Routers that can serve this choice; empty means not yet available.
+ */
+routers: Array<RouterId>, note: string | null, };
+export type DecisionChoiceOption = { id: DecisionChoice, label: string, 
+/**
+ * Workflow provider slot filled by this choice, once it has an adapter.
+ */
+provider: ProviderId | null, routers: Array<RouterId>, note: string | null, };
+export type ConnectionCatalog = { routers: Array<RouterOption>, planners: Array<PlannerChoiceOption>, decisions: Array<DecisionChoiceOption>, };
+export type PlannerRoute = { choice: PlannerChoice, router: RouterId, };
+export type DecisionRoute = { choice: DecisionChoice, router: RouterId, };
+export type RouterCredential = { router: RouterId, api_key: string, endpoint: string | null, };
+export type ConnectionSetup = { planner: PlannerRoute | null, decisions: Array<DecisionRoute>, credentials: Array<RouterCredential>, };
+export type CostSource = "reported" | "estimated";
 export type WorkflowResume = { run_id: string, expected_plan_id: string, expected_task_id: string, client_request_id: string, message: string, employee_review: boolean, };
 export type PlannerOption = { available: boolean, model: string | null, };
 export type DecisionProviderOption = { id: ProviderId, available: boolean, model: string | null, capability: string, };
 export type WorkflowLimits = { max_tasks: number, max_steps: number, deadline_ms: number, };
-export type WorkflowOptions = { planner: PlannerOption, providers: Array<DecisionProviderOption>, limits: WorkflowLimits, synthetic_only: boolean, };
+export type WorkflowOptions = { planner: PlannerOption, providers: Array<DecisionProviderOption>, limits: WorkflowLimits, synthetic_only: boolean, connections: ConnectionCatalog, };
 export type WorkflowState = "running" | "completed" | "clarification" | "employee_review" | "failed" | "interrupted";
 export type WorkflowTaskKind = "tool" | "decision";
 export type WorkflowTask = { id: string, kind: WorkflowTaskKind, name: string, depends_on: Array<string>, state: string, };
@@ -29,9 +48,13 @@ export type WorkflowPlan = { plan_id: string, tasks: Array<WorkflowTask>, };
 export type WorkflowEvent = { sequence: number, comparison_id: string, run_id: string, task_id: string | null, provider: ProviderId | null, model: string | null, actor: string, plan_id: string | null, policy_version: string, schema_version: string, stage: string, outcome: string, occurred_at_ms: number, recorded_at_ms: number | null, };
 export type WorkflowUsage = { input_tokens: number | null, output_tokens: number | null, attempts: number, 
 /**
- * Gateway-reported spend (OpenRouter `usage.cost`); `None` when the route does not report it.
+ * Spend in US dollars; `None` when the route neither reports cost nor has a configured price.
  */
-cost_usd: number | null, };
+cost_usd: number | null, 
+/**
+ * Whether `cost_usd` was reported by the router or estimated from tokens and list prices.
+ */
+cost_source: CostSource | null, };
 export type WorkflowRun = { run_id: string, plan_id: string, provider: ProviderId, model: string | null, state: WorkflowState, reply: string, tasks: Array<WorkflowTask>, event_trace: Array<WorkflowEvent>, usage: WorkflowUsage, elapsed_ms: number, failure_code: string | null, };
 export type WorkflowComparison = { comparison_id: string, input_key: string, base_plan: WorkflowPlan, runs: Array<WorkflowRun>, mode: string, complete: boolean, planner_model: string | null, planner_usage: WorkflowUsage, failure_code: string | null, };
 export type WorkflowDecisionRecord = { run_id: string, plan_id: string, decision_input_key: string, question_id: string, question_version: string, provider: ProviderId, model: string | null, policy_version: string, result: string, confidence_semantics: string | null, usage: WorkflowUsage, elapsed_ms: number, complete: boolean, task_id: string, attempt: number, context_json: string, question_json: string, };

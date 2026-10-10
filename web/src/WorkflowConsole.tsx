@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getWorkflowDetails, getWorkflowOptions, resumeWorkflow, submitWorkflow } from "./api";
-import type { OperatorWorkflow, ProviderId, WorkflowComparison, WorkflowOptions, WorkflowSubmission, WorkflowResume } from "./contracts";
+import type { OperatorWorkflow, ProviderId, WorkflowComparison, WorkflowOptions, WorkflowSubmission, WorkflowResume, WorkflowUsage } from "./contracts";
 import { DecisionEvidence } from "./WorkflowEvidence";
 import ExecutionTerminal from "./ExecutionTerminal";
 import LiveLogs from "./LiveLogs";
@@ -18,8 +18,9 @@ function taskLabel(name: string) {
   } as Record<string, string>)[name] ?? name.replaceAll("_", " ");
 }
 
-export function formatCost(cost: number | null | undefined): string {
-  return cost == null ? "Not reported" : `$${cost.toFixed(6)}`;
+export function formatCost(usage: Pick<WorkflowUsage, "cost_usd" | "cost_source">): string {
+  if (usage.cost_usd == null) return "Not reported";
+  return `$${usage.cost_usd.toFixed(6)}${usage.cost_source === "estimated" ? " (estimated)" : ""}`;
 }
 
 function Comparison({ value, detailed = true, geekMode = false }: { value: WorkflowComparison; detailed?: boolean; geekMode?: boolean }) {
@@ -28,7 +29,7 @@ function Comparison({ value, detailed = true, geekMode = false }: { value: Workf
     {geekMode && <p>Planner: {value.planner_model ?? "Unavailable"} · {value.mode.replaceAll("_", " ")}</p>}
     {geekMode && <p>All runs completed: {value.complete ? "Yes (not a quality label)" : "No"} ·
       Planner input/output tokens: {value.planner_usage.input_tokens ?? "Unknown"} / {value.planner_usage.output_tokens ?? "Unknown"} ·
-      Planner cost: {formatCost(value.planner_usage.cost_usd)}</p>
+      Planner cost: {formatCost(value.planner_usage)}</p>
     }
     {value.failure_code && <p role="alert" className="error">{value.failure_code}</p>}
     <details open={!detailed}><summary>Your base plan</summary>
@@ -41,7 +42,7 @@ function Comparison({ value, detailed = true, geekMode = false }: { value: Workf
       <p>{run.reply || "No conversational reply recorded."}</p>
       {run.failure_code && <p className="error">{run.failure_code}</p>}
       {geekMode && <p>Decision input/output tokens: {run.usage.input_tokens ?? "Unknown"} / {run.usage.output_tokens ?? "Unknown"} ·
-        Decision attempts: {run.usage.attempts} · Decision cost: {formatCost(run.usage.cost_usd)} · Observed latency: {run.elapsed_ms} ms</p>
+        Decision attempts: {run.usage.attempts} · Decision cost: {formatCost(run.usage)} · Observed latency: {run.elapsed_ms} ms</p>
       }
       <ol>{run.tasks.map(t => <li key={t.id}>{geekMode ? t.name : taskLabel(t.name)}: <strong>{t.state.replaceAll("_", " ")}</strong></li>)}</ol>
     </article>)}
@@ -282,7 +283,7 @@ export default function WorkflowConsole({ mode = "all", geekMode = false, agreem
       <LiveLogs key={mode} />
       <ExecutionTerminal title="Runtime configuration" lines={[
         `view=${mode} | operator inspection=${operatorKey ? "unlocked" : "locked"}`,
-        options ? `Planner: ${options.planner.available ? options.planner.model ?? "Model unknown" : "Not configured. Set OPENROUTER_API_KEY locally or add it in setup."}` : "Configuration not loaded.",
+        options ? `Planner: ${options.planner.available ? options.planner.model ?? "Model unknown" : "Not configured. Set OPENROUTER_API_KEY or AZURE_FOUNDRY_ENDPOINT and AZURE_FOUNDRY_API_KEY locally, or add them in setup."}` : "Configuration not loaded.",
         ...(options?.providers.map(p => `${p.id} | ${p.available ? "available" : "unavailable"} | model=${p.model ?? "none"} | ${p.capability}`) ?? []),
         ...(options ? [`limits: tasks=${options.limits.max_tasks} steps=${options.limits.max_steps} deadline=${options.limits.deadline_ms}ms`] : []),
         ...(configurationFailure ? [`ERROR | ${configurationFailure}`] : []),

@@ -43,6 +43,10 @@ impl LlmDecisions {
         })
     }
 
+    pub(crate) fn from_client(client: ResponsesClient) -> Self {
+        Self { client }
+    }
+
     /// Local loopback mocks only; runtime composition cannot configure vendor URLs.
     pub fn for_test(
         endpoint: String,
@@ -223,7 +227,7 @@ impl DecisionProvider for LlmDecisions {
         ProviderId::Openai
     }
     fn model(&self) -> Option<String> {
-        Some(self.client.model().to_string())
+        Some(self.client.identity())
     }
     fn capability(&self) -> String {
         "General LLM via OpenRouter answering the same bounded questions; probabilities are self-reported, not calibrated, and carry no confidence".into()

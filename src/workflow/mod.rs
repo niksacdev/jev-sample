@@ -1,4 +1,5 @@
 //! Bounded, synthetic agent workflows. No external business actions are supported.
+pub mod connections;
 pub mod contracts;
 pub mod decision;
 pub mod gateway;

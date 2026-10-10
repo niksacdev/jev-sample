@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 import { getAssessors, getOperatorRuns, getRuns, sendMessage, getWorkflowOptions } from "./api";
+import { connectionCatalog } from "./testFixtures";
 
 vi.mock("./api", () => ({
   getAssessors: vi.fn(),
@@ -9,7 +10,7 @@ vi.mock("./api", () => ({
   getRuns: vi.fn(),
   sendMessage: vi.fn(),
   getWorkflowOptions: vi.fn(),
-  configurePlanner: vi.fn(),
+  configureConnections: vi.fn(),
   getWorkflowDetails: vi.fn(),
   resumeWorkflow: vi.fn(),
   submitWorkflow: vi.fn(),
@@ -20,7 +21,7 @@ beforeEach(() => {
   sessionStorage.clear();
   vi.mocked(getRuns).mockResolvedValue([]);
   vi.mocked(getWorkflowOptions).mockResolvedValue({
-    planner: { available: false, model: null }, synthetic_only: true,
+    planner: { available: false, model: null }, synthetic_only: true, connections: connectionCatalog,
     providers: [{ id: "code", available: true, model: null, capability: "Synthetic completeness only" }],
     limits: { max_tasks: 8, max_steps: 24, deadline_ms: 45000 },
   });
@@ -205,7 +206,7 @@ test("operator requests cannot duplicate unlocks or restore inspection after loc
 
 test("Data Protection agreement survives message, provider and persona changes and tab-session remount", async () => {
   vi.mocked(getWorkflowOptions).mockResolvedValue({
-    planner: { available: true, model: "fixture-model" }, synthetic_only: true,
+    planner: { available: true, model: "fixture-model" }, synthetic_only: true, connections: connectionCatalog,
     providers: [{ id: "jev", available: true, model: "jev-1.13.0", capability: "Judgments" }],
     limits: { max_tasks: 8, max_steps: 24, deadline_ms: 45000 },
   });

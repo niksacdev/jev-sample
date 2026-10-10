@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { OperatorWorkflow, WorkflowComparison } from "../src/contracts";
+import { connectionCatalog } from "../src/testFixtures";
 
 test("guided setup preserves the draft and unlocks the workflow without inference", async ({ page }) => {
   let submissions = 0;
@@ -8,9 +9,9 @@ test("guided setup preserves the draft and unlocks the workflow without inferenc
   await expect(page.getByRole("region", { name: "Set up ZipClaim" })).toBeVisible();
   await expect(page.getByLabel("OpenRouter API key", { exact: true })).toBeVisible();
   await expect(page.getByLabel("OpenAI API key", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Not configured. Set OPENROUTER_API_KEY locally or add it in setup.", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("Not configured. Set OPENROUTER_API_KEY or AZURE_FOUNDRY_ENDPOINT and AZURE_FOUNDRY_API_KEY locally, or add them in setup.", { exact: false })).toHaveCount(0);
   await page.getByRole("button", { name: "Geek Mode: Off" }).click();
-  await expect(page.getByLabel("Runtime configuration output")).toContainText("Not configured. Set OPENROUTER_API_KEY locally or add it in setup.");
+  await expect(page.getByLabel("Runtime configuration output")).toContainText("Not configured. Set OPENROUTER_API_KEY or AZURE_FOUNDRY_ENDPOINT and AZURE_FOUNDRY_API_KEY locally, or add them in setup.");
   await expect(page.getByRole("button", { name: "Submit a Claim" })).toBeDisabled();
   await expect(page.getByRole("heading", { name: "Claim test console" })).toBeVisible();
   await expect(page.getByRole("heading", { name: /Less waiting/ })).toHaveCount(0);
@@ -41,6 +42,12 @@ test("guided setup preserves the draft and unlocks the workflow without inferenc
   for (const label of ["ZipClaim token", "OpenRouter API key"]) {
     await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("type", "password");
   }
+  await page.getByRole("radio", { name: /Azure Foundry/ }).check();
+  await expect(page.getByLabel("Azure Foundry API key", { exact: true })).toHaveAttribute("type", "password");
+  await expect(page.getByText("via OpenRouter — not available on Azure Foundry")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /Microsoft Decisions/ })).toBeDisabled();
+  await page.getByRole("radio", { name: /OpenRouter/ }).check();
+  await expect(page.getByLabel("Azure Foundry API key", { exact: true })).toHaveCount(0);
   await page.getByLabel("ZipClaim token", { exact: true }).fill("incorrect-operator-key");
   await page.getByLabel("OpenRouter API key", { exact: true }).fill("e2e-fixture-openrouter-key-no-vendor-access");
   await page.getByRole("button", { name: "Agree and save" }).click();
@@ -65,14 +72,14 @@ test("mocked base plan, employee clarification and operator evidence form one vi
   const comparison: WorkflowComparison = {
     comparison_id: "synthetic-browser-journey", input_key: "synthetic-input", mode: "shared_base_plan",
     complete: false, planner_model: "offline-planner", failure_code: null,
-    planner_usage: { input_tokens: null, output_tokens: null, attempts: 1, cost_usd: null },
+    planner_usage: { input_tokens: null, output_tokens: null, attempts: 1, cost_usd: null, cost_source: null },
     base_plan: { plan_id: "base-plan-1", tasks: [{
       id: "reference", kind: "decision", name: "synthetic_complete", depends_on: [], state: "pending",
     }] },
     runs: [{
       run_id: "run-1", plan_id: "base-plan-1", provider: "code", model: null, state: "clarification",
       reply: "Please provide a fictional reference.", failure_code: null, elapsed_ms: 0,
-      usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null }, event_trace: [],
+      usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null, cost_source: null }, event_trace: [],
       tasks: [{ id: "reference", kind: "decision", name: "synthetic_complete", depends_on: [], state: "paused" }],
     }],
   };
@@ -83,7 +90,7 @@ test("mocked base plan, employee clarification and operator evidence form one vi
       question_id: "synthetic_complete", question_version: "questions-1", decision_input_key: "matched-reference-input",
       policy_version: "policy-1", result: '{"kind":"deterministic","value":false}',
       confidence_semantics: "deterministic_boolean_no_probability",
-      usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null }, elapsed_ms: 0,
+      usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null, cost_source: null }, elapsed_ms: 0,
       complete: true, attempt: 1, context_json: "{}", question_json: "{}",
     }],
   };
@@ -92,7 +99,7 @@ test("mocked base plan, employee clarification and operator evidence form one vi
   await page.route("**/v1/**", async route => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/v1/workflows/options") return route.fulfill({ json: {
-      planner: { available: true, model: "offline-planner" }, synthetic_only: true,
+      planner: { available: true, model: "offline-planner" }, synthetic_only: true, connections: connectionCatalog,
       providers: [
         { id: "code", available: true, model: null, capability: "Synthetic completeness only" },
         { id: "jev", available: true, model: "jev-1.13.0", capability: "Offline fixture" },

@@ -249,6 +249,11 @@ footer span, footer small { display: block; margin-top: 8px; }
 .planner-setup p { font-size: 13px; }
 .planner-setup fieldset { border: none; padding: 0; margin: 0; min-width: 0; }
 .planner-setup input { display: block; width: 100%; border: 1px solid var(--cp-border-strong); border-radius: 10px; padding: 10px; margin-bottom: 12px; background: var(--cp-surface); }
+.planner-setup .setup-group { border: 1px solid var(--cp-border); border-radius: 10px; padding: 8px 12px; margin: 0 0 12px; }
+.planner-setup legend { font-weight: 600; padding: 0 4px; }
+.planner-setup .setup-choice { display: flex; gap: 8px; align-items: baseline; margin: 6px 0; font-size: 13px; }
+.planner-setup .setup-choice input { display: inline-block; width: auto; margin: 0; }
+.planner-setup .setup-choice input:disabled + span { opacity: 0.6; }
 .geek-theme :is(.card, button, textarea, input[type="password"], .planner-setup, .planner-setup input, .provider-settings, .assessor-list, .agreement-completed) {
   border-color: var(--cp-border);
   box-shadow: var(--cp-neon-shadow);

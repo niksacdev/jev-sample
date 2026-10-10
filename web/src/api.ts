@@ -10,7 +10,7 @@ import type {
   WorkflowComparison,
   WorkflowResume,
   OperatorWorkflow,
-  PlannerSetup,
+  ConnectionSetup,
 } from "./contracts";
 
 export async function getAssessors(): Promise<AssessorOption[]> {
@@ -39,7 +39,7 @@ export function getWorkflowOptions(): Promise<WorkflowOptions> {
   return request("/v1/workflows/options");
 }
 
-export function configurePlanner(input: PlannerSetup, operatorKey: string): Promise<WorkflowOptions> {
+export function configureConnections(input: ConnectionSetup, operatorKey: string): Promise<WorkflowOptions> {
   return request("/v1/operator/workflows/setup", {
     method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${operatorKey}` },
     body: JSON.stringify(input), cache: "no-store",

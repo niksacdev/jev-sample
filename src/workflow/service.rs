@@ -9,11 +9,11 @@ use tokio::sync::{Mutex, Semaphore};
 use tracing::{Instrument, instrument::WithSubscriber};
 
 use super::{
+    connections::{self, RouteError, RouterConnection, RouterEndpoints},
     contracts::*,
-    decision::{DecisionProvider, DecisionValue, ProviderFailure, Question, VendorDecisions},
-    gateway::OpenRouterModels,
-    llm_decision::LlmDecisions,
-    planner::{OpenAiPlanner, Planner, validate_plan},
+    decision::{DecisionProvider, DecisionValue, ProviderFailure, Question},
+    gateway::RouteModels,
+    planner::{Planner, validate_plan},
     policy::{Gate, WorkflowPolicy},
     store::{Admission, Snapshot, StoreError, WorkflowStore, epoch_ms, identity},
 };
@@ -28,10 +28,22 @@ pub enum WorkflowError {
     Execution,
 }
 #[derive(Debug)]
-pub enum PlannerSetupError {
+pub enum ConnectionSetupError {
     Invalid,
     AlreadyConfigured,
     TransportUnavailable,
+    UnsupportedRoute,
+    InvalidEndpoint,
+}
+impl From<RouteError> for ConnectionSetupError {
+    fn from(error: RouteError) -> Self {
+        match error {
+            RouteError::Unsupported => Self::UnsupportedRoute,
+            RouteError::InvalidCredential => Self::Invalid,
+            RouteError::InvalidEndpoint => Self::InvalidEndpoint,
+            RouteError::Client => Self::TransportUnavailable,
+        }
+    }
 }
 impl From<StoreError> for WorkflowError {
     fn from(_: StoreError) -> Self {
@@ -47,14 +59,15 @@ struct Runtime {
     planner: Option<Arc<dyn Planner>>,
     providers: BTreeMap<ProviderId, Arc<dyn DecisionProvider>>,
     setup: OnceLock<SetupConnections>,
-    openrouter: OpenRouterModels,
+    models: RouteModels,
+    endpoints: RouterEndpoints,
     policy: WorkflowPolicy,
     store: WorkflowStore,
     capacity: Arc<Semaphore>,
     resume_lock: Mutex<()>,
 }
 
-/// Connections added once at runtime from a single OpenRouter key; startup connections always win.
+/// Connections added once at runtime through the chosen routers; startup connections always win.
 struct SetupConnections {
     planner: Option<Arc<dyn Planner>>,
     providers: BTreeMap<ProviderId, Arc<dyn DecisionProvider>>,
@@ -86,7 +99,8 @@ impl WorkflowService {
                 planner,
                 providers,
                 setup: OnceLock::new(),
-                openrouter: OpenRouterModels::checked_in(),
+                models: RouteModels::checked_in(),
+                endpoints: RouterEndpoints::production(),
                 policy,
                 store,
                 capacity,
@@ -94,10 +108,17 @@ impl WorkflowService {
             }),
         }
     }
-    /// Overrides checked-in OpenRouter models; only effective before the service is cloned.
-    pub fn with_openrouter_models(mut self, models: OpenRouterModels) -> Self {
+    /// Overrides checked-in router models; only effective before the service is cloned.
+    pub fn with_route_models(mut self, models: RouteModels) -> Self {
         if let Some(runtime) = Arc::get_mut(&mut self.inner) {
-            runtime.openrouter = models;
+            runtime.models = models;
+        }
+        self
+    }
+    /// Points routers at a loopback mock; only effective before the service is cloned.
+    pub fn with_router_endpoints(mut self, endpoints: RouterEndpoints) -> Self {
+        if let Some(runtime) = Arc::get_mut(&mut self.inner) {
+            runtime.endpoints = endpoints;
         }
         self
     }
@@ -116,7 +137,7 @@ impl WorkflowService {
                         available: provider.is_some(),
                         model: provider.and_then(|p| p.model()),
                         capability: provider.map(|p| p.capability()).unwrap_or_else(|| {
-                            "Not configured; add an OpenRouter key in setup or a direct vendor key at startup.".into()
+                            "Not configured; connect it in setup or with a direct vendor key at startup.".into()
                         }),
                     }
                 })
@@ -127,60 +148,105 @@ impl WorkflowService {
                 deadline_ms: self.inner.policy.deadline_ms,
             },
             synthetic_only: true,
+            connections: connections::catalog(&self.inner.models),
         }
     }
-    /// One OpenRouter key fills every missing connection: planner, Jev, and the LLM comparison slot.
-    pub fn configure_planner(
+    /// Installs the chosen routes atomically. Only missing slots may be filled, and credentials
+    /// must cover exactly the routers the chosen routes use.
+    pub fn configure_connections(
         &self,
-        input: PlannerSetup,
-    ) -> Result<WorkflowOptions, PlannerSetupError> {
-        let key = input.openrouter_api_key.as_str();
-        let needs_planner = self.inner.planner().is_none();
-        let missing: Vec<ProviderId> = [ProviderId::Jev, ProviderId::Openai]
-            .into_iter()
-            .filter(|id| self.inner.provider(id).is_none())
-            .collect();
-        if self.inner.setup.get().is_some() || (!needs_planner && missing.is_empty()) {
-            return Err(PlannerSetupError::AlreadyConfigured);
+        input: ConnectionSetup,
+    ) -> Result<WorkflowOptions, ConnectionSetupError> {
+        if self.inner.setup.get().is_some() {
+            return Err(ConnectionSetupError::AlreadyConfigured);
         }
-        if key.is_empty() || key.len() > 512 || !key.bytes().all(|b| b.is_ascii_graphic()) {
-            return Err(PlannerSetupError::Invalid);
+        if input.planner.is_none() && input.decisions.is_empty() {
+            return Err(ConnectionSetupError::Invalid);
         }
-        let transport_error = |code: String| {
-            if code == "client" {
-                PlannerSetupError::TransportUnavailable
-            } else {
-                PlannerSetupError::Invalid
+        if input.planner.is_some() && self.inner.planner().is_some() {
+            return Err(ConnectionSetupError::AlreadyConfigured);
+        }
+        // Setup installs once, so it must cover every required slot startup left empty.
+        let covers_jev = input
+            .decisions
+            .iter()
+            .any(|route| connections::decision_provider(route.choice) == Some(ProviderId::Jev));
+        if (input.planner.is_none() && self.inner.planner().is_none())
+            || (!covers_jev && self.inner.provider(&ProviderId::Jev).is_none())
+        {
+            return Err(ConnectionSetupError::Invalid);
+        }
+        let mut used = std::collections::BTreeSet::new();
+        let mut slots = std::collections::BTreeSet::new();
+        if let Some(route) = input.planner {
+            if !connections::supports_planner(route.router, route.choice) {
+                return Err(ConnectionSetupError::UnsupportedRoute);
             }
-        };
+            used.insert(route.router);
+        }
+        for route in &input.decisions {
+            if !connections::supports_decision(route.router, route.choice) {
+                return Err(ConnectionSetupError::UnsupportedRoute);
+            }
+            let slot = connections::decision_provider(route.choice)
+                .ok_or(ConnectionSetupError::UnsupportedRoute)?;
+            if !slots.insert(slot) {
+                return Err(ConnectionSetupError::Invalid);
+            }
+            if self.inner.provider(&slot).is_some() {
+                return Err(ConnectionSetupError::AlreadyConfigured);
+            }
+            used.insert(route.router);
+        }
+        let supplied: std::collections::BTreeSet<_> =
+            input.credentials.iter().map(|c| c.router).collect();
+        if supplied.len() != input.credentials.len() || supplied != used {
+            return Err(ConnectionSetupError::Invalid);
+        }
+        let endpoints = &self.inner.endpoints;
+        let routers = input
+            .credentials
+            .iter()
+            .map(|c| Ok((c.router, RouterConnection::new(c, endpoints)?)))
+            .collect::<Result<BTreeMap<_, _>, RouteError>>()?;
         let timeout = Duration::from_millis(u64::from(self.inner.policy.deadline_ms));
-        let models = &self.inner.openrouter;
-        let planner: Option<Arc<dyn Planner>> = if needs_planner {
-            Some(Arc::new(
-                OpenAiPlanner::openrouter(key, &models.planner_model, timeout)
-                    .map_err(transport_error)?,
-            ))
-        } else {
-            None
-        };
+        let models = &self.inner.models;
+        let connection = |router| routers.get(&router).ok_or(ConnectionSetupError::Invalid);
+        let planner = input
+            .planner
+            .map(|route| {
+                connection(route.router)?
+                    .planner(route.choice, models, endpoints, timeout)
+                    .map_err(ConnectionSetupError::from)
+            })
+            .transpose()?;
         let mut providers: BTreeMap<ProviderId, Arc<dyn DecisionProvider>> = BTreeMap::new();
-        for id in missing {
-            let provider: Arc<dyn DecisionProvider> = match id {
-                ProviderId::Jev => Arc::new(
-                    VendorDecisions::jev_openrouter(key, &models.jev_model, timeout)
-                        .map_err(transport_error)?,
-                ),
-                _ => Arc::new(
-                    LlmDecisions::openrouter(key, &models.decision_model, timeout)
-                        .map_err(transport_error)?,
-                ),
-            };
-            providers.insert(id, provider);
+        for route in &input.decisions {
+            if let Some(slot) = connections::decision_provider(route.choice) {
+                providers.insert(
+                    slot,
+                    connection(route.router)?.decision(route.choice, models, endpoints, timeout)?,
+                );
+            }
+        }
+        // An OpenRouter key also fills the general-LLM comparison baseline when it is missing.
+        if !providers.contains_key(&ProviderId::Openai)
+            && self.inner.provider(&ProviderId::Openai).is_none()
+            && let Some(openrouter) = routers.get(&RouterId::Openrouter)
+            && let Some(baseline) = openrouter.llm_baseline(models, endpoints, timeout)
+        {
+            providers.insert(ProviderId::Openai, baseline?);
         }
         self.inner
             .setup
             .set(SetupConnections { planner, providers })
-            .map_err(|_| PlannerSetupError::AlreadyConfigured)?;
+            .map_err(|_| ConnectionSetupError::AlreadyConfigured)?;
+        tracing::info!(
+            event = "connections_configured",
+            routers = ?used,
+            planner = input.planner.is_some(),
+            decisions = input.decisions.len(),
+        );
         Ok(self.options())
     }
     pub async fn details(&self) -> Result<Vec<OperatorWorkflow>, WorkflowError> {
@@ -890,6 +956,16 @@ fn add_usage(total: &mut WorkflowUsage, usage: &WorkflowUsage) -> Result<(), Wor
     total.cost_usd = match (total.cost_usd, usage.cost_usd) {
         (Some(a), Some(b)) => Some(a + b),
         (None, Some(b)) if total.attempts == usage.attempts => Some(b),
+        _ => None,
+    };
+    let first = total.attempts == usage.attempts;
+    total.cost_source = match (total.cost_usd, total.cost_source, usage.cost_source) {
+        (None, ..) => None,
+        (Some(_), _, Some(next)) if first => Some(next),
+        (Some(_), Some(CostSource::Reported), Some(CostSource::Reported)) => {
+            Some(CostSource::Reported)
+        }
+        (Some(_), Some(_), Some(_)) => Some(CostSource::Estimated),
         _ => None,
     };
     Ok(())
