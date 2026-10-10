@@ -11,6 +11,7 @@ export default defineConfig({
       url: "http://127.0.0.1:3000/health",
       env: {
         TYPESAFE_API_KEY: "", OPENAI_API_KEY: "", OPENROUTER_API_KEY: "", OPENAI_PLANNER_MODEL: "", OPENAI_DECISION_MODEL: "",
+        AZURE_FOUNDRY_ENDPOINT: "", AZURE_FOUNDRY_API_KEY: "", AZURE_FOUNDRY_PLANNER_DEPLOYMENT: "", AZURE_FOUNDRY_PLANNER_MODEL: "",
         REASSURE_WORKFLOW_DB: ".local/e2e-workflows.sqlite3",
         REASSURE_OPERATOR_KEY: "e2e-only-operator-key-not-for-production",
       },

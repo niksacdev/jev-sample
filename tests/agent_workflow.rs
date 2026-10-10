@@ -17,12 +17,13 @@ use axum::{
 use jev_sample::{
     http::{OperatorAuth, workflow_router},
     workflow::{
+        connections::{RouterConnection, RouterEndpoints},
         contracts::*,
         decision::{
             DecisionAttempt, DecisionFuture, DecisionProvider, DecisionValue,
             DeterministicProvider, ProviderFailure, Question, VendorDecisions,
         },
-        gateway::{Gateway, OpenRouterModels},
+        gateway::{Gateway, OpenRouterModels, RouteModels},
         llm_decision::LlmDecisions,
         planner::{OpenAiPlanner, Planner, PlannerFuture, validate_plan},
         policy::{Gate, WorkflowPolicy},
@@ -34,7 +35,7 @@ use serde_json::json;
 use tower::ServiceExt;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,
-    matchers::{body_partial_json, method, path},
+    matchers::{body_partial_json, header, method, path},
 };
 
 struct TestDb(PathBuf);
@@ -127,6 +128,7 @@ impl Planner for MockPlanner {
                 plan(self.route),
                 WorkflowUsage {
                     cost_usd: None,
+                    cost_source: None,
                     input_tokens: Some(12),
                     output_tokens: Some(8),
                     attempts: 1,
@@ -141,6 +143,7 @@ impl Planner for MockPlanner {
                 "Synthetic results recorded; no external action.".into(),
                 WorkflowUsage {
                     cost_usd: None,
+                    cost_source: None,
                     input_tokens: Some(4),
                     output_tokens: Some(5),
                     attempts: 1,
@@ -187,6 +190,7 @@ impl DecisionProvider for MockDecision {
                     input_tokens: Some(3),
                     output_tokens: None,
                     cost_usd: None,
+                    cost_source: None,
                 },
                 elapsed_ms: 2,
             }
@@ -209,6 +213,34 @@ async fn service(
         WorkflowService::new(Some(planner), providers, policy, store.clone()),
         store,
     )
+}
+fn openrouter_setup(key: &str, planner: bool, jev: bool) -> ConnectionSetup {
+    ConnectionSetup {
+        planner: planner.then_some(PlannerRoute {
+            choice: PlannerChoice::Openai,
+            router: RouterId::Openrouter,
+        }),
+        decisions: if jev {
+            vec![DecisionRoute {
+                choice: DecisionChoice::Jev,
+                router: RouterId::Openrouter,
+            }]
+        } else {
+            vec![]
+        },
+        credentials: vec![RouterCredential {
+            router: RouterId::Openrouter,
+            api_key: key.into(),
+            endpoint: None,
+        }],
+    }
+}
+fn setup_json(key: &str) -> serde_json::Value {
+    json!({
+        "planner": {"choice":"openai","router":"openrouter"},
+        "decisions": [{"choice":"jev","router":"openrouter"}],
+        "credentials": [{"router":"openrouter","api_key":key,"endpoint":null}]
+    })
 }
 fn submission(key: &str, message: &str, providers: Vec<ProviderId>) -> WorkflowSubmission {
     WorkflowSubmission {
@@ -236,7 +268,7 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
         workflow.clone(),
         OperatorAuth::new(Some("setup-operator-key-at-least-32-bytes".into())).unwrap(),
     );
-    let body = json!({"openrouter_api_key":"fixture-private-openrouter-key"});
+    let body = setup_json("fixture-private-openrouter-key");
     let request = |value: serde_json::Value, authorized: bool, origin: &str| {
         let mut builder = Request::builder()
             .method("POST")
@@ -268,14 +300,39 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
         .await
         .unwrap();
     assert_eq!(denied.status(), StatusCode::FORBIDDEN);
+    let with = |patch: &dyn Fn(&mut serde_json::Value)| {
+        let mut value = setup_json("fixture-key");
+        patch(&mut value);
+        value
+    };
     for invalid in [
-        json!({"openrouter_api_key":""}),
-        json!({"openrouter_api_key":"bad\nkey"}),
-        json!({"openrouter_api_key":"bad key"}),
-        json!({"openrouter_api_key":"a".repeat(513)}),
-        json!({"openrouter_api_key":"fixture-key", "endpoint":"https://untrusted.example"}),
-        json!({"openrouter_api_key":"fixture-key", "model":"attacker/model"}),
-        json!({"api_key":"fixture-key"}),
+        setup_json(""),
+        setup_json("bad\nkey"),
+        setup_json("bad key"),
+        setup_json(&"a".repeat(513)),
+        with(&|v| v["credentials"][0]["endpoint"] = json!("https://untrusted.example")),
+        with(&|v| v["model"] = json!("attacker/model")),
+        with(&|v| v["credentials"][0]["url"] = json!("https://untrusted.example")),
+        with(&|v| v["decisions"] = json!([{"choice":"jev","router":"azure_foundry"}])),
+        with(&|v| v["decisions"] = json!([{"choice":"microsoft_decisions","router":"openrouter"}])),
+        with(&|v| {
+            v["decisions"] = json!([{"choice":"jev","router":"openrouter"},{"choice":"jev","router":"openrouter"}])
+        }),
+        with(&|v| {
+            v["planner"] = json!({"choice":"openai","router":"azure_foundry"});
+            v["decisions"] = json!([]);
+        }),
+        with(&|v| {
+            v["planner"] = json!({"choice":"openai","router":"azure_foundry"});
+            v["decisions"] = json!([]);
+            v["credentials"] =
+                json!([{"router":"azure_foundry","api_key":"k","endpoint":"https://evil.example"}]);
+        }),
+        with(&|v| {
+            v["planner"] = json!(null);
+            v["decisions"] = json!([]);
+        }),
+        json!({"openrouter_api_key":"fixture-key"}),
     ] {
         let response = app
             .clone()
@@ -300,17 +357,18 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
         (ProviderId::Jev, &models.jev_model),
         (ProviderId::Openai, &models.decision_model),
     ] {
+        let expected = format!("openrouter:{model}");
         assert!(
             workflow
                 .options()
                 .providers
                 .iter()
-                .any(|p| p.id == id && p.available && p.model.as_ref() == Some(model))
+                .any(|p| p.id == id && p.available && p.model.as_ref() == Some(&expected))
         );
     }
     assert_eq!(
-        workflow.options().planner.model.as_ref(),
-        Some(&models.planner_model)
+        workflow.options().planner.model,
+        Some(format!("openrouter:{}", models.planner_model))
     );
     let response = app
         .oneshot(request(body, true, "http://127.0.0.1:5173"))
@@ -345,9 +403,11 @@ async fn concurrent_setup_accepts_exactly_one_planner_without_replacement() {
         .map(|index| {
             let service = workflow.clone();
             std::thread::spawn(move || {
-                service.configure_planner(PlannerSetup {
-                    openrouter_api_key: format!("fixture-openrouter-key-{index}"),
-                })
+                service.configure_connections(openrouter_setup(
+                    &format!("fixture-openrouter-key-{index}"),
+                    true,
+                    true,
+                ))
             })
         })
         .collect();
@@ -355,7 +415,7 @@ async fn concurrent_setup_accepts_exactly_one_planner_without_replacement() {
     for worker in workers {
         match worker.join().unwrap() {
             Ok(_) => accepted += 1,
-            Err(jev_sample::workflow::service::PlannerSetupError::AlreadyConfigured) => {}
+            Err(jev_sample::workflow::service::ConnectionSetupError::AlreadyConfigured) => {}
             Err(other) => panic!("unexpected setup error: {other:?}"),
         }
     }
@@ -371,6 +431,28 @@ async fn concurrent_setup_accepts_exactly_one_planner_without_replacement() {
 }
 
 #[tokio::test]
+async fn partial_setup_is_rejected_without_locking_required_slots() {
+    let db = TestDb::new();
+    let policy = policy();
+    let store = WorkflowStore::open(&db.path(), &policy).await.unwrap();
+    let workflow = WorkflowService::new(None, BTreeMap::new(), policy, store);
+    for (planner, jev) in [(true, false), (false, true)] {
+        assert!(matches!(
+            workflow.configure_connections(openrouter_setup(
+                "fixture-openrouter-key",
+                planner,
+                jev
+            )),
+            Err(jev_sample::workflow::service::ConnectionSetupError::Invalid)
+        ));
+    }
+    workflow
+        .configure_connections(openrouter_setup("fixture-openrouter-key", true, true))
+        .unwrap();
+    assert!(workflow.options().planner.available);
+}
+
+#[tokio::test]
 async fn setup_fills_only_missing_connections_without_replacing_startup_provenance() {
     let db = TestDb::new();
     let policy = policy();
@@ -382,10 +464,12 @@ async fn setup_fills_only_missing_connections_without_replacing_startup_provenan
         store.clone(),
     );
     let before = workflow.options().planner.model;
+    assert!(matches!(
+        workflow.configure_connections(openrouter_setup("fixture-openrouter-key", true, true)),
+        Err(jev_sample::workflow::service::ConnectionSetupError::AlreadyConfigured)
+    ));
     workflow
-        .configure_planner(PlannerSetup {
-            openrouter_api_key: "fixture-openrouter-key".into(),
-        })
+        .configure_connections(openrouter_setup("fixture-openrouter-key", false, true))
         .unwrap();
     assert_eq!(workflow.options().planner.model, before);
     assert!(
@@ -414,9 +498,7 @@ async fn setup_fills_only_missing_connections_without_replacing_startup_provenan
         store.clone(),
     );
     startup_jev
-        .configure_planner(PlannerSetup {
-            openrouter_api_key: "fixture-openrouter-key".into(),
-        })
+        .configure_connections(openrouter_setup("fixture-openrouter-key", true, false))
         .unwrap();
     assert!(startup_jev.options().planner.available);
     let options = startup_jev.options();
@@ -430,10 +512,8 @@ async fn setup_fills_only_missing_connections_without_replacing_startup_provenan
         store,
     );
     assert!(matches!(
-        complete.configure_planner(PlannerSetup {
-            openrouter_api_key: "fixture-openrouter-key".into(),
-        }),
-        Err(jev_sample::workflow::service::PlannerSetupError::AlreadyConfigured)
+        complete.configure_connections(openrouter_setup("fixture-openrouter-key", false, true)),
+        Err(jev_sample::workflow::service::ConnectionSetupError::AlreadyConfigured)
     ));
 }
 
@@ -1221,4 +1301,153 @@ async fn authorized_operator_can_inspect_protected_decision_context() {
     let text = std::str::from_utf8(&body).unwrap();
     assert!(text.contains("fictional-narrative"));
     assert!(text.contains("question_json"));
+}
+
+fn azure_planner_and_jev_setup(endpoint: &str) -> ConnectionSetup {
+    ConnectionSetup {
+        planner: Some(PlannerRoute {
+            choice: PlannerChoice::Openai,
+            router: RouterId::AzureFoundry,
+        }),
+        decisions: vec![DecisionRoute {
+            choice: DecisionChoice::Jev,
+            router: RouterId::Openrouter,
+        }],
+        credentials: vec![
+            RouterCredential {
+                router: RouterId::AzureFoundry,
+                api_key: "fixture-azure-key".into(),
+                endpoint: Some(endpoint.into()),
+            },
+            RouterCredential {
+                router: RouterId::Openrouter,
+                api_key: "fixture-openrouter-key".into(),
+                endpoint: None,
+            },
+        ],
+    }
+}
+
+#[tokio::test]
+async fn azure_planner_uses_api_key_header_deployment_and_estimated_cost() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/openai/v1/responses"))
+        .and(header("api-key", "fixture-azure-key"))
+        .and(body_partial_json(json!({"model":"gpt-6-astra","store":false})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"status":"completed","model":"gpt-6-astra-2026-09-01","output":[{"type":"message","content":[{"type":"output_text","text":r#"{"tasks":[{"id":"check","kind":"decision","name":"synthetic_complete","depends_on":[]}]}"#}]}],"usage":{"input_tokens":100000,"output_tokens":20000}})))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let endpoints = RouterEndpoints::loopback(&server.uri()).unwrap();
+    let models = RouteModels::checked_in();
+    let azure = RouterConnection::new(
+        &RouterCredential {
+            router: RouterId::AzureFoundry,
+            api_key: "fixture-azure-key".into(),
+            endpoint: Some("https://zipclaim-test.openai.azure.com".into()),
+        },
+        &endpoints,
+    )
+    .unwrap();
+    let planner = azure
+        .planner(
+            PlannerChoice::Openai,
+            &models,
+            &endpoints,
+            Duration::from_secs(1),
+        )
+        .unwrap();
+    assert_eq!(planner.model(), "azure_foundry:gpt-6-astra");
+    let (_, usage) = planner.plan("synthetic input").await.unwrap();
+    assert_eq!(usage.cost_source, Some(CostSource::Estimated));
+    let cost = usage.cost_usd.unwrap();
+    assert!((cost - 2.0).abs() < 1e-9, "estimated {cost}");
+    assert!(
+        azure
+            .decision(
+                DecisionChoice::Jev,
+                &models,
+                &endpoints,
+                Duration::from_secs(1)
+            )
+            .is_err()
+    );
+    assert!(
+        azure
+            .llm_baseline(&models, &endpoints, Duration::from_secs(1))
+            .is_none()
+    );
+}
+
+#[tokio::test]
+async fn azure_planner_with_jev_via_openrouter_routes_each_choice_independently() {
+    let db = TestDb::new();
+    let policy = policy();
+    let store = WorkflowStore::open(&db.path(), &policy).await.unwrap();
+    let workflow = WorkflowService::new(None, BTreeMap::new(), policy, store)
+        .with_router_endpoints(RouterEndpoints::loopback("http://127.0.0.1:9").unwrap());
+    for (setup, reason) in [
+        (
+            {
+                let mut s = azure_planner_and_jev_setup("https://zipclaim-test.openai.azure.com");
+                s.decisions[0].router = RouterId::AzureFoundry;
+                s
+            },
+            "jev on azure",
+        ),
+        (
+            azure_planner_and_jev_setup("https://evil.example.com"),
+            "untrusted azure host",
+        ),
+        (
+            {
+                let mut s = azure_planner_and_jev_setup("https://zipclaim-test.openai.azure.com");
+                s.credentials.pop();
+                s
+            },
+            "missing router credential",
+        ),
+        (
+            {
+                let mut s = azure_planner_and_jev_setup("https://zipclaim-test.openai.azure.com");
+                s.decisions.clear();
+                s
+            },
+            "unused router credential",
+        ),
+    ] {
+        assert!(workflow.configure_connections(setup).is_err(), "{reason}");
+        assert!(!workflow.options().planner.available, "{reason}");
+    }
+    workflow
+        .configure_connections(azure_planner_and_jev_setup(
+            "https://zipclaim-test.services.ai.azure.com",
+        ))
+        .unwrap();
+    let options = workflow.options();
+    assert_eq!(
+        options.planner.model.as_deref(),
+        Some("azure_foundry:gpt-6-astra")
+    );
+    let jev = options
+        .providers
+        .iter()
+        .find(|p| p.id == ProviderId::Jev)
+        .unwrap();
+    assert!(jev.available);
+    assert!(jev.model.as_deref().unwrap().starts_with("openrouter:"));
+    // The LLM baseline is filled only from an OpenRouter credential, which is present here.
+    assert!(
+        options
+            .providers
+            .iter()
+            .any(|p| p.id == ProviderId::Openai && p.available)
+    );
+    assert!(matches!(
+        workflow.configure_connections(azure_planner_and_jev_setup(
+            "https://zipclaim-test.openai.azure.com"
+        )),
+        Err(jev_sample::workflow::service::ConnectionSetupError::AlreadyConfigured)
+    ));
 }

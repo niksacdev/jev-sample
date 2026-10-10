@@ -77,10 +77,10 @@ async fn main() -> io::Result<()> {
         .map_err(io::Error::other)?;
     let service = ServicingService::with_assessors(assessors, policy, limits);
     use jev_sample::workflow::{
-        contracts::ProviderId,
+        connections::{RouterConnection, RouterEndpoints},
+        contracts::{DecisionChoice, PlannerChoice, ProviderId, RouterCredential, RouterId},
         decision::{DecisionProvider, DeterministicProvider, VendorDecisions},
-        gateway::{OpenRouterModels, valid_model_id},
-        llm_decision::LlmDecisions,
+        gateway::{RouteModels, valid_model_id},
         planner::{OpenAiPlanner, Planner},
         policy::WorkflowPolicy,
         service::WorkflowService,
@@ -117,18 +117,27 @@ async fn main() -> io::Result<()> {
             ),
         );
     }
-    // Direct vendor keys win; one OpenRouter key fills whatever is still missing.
-    let mut openrouter_models = OpenRouterModels::checked_in();
+    // Direct vendor keys win; Azure Foundry then fills the planner, and one OpenRouter key fills
+    // whatever is still missing. Startup uses the same route table as runtime setup.
+    let mut models = RouteModels::checked_in();
     for (name, slot) in [
         (
             "OPENROUTER_PLANNER_MODEL",
-            &mut openrouter_models.planner_model,
+            &mut models.openrouter.planner_model,
         ),
         (
             "OPENROUTER_DECISION_MODEL",
-            &mut openrouter_models.decision_model,
+            &mut models.openrouter.decision_model,
         ),
-        ("OPENROUTER_JEV_MODEL", &mut openrouter_models.jev_model),
+        ("OPENROUTER_JEV_MODEL", &mut models.openrouter.jev_model),
+        (
+            "AZURE_FOUNDRY_PLANNER_DEPLOYMENT",
+            &mut models.azure_foundry.planner_deployment,
+        ),
+        (
+            "AZURE_FOUNDRY_PLANNER_MODEL",
+            &mut models.azure_foundry.planner_model,
+        ),
     ] {
         if let Some(model) = optional_env(name)? {
             if !valid_model_id(&model) {
@@ -137,31 +146,70 @@ async fn main() -> io::Result<()> {
             *slot = model;
         }
     }
+    let endpoints = RouterEndpoints::production();
+    let route_error = |router: &str| {
+        let router = router.to_string();
+        move |e| io::Error::other(format!("{router} startup connection failed: {e:?}"))
+    };
     let mut planner = planner;
-    if let Some(key) = optional_env("OPENROUTER_API_KEY")? {
-        if planner.is_none() {
-            planner = Some(Arc::new(
-                OpenAiPlanner::openrouter(&key, &openrouter_models.planner_model, provider_timeout)
-                    .map_err(io::Error::other)?,
+    match (
+        optional_env("AZURE_FOUNDRY_ENDPOINT")?,
+        optional_env("AZURE_FOUNDRY_API_KEY")?,
+    ) {
+        (Some(endpoint), Some(api_key)) => {
+            let azure = RouterConnection::new(
+                &RouterCredential {
+                    router: RouterId::AzureFoundry,
+                    api_key,
+                    endpoint: Some(endpoint),
+                },
+                &endpoints,
+            )
+            .map_err(route_error("AZURE_FOUNDRY"))?;
+            if planner.is_none() {
+                planner = Some(
+                    azure
+                        .planner(PlannerChoice::Openai, &models, &endpoints, provider_timeout)
+                        .map_err(route_error("AZURE_FOUNDRY"))?,
+                );
+            }
+        }
+        (None, None) => {}
+        _ => {
+            return Err(io::Error::other(
+                "Azure Foundry requires both AZURE_FOUNDRY_ENDPOINT and AZURE_FOUNDRY_API_KEY",
             ));
         }
+    }
+    if let Some(api_key) = optional_env("OPENROUTER_API_KEY")? {
+        let openrouter = RouterConnection::new(
+            &RouterCredential {
+                router: RouterId::Openrouter,
+                api_key,
+                endpoint: None,
+            },
+            &endpoints,
+        )
+        .map_err(route_error("OPENROUTER"))?;
+        if planner.is_none() {
+            planner = Some(
+                openrouter
+                    .planner(PlannerChoice::Openai, &models, &endpoints, provider_timeout)
+                    .map_err(route_error("OPENROUTER"))?,
+            );
+        }
         if let std::collections::btree_map::Entry::Vacant(slot) = decisions.entry(ProviderId::Jev) {
-            slot.insert(Arc::new(
-                VendorDecisions::jev_openrouter(
-                    &key,
-                    &openrouter_models.jev_model,
-                    provider_timeout,
-                )
-                .map_err(io::Error::other)?,
-            ));
+            slot.insert(
+                openrouter
+                    .decision(DecisionChoice::Jev, &models, &endpoints, provider_timeout)
+                    .map_err(route_error("OPENROUTER"))?,
+            );
         }
         if let std::collections::btree_map::Entry::Vacant(slot) =
             decisions.entry(ProviderId::Openai)
+            && let Some(baseline) = openrouter.llm_baseline(&models, &endpoints, provider_timeout)
         {
-            slot.insert(Arc::new(
-                LlmDecisions::openrouter(&key, &openrouter_models.decision_model, provider_timeout)
-                    .map_err(io::Error::other)?,
-            ));
+            slot.insert(baseline.map_err(route_error("OPENROUTER"))?);
         }
     }
     let database =
@@ -170,8 +218,8 @@ async fn main() -> io::Result<()> {
     let store = WorkflowStore::open(Path::new(&database), &workflow_policy)
         .await
         .map_err(io::Error::other)?;
-    let workflows = WorkflowService::new(planner, decisions, workflow_policy, store)
-        .with_openrouter_models(openrouter_models);
+    let workflows =
+        WorkflowService::new(planner, decisions, workflow_policy, store).with_route_models(models);
     eprintln!(
         "Synthetic workflow planner configured={}; durable SQLite records enabled; no automatic replay.",
         workflows.options().planner.available

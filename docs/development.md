@@ -75,8 +75,8 @@ planning/replies and a separate `DecisionProvider` for bounded judgments.
 `planner.rs` validates the allowlisted DAG; `decision.rs` translates vendor
 protocols and validates results; `policy.rs` owns confidence gates;
 `service.rs` owns admission, bounded execution, per-provider continuation and
-grounded replies; `store.rs` serializes protected SQLite transactions through
-`spawn_blocking`. `http.rs` exposes additive routes, not provider-specific logic.
+grounded replies; `store/` defines a backend-neutral workflow repository; its SQLite module
+serializes protected transactions through `spawn_blocking`. `http.rs` exposes additive routes, not provider-specific logic.
 `src/contracts.rs` includes the workflow declarations in the single TS exporter.
 
 ```sh
@@ -126,14 +126,18 @@ operator Bearer authorization and loopback-origin boundary. It initializes only
 missing planner/Jev connections atomically, once per API process, with no disk/browser credential
 persistence and no model call. Concurrent or repeated setup returns a conflict;
 refresh options rather than retrying automatically. The panel preserves the
-message and clears password fields after success/failure. Use empty strings for
-already configured connections; replacement credentials are rejected. Startup
+message and clears password fields after success/failure. Only missing connections are
+requested; replacement credentials are rejected. Startup
 connections remain immutable. **Agree and save** acknowledges the terms and
 automatically refreshes options before enabling submission; both the planner and Jev
 must be configured. A refresh failure leaves submission disabled and supports an
-explicit check without repeating setup. Credentials are labelled ZipClaim token
-and OpenRouter API key, both password fields; models come from
-`config/openrouter.json`. See ADR0019 and ADR0020. Runtime Jev setup applies only to the AI-native workflow, not Assessment lab.
+explicit check without repeating setup. Setup has Router (OpenRouter or Azure
+Foundry), Planner and Decisions sections rendered from the API's connection catalog;
+`web/src/connectionPlan.ts` routes each choice and asks only for the keys of routers
+it uses. Credentials are labelled ZipClaim token, OpenRouter API key and Azure
+Foundry API key, all password fields; the Azure endpoint is a validated URL field.
+Models come from `config/openrouter.json` and `config/azure-foundry.json`. See
+ADR0019, ADR0020 and ADR0022. Runtime Jev setup applies only to the AI-native workflow, not Assessment lab.
 
 Follow the [mocked contract testing decision](adr/0008-mocked-provider-contract-tests.md).
 Provider tests use real adapters against per-test local wiremock servers;

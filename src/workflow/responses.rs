@@ -5,16 +5,22 @@ use std::time::Duration;
 use serde_json::{Value, json};
 
 use super::{
+    contracts::CostSource,
     contracts::WorkflowUsage,
+    decision::VendorAuth,
     decision::{JsonVendor, ProviderFailure, optional_cost},
-    gateway::{Gateway, valid_model_id},
+    gateway::{Gateway, TokenPrice, valid_model_id},
 };
 
 #[derive(Clone)]
 pub struct ResponsesClient {
     transport: JsonVendor,
+    /// Sent as `model`: a model ID, or an Azure deployment name.
     model: String,
+    /// What the response must report as served.
+    expected: String,
     gateway: Gateway,
+    price: Option<TokenPrice>,
 }
 
 impl ResponsesClient {
@@ -25,18 +31,48 @@ impl ResponsesClient {
         gateway: Gateway,
         timeout: Duration,
     ) -> Result<Self, String> {
-        if !valid_model_id(model) {
+        Self::routed(
+            endpoint,
+            key,
+            VendorAuth::Bearer,
+            model,
+            model,
+            gateway,
+            None,
+            timeout,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn routed(
+        endpoint: String,
+        key: &str,
+        auth: VendorAuth,
+        model: &str,
+        expected: &str,
+        gateway: Gateway,
+        price: Option<TokenPrice>,
+        timeout: Duration,
+    ) -> Result<Self, String> {
+        if !valid_model_id(model) || !valid_model_id(expected) {
             return Err("invalid_model".into());
         }
         Ok(Self {
-            transport: JsonVendor::new(endpoint, key, timeout)?,
+            transport: JsonVendor::with_auth(endpoint, key, auth, timeout)?,
             model: model.into(),
+            expected: expected.into(),
             gateway,
+            price,
         })
     }
 
     pub fn model(&self) -> &str {
         &self.model
+    }
+
+    /// Recorded provenance, qualified by router so resumes cannot switch routes.
+    pub fn identity(&self) -> String {
+        self.gateway.identity(&self.model)
     }
 
     pub fn gateway(&self) -> Gateway {
@@ -62,7 +98,8 @@ impl ResponsesClient {
             .await?;
         let served = response.get("model").and_then(Value::as_str);
         if response.get("status").and_then(Value::as_str) != Some("completed")
-            || !served.is_some_and(|served| self.gateway.served_model_matches(&self.model, served))
+            || !served
+                .is_some_and(|served| self.gateway.served_model_matches(&self.expected, served))
         {
             return Err(ProviderFailure::InvalidResponse);
         }
@@ -108,15 +145,26 @@ impl ResponsesClient {
             event = "responses_call_finished",
             gateway = self.gateway.label(),
             configured_model = %self.model,
+            expected_model = %self.expected,
             served_model = served,
         );
+        let (input_tokens, output_tokens) = (tokens("input_tokens")?, tokens("output_tokens")?);
+        let (cost_usd, cost_source) = match (optional_cost(usage)?, &self.price) {
+            (Some(cost), _) => (Some(cost), Some(CostSource::Reported)),
+            (None, Some(price)) => (
+                Some(price.estimate(input_tokens, output_tokens)),
+                Some(CostSource::Estimated),
+            ),
+            (None, None) => (None, None),
+        };
         Ok((
             serde_json::from_str(texts[0]).map_err(|_| ProviderFailure::InvalidResponse)?,
             WorkflowUsage {
-                input_tokens: Some(tokens("input_tokens")?),
-                output_tokens: Some(tokens("output_tokens")?),
+                input_tokens: Some(input_tokens),
+                output_tokens: Some(output_tokens),
                 attempts: 1,
-                cost_usd: optional_cost(usage)?,
+                cost_usd,
+                cost_source,
             },
         ))
     }

@@ -20,7 +20,11 @@ shared across selected providers; independent continuations can diverge.
 
 Configure one `OPENROUTER_API_KEY` locally (or enter it in setup) to enable the
 planner, Jev and the OpenAI comparison decider through OpenRouter (ADR 0020).
-OpenRouter uses prepaid credits; reported cost appears in Geek Mode. Alternatively,
+OpenRouter uses prepaid credits; reported cost appears in Geek Mode. Setup can
+instead route the planner through Azure Foundry (endpoint and key, or
+`AZURE_FOUNDRY_ENDPOINT` and `AZURE_FOUNDRY_API_KEY`); Jev is not in the Azure
+Foundry catalog, so it still routes through OpenRouter, and Azure cost is shown as
+an estimate (ADR 0022). Alternatively,
 configure `OPENAI_API_KEY` and an explicit `OPENAI_PLANNER_MODEL` directly to enable
 planning and conversational replies. Configure `OPENAI_DECISION_MODEL` separately
 to enable the Decisions provider; no model name is silently selected. Account

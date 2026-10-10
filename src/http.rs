@@ -277,25 +277,29 @@ async fn workflow_options(
 async fn workflow_setup(
     State(state): State<WorkflowHttpState>,
     headers: HeaderMap,
-    body: Result<Json<crate::workflow::contracts::PlannerSetup>, JsonRejection>,
+    body: Result<Json<crate::workflow::contracts::ConnectionSetup>, JsonRejection>,
 ) -> Result<Response, HttpError> {
     workflow_auth(&state, &headers)?;
     let Json(input) = body.map_err(|r| {
         error(
             r.status(),
             "invalid_setup_request",
-            "Enter your OpenRouter API key.",
+            "Choose a router and enter its connection details.",
             None,
         )
     })?;
-    use crate::workflow::service::PlannerSetupError;
-    let options = state.service.configure_planner(input).map_err(|failure| {
+    use crate::workflow::service::ConnectionSetupError;
+    let options = state.service.configure_connections(input).map_err(|failure| {
         let (status, code, message) = match failure {
-            PlannerSetupError::Invalid => (StatusCode::UNPROCESSABLE_ENTITY, "invalid_planner_setup",
-                "Enter a valid OpenRouter API key (no spaces, up to 512 characters). Already connected services cannot be replaced."),
-            PlannerSetupError::AlreadyConfigured => (StatusCode::CONFLICT, "planner_already_configured",
+            ConnectionSetupError::Invalid => (StatusCode::UNPROCESSABLE_ENTITY, "invalid_planner_setup",
+                "Enter a valid API key for each selected router (no spaces, up to 512 characters). Already connected services cannot be replaced."),
+            ConnectionSetupError::UnsupportedRoute => (StatusCode::UNPROCESSABLE_ENTITY, "unsupported_route",
+                "That provider isn't available through the selected router."),
+            ConnectionSetupError::InvalidEndpoint => (StatusCode::UNPROCESSABLE_ENTITY, "invalid_router_endpoint",
+                "Enter your Azure Foundry resource endpoint, e.g. https://your-resource.openai.azure.com."),
+            ConnectionSetupError::AlreadyConfigured => (StatusCode::CONFLICT, "planner_already_configured",
                 "Setup is already configured. Refresh availability to continue. Restart the API to change credentials."),
-            PlannerSetupError::TransportUnavailable => (StatusCode::SERVICE_UNAVAILABLE, "setup_transport_unavailable",
+            ConnectionSetupError::TransportUnavailable => (StatusCode::SERVICE_UNAVAILABLE, "setup_transport_unavailable",
                 "The API could not initialize the AI connection. Your credentials were not installed. Try again or check the API's local configuration."),
         };
         tracing::warn!(event = "workflow_request_failed", code);

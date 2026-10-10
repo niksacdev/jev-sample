@@ -283,6 +283,13 @@ impl DecisionProvider for DeterministicProvider {
     }
 }
 
+/// How a vendor expects the key: OpenAI-compatible bearer token or Azure's `api-key` header.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VendorAuth {
+    Bearer,
+    ApiKeyHeader,
+}
+
 #[derive(Clone)]
 pub struct JsonVendor {
     pub(crate) client: reqwest::Client,
@@ -290,14 +297,28 @@ pub struct JsonVendor {
 }
 impl JsonVendor {
     pub(crate) fn new(endpoint: String, key: &str, timeout: Duration) -> Result<Self, String> {
+        Self::with_auth(endpoint, key, VendorAuth::Bearer, timeout)
+    }
+    pub(crate) fn with_auth(
+        endpoint: String,
+        key: &str,
+        auth_kind: VendorAuth,
+        timeout: Duration,
+    ) -> Result<Self, String> {
         if key.trim().is_empty() {
             return Err("missing_key".into());
         }
-        let mut auth = reqwest::header::HeaderValue::from_str(&format!("Bearer {key}"))
-            .map_err(|_| "invalid_key")?;
+        let (name, value) = match auth_kind {
+            VendorAuth::Bearer => (reqwest::header::AUTHORIZATION, format!("Bearer {key}")),
+            VendorAuth::ApiKeyHeader => (
+                reqwest::header::HeaderName::from_static("api-key"),
+                key.to_string(),
+            ),
+        };
+        let mut auth = reqwest::header::HeaderValue::from_str(&value).map_err(|_| "invalid_key")?;
         auth.set_sensitive(true);
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert(reqwest::header::AUTHORIZATION, auth);
+        headers.insert(name, auth);
         let client = reqwest::Client::builder()
             .default_headers(headers)
             .timeout(timeout)
@@ -407,7 +428,7 @@ impl VendorDecisions {
         }
         Self::new(endpoint, key, model, id, gateway, timeout)
     }
-    fn new(
+    pub(crate) fn new(
         endpoint: String,
         key: &str,
         model: &str,
@@ -463,6 +484,7 @@ impl VendorDecisions {
                 usage.input_tokens=optional_u32(wire_usage,"input_tokens")?;
                 usage.output_tokens=optional_u32(wire_usage,"output_tokens")?;
                 usage.cost_usd=optional_cost(wire_usage)?;
+                usage.cost_source=usage.cost_usd.map(|_|super::contracts::CostSource::Reported);
             }
             let answer_values: BTreeMap<String,serde_json::Value>=if self.id==ProviderId::Jev {
                 serde_json::from_value(response.get("answers").cloned().ok_or(ProviderFailure::InvalidResponse)?).map_err(|_|ProviderFailure::InvalidResponse)?
@@ -674,7 +696,7 @@ impl DecisionProvider for VendorDecisions {
         self.id
     }
     fn model(&self) -> Option<String> {
-        Some(self.model.clone())
+        Some(self.gateway.identity(&self.model))
     }
     fn capability(&self) -> String {
         "Versioned bounded Predicate, Choice, Score questions; vendor probabilities are not locally calibrated".into()

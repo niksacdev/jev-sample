@@ -1,18 +1,19 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import WorkflowConsole from "./WorkflowConsole";
-import { configurePlanner, getWorkflowDetails, getWorkflowOptions, resumeWorkflow, submitWorkflow } from "./api";
+import WorkflowConsole, { formatCost } from "./WorkflowConsole";
+import { configureConnections, getWorkflowDetails, getWorkflowOptions, resumeWorkflow, submitWorkflow } from "./api";
 import type { OperatorWorkflow, WorkflowComparison } from "./contracts";
 import samples from "./claimSamples.json";
+import { connectionCatalog } from "./testFixtures";
 
 vi.mock("./api", () => ({
-  getWorkflowDetails: vi.fn(), getWorkflowOptions: vi.fn(), resumeWorkflow: vi.fn(), submitWorkflow: vi.fn(), configurePlanner: vi.fn(),
+  getWorkflowDetails: vi.fn(), getWorkflowOptions: vi.fn(), resumeWorkflow: vi.fn(), submitWorkflow: vi.fn(), configureConnections: vi.fn(),
 }));
 vi.mock("./TerminalScreen", () => ({ default: ({ title, text }: { title: string; text: string }) => <pre aria-label={title}>{text}</pre> }));
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 beforeEach(() => {
   vi.mocked(getWorkflowOptions).mockResolvedValue({
-    planner: { available: true, model: "mock-planner" }, synthetic_only: true,
+    planner: { available: true, model: "mock-planner" }, synthetic_only: true, connections: connectionCatalog,
     providers: [
       { id: "code", available: true, model: null, capability: "Synthetic completeness only" },
       { id: "jev", available: true, model: "jev-1.13.0", capability: "Synthetic judgments" },
@@ -23,12 +24,12 @@ beforeEach(() => {
 function comparison(): WorkflowComparison {
   return {
     comparison_id: "comparison-1", input_key: "message-hash", mode: "shared_base_plan", complete: false,
-    planner_model: "mock-planner", planner_usage: { input_tokens: 12, output_tokens: 8, attempts: 1, cost_usd: 0.0012 }, failure_code: null,
+    planner_model: "mock-planner", planner_usage: { input_tokens: 12, output_tokens: 8, attempts: 1, cost_usd: 0.0012, cost_source: "reported" }, failure_code: null,
     base_plan: { plan_id: "plan-hash", tasks: [{ id: "check", kind: "decision", name: "synthetic_complete", depends_on: [], state: "pending" }] },
     runs: [{
       run_id: "comparison-1-run-1", plan_id: "plan-hash", provider: "code", model: null, state: "clarification", reply: "Please provide a synthetic reference.",
       tasks: [{ id: "check", kind: "decision", name: "synthetic_complete", depends_on: [], state: "paused" }],
-      event_trace: [], usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null }, elapsed_ms: 0, failure_code: null,
+      event_trace: [], usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null, cost_source: null }, elapsed_ms: 0, failure_code: null,
     }],
   };
 }
@@ -38,7 +39,7 @@ function detail(): OperatorWorkflow {
     decisions: [{
       run_id: "comparison-1-run-1", plan_id: "plan-hash", question_id: "synthetic_complete", question_version: "questions-1", provider: "code",
       model: null, policy_version: "policy-1", result: '{"kind":"deterministic","value":false}', decision_input_key: "exact-input-hash",
-      confidence_semantics: "deterministic_boolean_no_probability", usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null },
+      confidence_semantics: "deterministic_boolean_no_probability", usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null, cost_source: null },
       elapsed_ms: 0, complete: true, task_id: "check", attempt: 1, context_json: "{}", question_json: "{}",
     }],
   };
@@ -69,7 +70,7 @@ test("sample categories fill the primary chat, clear old results and renew reque
 test("inline setup unlocks submission while preserving the customer's message and agreement", async () => {
   const ready = await getWorkflowOptions();
   vi.mocked(getWorkflowOptions).mockResolvedValueOnce({ ...ready, planner: { available: false, model: null } });
-  vi.mocked(configurePlanner).mockResolvedValue(ready);
+  vi.mocked(configureConnections).mockResolvedValue(ready);
   vi.mocked(submitWorkflow).mockResolvedValue(comparison());
   render(<WorkflowConsole mode="Customer" />);
   await screen.findByRole("region", { name: "Set up ZipClaim" });
@@ -268,4 +269,10 @@ test("Geek Mode shows actual execution stages in side terminals and clears prote
   view.rerender(<WorkflowConsole mode="Customer" />);
   expect(screen.queryByLabelText("Runtime configuration output")).toBeNull();
   expect(screen.getByText("Please provide a synthetic reference.")).toBeTruthy();
+});
+
+test("costs distinguish router-reported spend from token-based estimates", () => {
+  expect(formatCost({ cost_usd: null, cost_source: null })).toBe("Not reported");
+  expect(formatCost({ cost_usd: 0.0012, cost_source: "reported" })).toBe("$0.001200");
+  expect(formatCost({ cost_usd: 2, cost_source: "estimated" })).toBe("$2.000000 (estimated)");
 });

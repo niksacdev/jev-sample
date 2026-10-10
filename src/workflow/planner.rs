@@ -46,6 +46,10 @@ impl OpenAiPlanner {
         )
     }
 
+    pub(crate) fn from_client(client: ResponsesClient) -> Self {
+        Self { client }
+    }
+
     pub fn for_test(
         endpoint: String,
         key: &str,
@@ -109,7 +113,7 @@ struct TaskProposal {
 
 impl Planner for OpenAiPlanner {
     fn model(&self) -> String {
-        self.client.model().to_string()
+        self.client.identity()
     }
     fn plan<'a>(&'a self, context: &'a str) -> PlannerFuture<'a, WorkflowPlan> {
         Box::pin(async move {

@@ -1,0 +1,9 @@
+{
+  "planner_deployment": "gpt-6-astra",
+  "planner_model": "gpt-6-astra",
+  "planner_price": {
+    "input_usd_per_million": 10.0,
+    "output_usd_per_million": 50.0,
+    "source": "Azure Retail Prices API, gpt-6-astra Global Standard short context, effective 2026-09-01"
+  }
+}
