@@ -22,6 +22,8 @@ use jev_sample::{
             DecisionAttempt, DecisionFuture, DecisionProvider, DecisionValue,
             DeterministicProvider, ProviderFailure, Question, VendorDecisions,
         },
+        gateway::{Gateway, OpenRouterModels},
+        llm_decision::LlmDecisions,
         planner::{OpenAiPlanner, Planner, PlannerFuture, validate_plan},
         policy::{Gate, WorkflowPolicy},
         service::WorkflowService,
@@ -124,6 +126,7 @@ impl Planner for MockPlanner {
             Ok((
                 plan(self.route),
                 WorkflowUsage {
+                    cost_usd: None,
                     input_tokens: Some(12),
                     output_tokens: Some(8),
                     attempts: 1,
@@ -137,6 +140,7 @@ impl Planner for MockPlanner {
             Ok((
                 "Synthetic results recorded; no external action.".into(),
                 WorkflowUsage {
+                    cost_usd: None,
                     input_tokens: Some(4),
                     output_tokens: Some(5),
                     attempts: 1,
@@ -182,6 +186,7 @@ impl DecisionProvider for MockDecision {
                     attempts: 1,
                     input_tokens: Some(3),
                     output_tokens: None,
+                    cost_usd: None,
                 },
                 elapsed_ms: 2,
             }
@@ -231,7 +236,7 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
         workflow.clone(),
         OperatorAuth::new(Some("setup-operator-key-at-least-32-bytes".into())).unwrap(),
     );
-    let body = json!({"api_key":"fixture-private-api-key", "model":"fixture-model", "jev_api_key":"fixture-private-jev-key"});
+    let body = json!({"openrouter_api_key":"fixture-private-openrouter-key"});
     let request = |value: serde_json::Value, authorized: bool, origin: &str| {
         let mut builder = Request::builder()
             .method("POST")
@@ -264,15 +269,13 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
         .unwrap();
     assert_eq!(denied.status(), StatusCode::FORBIDDEN);
     for invalid in [
-        json!({"api_key":"fixture-private-api-key", "model":"fixture-model", "jev_api_key":""}),
-        json!({"api_key":"fixture-private-api-key", "model":"fixture-model", "jev_api_key":"bad\nkey"}),
-        json!({"api_key":"fixture-private-api-key", "model":"fixture-model", "jev_api_key":"a".repeat(513)}),
-        json!({"api_key":"", "model":"fixture-model", "jev_api_key":"fixture-jev-key"}),
-        json!({"api_key":"fixture-private-api-key", "model":"bad model\n", "jev_api_key":"fixture-jev-key"}),
-        json!({"api_key":"bad\nkey", "model":"fixture-model", "jev_api_key":"fixture-jev-key"}),
-        json!({"api_key":"a".repeat(513), "model":"fixture-model", "jev_api_key":"fixture-jev-key"}),
-        json!({"api_key":"fixture-private-api-key", "model":"a".repeat(101), "jev_api_key":"fixture-jev-key"}),
-        json!({"api_key":"fixture-private-api-key", "model":"fixture-model", "jev_api_key":"fixture-jev-key", "endpoint":"https://untrusted.example"}),
+        json!({"openrouter_api_key":""}),
+        json!({"openrouter_api_key":"bad\nkey"}),
+        json!({"openrouter_api_key":"bad key"}),
+        json!({"openrouter_api_key":"a".repeat(513)}),
+        json!({"openrouter_api_key":"fixture-key", "endpoint":"https://untrusted.example"}),
+        json!({"openrouter_api_key":"fixture-key", "model":"attacker/model"}),
+        json!({"api_key":"fixture-key"}),
     ] {
         let response = app
             .clone()
@@ -290,19 +293,24 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers().get("cache-control").unwrap(), "no-store");
     let encoded = to_bytes(response.into_body(), 8192).await.unwrap();
-    assert!(!String::from_utf8_lossy(&encoded).contains("fixture-private-api-key"));
-    assert!(!String::from_utf8_lossy(&encoded).contains("fixture-private-jev-key"));
+    assert!(!String::from_utf8_lossy(&encoded).contains("fixture-private-openrouter-key"));
     assert!(workflow.options().planner.available);
-    assert!(
-        workflow
-            .options()
-            .providers
-            .iter()
-            .any(|p| p.id == ProviderId::Jev && p.available)
-    );
+    let models = OpenRouterModels::checked_in();
+    for (id, model) in [
+        (ProviderId::Jev, &models.jev_model),
+        (ProviderId::Openai, &models.decision_model),
+    ] {
+        assert!(
+            workflow
+                .options()
+                .providers
+                .iter()
+                .any(|p| p.id == id && p.available && p.model.as_ref() == Some(model))
+        );
+    }
     assert_eq!(
-        workflow.options().planner.model.as_deref(),
-        Some("fixture-model")
+        workflow.options().planner.model.as_ref(),
+        Some(&models.planner_model)
     );
     let response = app
         .oneshot(request(body, true, "http://127.0.0.1:5173"))
@@ -322,14 +330,8 @@ async fn setup_is_authorized_validated_redacted_once_and_memory_only() {
     assert!(
         !std::fs::read(db.path())
             .unwrap()
-            .windows(b"fixture-private-api-key".len())
-            .any(|part| part == b"fixture-private-api-key")
-    );
-    assert!(
-        !std::fs::read(db.path())
-            .unwrap()
-            .windows(b"fixture-private-jev-key".len())
-            .any(|part| part == b"fixture-private-jev-key")
+            .windows(b"fixture-private-openrouter-key".len())
+            .any(|part| part == b"fixture-private-openrouter-key")
     );
 }
 
@@ -344,9 +346,7 @@ async fn concurrent_setup_accepts_exactly_one_planner_without_replacement() {
             let service = workflow.clone();
             std::thread::spawn(move || {
                 service.configure_planner(PlannerSetup {
-                    api_key: "fixture-api-key".into(),
-                    model: format!("fixture-model-{index}"),
-                    jev_api_key: "fixture-jev-key".into(),
+                    openrouter_api_key: format!("fixture-openrouter-key-{index}"),
                 })
             })
         })
@@ -382,26 +382,9 @@ async fn setup_fills_only_missing_connections_without_replacing_startup_provenan
         store.clone(),
     );
     let before = workflow.options().planner.model;
-    assert!(matches!(
-        workflow.configure_planner(PlannerSetup {
-            api_key: "replacement".into(),
-            model: "replacement".into(),
-            jev_api_key: "fixture-jev-key".into(),
-        }),
-        Err(jev_sample::workflow::service::PlannerSetupError::Invalid)
-    ));
-    assert!(
-        !workflow
-            .options()
-            .providers
-            .iter()
-            .any(|p| p.id == ProviderId::Jev && p.available)
-    );
     workflow
         .configure_planner(PlannerSetup {
-            api_key: "".into(),
-            model: "".into(),
-            jev_api_key: "fixture-jev-key".into(),
+            openrouter_api_key: "fixture-openrouter-key".into(),
         })
         .unwrap();
     assert_eq!(workflow.options().planner.model, before);
@@ -410,7 +393,9 @@ async fn setup_fills_only_missing_connections_without_replacing_startup_provenan
             .options()
             .providers
             .iter()
-            .any(|p| p.id == ProviderId::Jev && p.available)
+            .filter(|p| p.available)
+            .count()
+            == 2
     );
     let jev = Arc::new(
         VendorDecisions::for_test(
@@ -425,35 +410,31 @@ async fn setup_fills_only_missing_connections_without_replacing_startup_provenan
     let startup_jev = WorkflowService::new(
         None,
         BTreeMap::from([(ProviderId::Jev, jev.clone())]),
+        policy.clone(),
+        store.clone(),
+    );
+    startup_jev
+        .configure_planner(PlannerSetup {
+            openrouter_api_key: "fixture-openrouter-key".into(),
+        })
+        .unwrap();
+    assert!(startup_jev.options().planner.available);
+    let options = startup_jev.options();
+    let provider = |id| options.providers.iter().find(|p| p.id == id).unwrap();
+    assert_eq!(provider(ProviderId::Jev).model, jev.model());
+    assert!(provider(ProviderId::Openai).available);
+    let complete = WorkflowService::new(
+        Some(Arc::new(MockPlanner::default())),
+        BTreeMap::from([(ProviderId::Jev, jev.clone()), (ProviderId::Openai, jev)]),
         policy,
         store,
     );
     assert!(matches!(
-        startup_jev.configure_planner(PlannerSetup {
-            api_key: "fixture-api-key".into(),
-            model: "fixture-model".into(),
-            jev_api_key: "replacement".into(),
+        complete.configure_planner(PlannerSetup {
+            openrouter_api_key: "fixture-openrouter-key".into(),
         }),
-        Err(jev_sample::workflow::service::PlannerSetupError::Invalid)
+        Err(jev_sample::workflow::service::PlannerSetupError::AlreadyConfigured)
     ));
-    assert!(!startup_jev.options().planner.available);
-    startup_jev
-        .configure_planner(PlannerSetup {
-            api_key: "fixture-api-key".into(),
-            model: "fixture-model".into(),
-            jev_api_key: "".into(),
-        })
-        .unwrap();
-    assert_eq!(
-        startup_jev
-            .options()
-            .providers
-            .iter()
-            .find(|p| p.id == ProviderId::Jev)
-            .unwrap()
-            .model,
-        jev.model()
-    );
 }
 
 #[test]
@@ -971,6 +952,165 @@ async fn responses_planner_requires_completed_named_structured_output_and_disabl
     let (plan, usage) = planner.plan("synthetic input").await.unwrap();
     assert!(validate_plan(&plan, 8));
     assert_eq!(usage.output_tokens, Some(2));
+}
+
+#[tokio::test]
+async fn openrouter_jev_accepts_dated_snapshots_records_cost_and_maps_missing_credits() {
+    let server = MockServer::start().await;
+    let q = Question::named("synthetic_complete").unwrap();
+    let body = json!({"id":"dec-1","model":"typesafe/jev-1.13-20260917","provider":"TypeSafe","answers":{"synthetic_complete":{"type":"noul","noul":0.97}},"usage":{"input_tokens":120,"output_tokens":0,"cost":0.00000504}});
+    Mock::given(method("POST"))
+        .and(path("/decisions"))
+        .and(body_partial_json(
+            json!({"model":"typesafe/jev-1.13","questions":{"synthetic_complete":{"type":"noul"}}}),
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(body))
+        .expect(2)
+        .mount(&server)
+        .await;
+    let via = |gateway| {
+        VendorDecisions::for_test_via(
+            format!("{}/decisions", server.uri()),
+            "mock-key",
+            "typesafe/jev-1.13",
+            ProviderId::Jev,
+            gateway,
+            Duration::from_secs(1),
+        )
+        .unwrap()
+    };
+    let attempt = via(Gateway::OpenRouter)
+        .evaluate("SYN-42", std::slice::from_ref(&q))
+        .await;
+    assert!(matches!(
+        attempt.answers.unwrap()["synthetic_complete"],
+        DecisionValue::Predicate { probability, .. } if probability == 0.97
+    ));
+    assert_eq!(attempt.usage.cost_usd, Some(0.00000504));
+    assert_eq!(attempt.usage.input_tokens, Some(120));
+    let direct = via(Gateway::Direct)
+        .evaluate("SYN-42", std::slice::from_ref(&q))
+        .await;
+    assert!(matches!(
+        direct.answers,
+        Err(ProviderFailure::InvalidResponse)
+    ));
+    Mock::given(method("POST"))
+        .and(path("/broke"))
+        .respond_with(ResponseTemplate::new(402))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let broke = VendorDecisions::for_test_via(
+        format!("{}/broke", server.uri()),
+        "mock-key",
+        "typesafe/jev-1.13",
+        ProviderId::Jev,
+        Gateway::OpenRouter,
+        Duration::from_secs(1),
+    )
+    .unwrap()
+    .evaluate("SYN-42", &[q])
+    .await;
+    assert!(matches!(
+        broke.answers,
+        Err(ProviderFailure::InsufficientCredits)
+    ));
+    assert_eq!(
+        ProviderFailure::InsufficientCredits.code(),
+        "insufficient_credits"
+    );
+}
+
+#[tokio::test]
+async fn llm_decider_uses_strict_schema_and_rejects_unnormalizable_distributions() {
+    let server = MockServer::start().await;
+    let questions: Vec<_> = [
+        "synthetic_complete",
+        "synthetic_route",
+        "synthetic_priority",
+    ]
+    .into_iter()
+    .map(|id| Question::named(id).unwrap())
+    .collect();
+    let respond = |text: serde_json::Value| {
+        ResponseTemplate::new(200).set_body_json(json!({"status":"completed","model":"openai/gpt-5.4-mini","output":[{"type":"message","content":[{"type":"output_text","text":text.to_string()}]}],"usage":{"input_tokens":200,"output_tokens":40,"cost":0.00033}}))
+    };
+    Mock::given(method("POST"))
+        .and(path("/ok"))
+        .and(body_partial_json(json!({"model":"openai/gpt-5.4-mini","store":false,"text":{"format":{"type":"json_schema","strict":true,"schema":{"additionalProperties":false,"required":["synthetic_complete","synthetic_priority","synthetic_route"]}}}})))
+        .respond_with(respond(json!({
+            "synthetic_complete":{"probability_yes":0.9},
+            "synthetic_route":{"probabilities":{"customer":0.8,"employee":0.21}},
+            "synthetic_priority":{"probabilities":{"routine":0.6,"urgent":0.4}}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/bad"))
+        .respond_with(respond(json!({
+            "synthetic_complete":{"probability_yes":0.9},
+            "synthetic_route":{"probabilities":{"customer":0.5,"employee":0.1}},
+            "synthetic_priority":{"probabilities":{"routine":0.6,"urgent":0.4}}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let decider = |route: &str| {
+        LlmDecisions::for_test(
+            format!("{}/{route}", server.uri()),
+            "mock-key",
+            "openai/gpt-5.4-mini",
+            Duration::from_secs(1),
+        )
+        .unwrap()
+    };
+    let ok = decider("ok");
+    assert_eq!(ok.id(), ProviderId::Openai);
+    assert!(ok.capability().contains("not calibrated"));
+    let attempt = ok.evaluate("SYN-42", &questions).await;
+    assert_eq!(attempt.usage.cost_usd, Some(0.00033));
+    let answers = attempt.answers.unwrap();
+    assert!(matches!(
+        &answers["synthetic_route"],
+        DecisionValue::Choice { selected, confidence: None, .. } if selected == "customer"
+    ));
+    assert!(matches!(
+        answers["synthetic_priority"],
+        DecisionValue::Score { value, .. } if (value - 0.4).abs() < 1e-9
+    ));
+    let bad = decider("bad").evaluate("SYN-42", &questions).await;
+    assert!(matches!(bad.answers, Err(ProviderFailure::InvalidResponse)));
+    assert_eq!(bad.usage.cost_usd, Some(0.00033));
+}
+
+#[tokio::test]
+async fn openrouter_planner_accepts_dated_snapshot_but_rejects_other_models() {
+    let server = MockServer::start().await;
+    for (route, served) in [
+        ("dated", "openai/gpt-6-astra-20260101"),
+        ("other", "openai/gpt-5-mini"),
+    ] {
+        Mock::given(method("POST")).and(path(format!("/{route}")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"status":"completed","model":served,"output":[{"type":"message","content":[{"type":"output_text","text":r#"{"tasks":[{"id":"check","kind":"decision","name":"synthetic_complete","depends_on":[]}]}"#}]}],"usage":{"input_tokens":1,"output_tokens":2,"cost":0.0001}}))).expect(1).mount(&server).await;
+    }
+    let planner = |route: &str| {
+        OpenAiPlanner::for_test_via(
+            format!("{}/{route}", server.uri()),
+            "mock-key",
+            "openai/gpt-6-astra",
+            Gateway::OpenRouter,
+            Duration::from_secs(1),
+        )
+        .unwrap()
+    };
+    let (_, usage) = planner("dated").plan("synthetic input").await.unwrap();
+    assert_eq!(usage.cost_usd, Some(0.0001));
+    assert!(matches!(
+        planner("other").plan("synthetic input").await,
+        Err(ProviderFailure::InvalidResponse)
+    ));
 }
 
 #[tokio::test]

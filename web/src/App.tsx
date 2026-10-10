@@ -207,8 +207,8 @@ export default function App() {
         <p>This experimental solution demonstrates an AI-assisted claims-processing journey. ZipClaim does not
           process insurance claims, determine coverage, settle claims, change policies or execute payments.
           Use fictional information only; never enter real customer, health, financial or insurance information.</p>
-        <p>With your consent, messages may be sent to OpenAI, Jev, or OSS models as deemed appropriate by the solution
-          and retained in protected local records. Only configured providers are used. Live-provider operation and
+        <p>With your consent, messages may be sent through OpenRouter (an additional data processor) to OpenAI,
+          TypeSafe Jev or OSS models as deemed appropriate by the solution, and retained in protected local records. Only configured providers are used. Live-provider operation and
           business outcomes are not verified; brand descriptions express intended design, not correctness guarantees. Persona tabs are not authentication;
           inspection and both kinds of workflow continuation require the ZipClaim token.
           Workflow records persist locally; Assessment lab history clears on API restart.</p>

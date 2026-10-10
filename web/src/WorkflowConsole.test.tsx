@@ -23,12 +23,12 @@ beforeEach(() => {
 function comparison(): WorkflowComparison {
   return {
     comparison_id: "comparison-1", input_key: "message-hash", mode: "shared_base_plan", complete: false,
-    planner_model: "mock-planner", planner_usage: { input_tokens: 12, output_tokens: 8, attempts: 1 }, failure_code: null,
+    planner_model: "mock-planner", planner_usage: { input_tokens: 12, output_tokens: 8, attempts: 1, cost_usd: 0.0012 }, failure_code: null,
     base_plan: { plan_id: "plan-hash", tasks: [{ id: "check", kind: "decision", name: "synthetic_complete", depends_on: [], state: "pending" }] },
     runs: [{
       run_id: "comparison-1-run-1", plan_id: "plan-hash", provider: "code", model: null, state: "clarification", reply: "Please provide a synthetic reference.",
       tasks: [{ id: "check", kind: "decision", name: "synthetic_complete", depends_on: [], state: "paused" }],
-      event_trace: [], usage: { input_tokens: null, output_tokens: null, attempts: 0 }, elapsed_ms: 0, failure_code: null,
+      event_trace: [], usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null }, elapsed_ms: 0, failure_code: null,
     }],
   };
 }
@@ -38,7 +38,7 @@ function detail(): OperatorWorkflow {
     decisions: [{
       run_id: "comparison-1-run-1", plan_id: "plan-hash", question_id: "synthetic_complete", question_version: "questions-1", provider: "code",
       model: null, policy_version: "policy-1", result: '{"kind":"deterministic","value":false}', decision_input_key: "exact-input-hash",
-      confidence_semantics: "deterministic_boolean_no_probability", usage: { input_tokens: null, output_tokens: null, attempts: 0 },
+      confidence_semantics: "deterministic_boolean_no_probability", usage: { input_tokens: null, output_tokens: null, attempts: 0, cost_usd: null },
       elapsed_ms: 0, complete: true, task_id: "check", attempt: 1, context_json: "{}", question_json: "{}",
     }],
   };
@@ -77,8 +77,7 @@ test("inline setup unlocks submission while preserving the customer's message an
   expect(screen.getByRole("button", { name: "Submit a Claim" }).hasAttribute("disabled")).toBe(true);
   expect(screen.queryByRole("checkbox", { name: /Experimental Preview/ })).toBeNull();
   fireEvent.change(screen.getByLabelText("ZipClaim token"), { target: { value: "fixture-operator-key" } });
-  fireEvent.change(screen.getByLabelText("OpenAI API key"), { target: { value: "fixture-api-key" } });
-  fireEvent.change(screen.getByLabelText("OpenAI model name"), { target: { value: "mock-planner" } });
+  fireEvent.change(screen.getByLabelText("OpenRouter API key"), { target: { value: "fixture-openrouter-key" } });
   fireEvent.click(screen.getByRole("button", { name: "Agree and save" }));
   await screen.findByText("Setup completed for this API session. Your message is ready to submit.");
   expect(screen.queryByRole("region", { name: "Set up ZipClaim" })).toBeNull();
@@ -103,6 +102,8 @@ test("consent submits one frozen-plan comparison and keeps unavailable providers
   await screen.findByText("Please provide a synthetic reference.");
   expect(submitWorkflow).toHaveBeenCalledWith(expect.objectContaining({ providers: ["code", "jev"], client_request_id: expect.any(String) }));
   expect(screen.getAllByText(/Unknown \/ Unknown/).length).toBeGreaterThan(0);
+  expect(screen.getByText(/Planner cost: \$0\.001200/)).toBeTruthy();
+  expect(screen.getByText(/Decision cost: Not reported/)).toBeTruthy();
 });
 test("unchanged resubmission after a network failure retains the request identity", async () => {
   vi.mocked(submitWorkflow).mockRejectedValueOnce(new Error("Connection lost")).mockResolvedValueOnce(comparison());

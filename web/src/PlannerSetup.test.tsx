@@ -13,9 +13,7 @@ const options: WorkflowOptions = {
 };
 function fill() {
   fireEvent.change(screen.getByLabelText("ZipClaim token"), { target: { value: "fixture-operator-key" } });
-  fireEvent.change(screen.getByLabelText("OpenAI API key"), { target: { value: "fixture-api-key" } });
-  fireEvent.change(screen.getByLabelText("Jev API key"), { target: { value: "fixture-jev-key" } });
-  fireEvent.change(screen.getByLabelText("OpenAI model name"), { target: { value: " fixture-model " } });
+  fireEvent.change(screen.getByLabelText("OpenRouter API key"), { target: { value: "fixture-openrouter-key" } });
 }
 test("setup masks all credentials, clears them and waits for refreshed readiness before continuing", async () => {
   vi.mocked(configurePlanner).mockResolvedValue(options);
@@ -24,18 +22,17 @@ test("setup masks all credentials, clears them and waits for refreshed readiness
   const configured = vi.fn();
   render(<PlannerSetup options={null} onConfigured={configured} />);
   fill();
-  for (const label of ["ZipClaim token", "OpenAI API key", "Jev API key"]) {
+  for (const label of ["ZipClaim token", "OpenRouter API key"]) {
     expect(screen.getByLabelText(label).getAttribute("type")).toBe("password");
   }
   expect(screen.queryByRole("checkbox")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Agree and save" }));
   await act(async () => {});
-  expect(configurePlanner).toHaveBeenCalledWith({
-    api_key: "fixture-api-key", model: "fixture-model", jev_api_key: "fixture-jev-key",
-  }, "fixture-operator-key");
+  expect(configurePlanner).toHaveBeenCalledWith({ openrouter_api_key: "fixture-openrouter-key" }, "fixture-operator-key");
+  for (const label of ["OpenAI API key", "Jev API key", "OpenAI model name"]) expect(screen.queryByLabelText(label)).toBeNull();
   expect(getWorkflowOptions).toHaveBeenCalledTimes(1);
   expect(configured).not.toHaveBeenCalled();
-  for (const label of ["ZipClaim token", "OpenAI API key", "Jev API key"]) {
+  for (const label of ["ZipClaim token", "OpenRouter API key"]) {
     expect(screen.queryByLabelText(label)).toBeNull();
   }
   await act(async () => resolve?.(options));
@@ -51,7 +48,7 @@ test("failed setup clears credentials and supports explicit retry", async () => 
   expect((await screen.findByRole("alert")).textContent).toContain("Your claim message has been kept");
   expect(configured).not.toHaveBeenCalled();
   expect(getWorkflowOptions).not.toHaveBeenCalled();
-  expect((screen.getByLabelText("Jev API key") as HTMLInputElement).value).toBe("");
+  expect((screen.getByLabelText("OpenRouter API key") as HTMLInputElement).value).toBe("");
   fill();
   fireEvent.click(screen.getByRole("button", { name: "Agree and save" }));
   await act(async () => {});
@@ -85,18 +82,17 @@ test("refresh never accepts agreement on its own and requires both connections",
   expect(configured).toHaveBeenCalledWith(options);
   expect(configurePlanner).not.toHaveBeenCalled();
 });
-test("a configured Jev connection does not request or replace its key", async () => {
+test("one OpenRouter key fills whichever connection is still missing", async () => {
   const missingPlanner = { ...options, planner: { available: false, model: null } };
   vi.mocked(configurePlanner).mockResolvedValue(options);
   vi.mocked(getWorkflowOptions).mockResolvedValue(options);
   render(<PlannerSetup options={missingPlanner} onConfigured={vi.fn()} />);
   expect(screen.queryByLabelText("Jev API key")).toBeNull();
+  expect(screen.getByRole("button", { name: "Agree and save" }).hasAttribute("disabled")).toBe(true);
   fireEvent.change(screen.getByLabelText("ZipClaim token"), { target: { value: "fixture-token" } });
-  fireEvent.change(screen.getByLabelText("OpenAI API key"), { target: { value: "fixture-key" } });
-  fireEvent.change(screen.getByLabelText("OpenAI model name"), { target: { value: "fixture-model" } });
+  fireEvent.change(screen.getByLabelText("OpenRouter API key"), { target: { value: "fixture-key" } });
+  expect(screen.getByText(/through OpenRouter/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Agree and save" }));
   await act(async () => {});
-  expect(configurePlanner).toHaveBeenCalledWith({
-    api_key: "fixture-key", model: "fixture-model", jev_api_key: "",
-  }, "fixture-token");
+  expect(configurePlanner).toHaveBeenCalledWith({ openrouter_api_key: "fixture-key" }, "fixture-token");
 });

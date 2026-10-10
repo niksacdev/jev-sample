@@ -129,11 +129,11 @@ refresh options rather than retrying automatically. The panel preserves the
 message and clears password fields after success/failure. Use empty strings for
 already configured connections; replacement credentials are rejected. Startup
 connections remain immutable. **Agree and save** acknowledges the terms and
-automatically refreshes options before enabling submission; both OpenAI and Jev
+automatically refreshes options before enabling submission; both the planner and Jev
 must be configured. A refresh failure leaves submission disabled and supports an
-explicit check without repeating setup. Credentials are labelled ZipClaim token,
-OpenAI API key and Jev API key, all password fields; the model remains a textbox.
-See ADR0019. Runtime Jev setup applies only to the AI-native workflow, not Assessment lab.
+explicit check without repeating setup. Credentials are labelled ZipClaim token
+and OpenRouter API key, both password fields; models come from
+`config/openrouter.json`. See ADR0019 and ADR0020. Runtime Jev setup applies only to the AI-native workflow, not Assessment lab.
 
 Follow the [mocked contract testing decision](adr/0008-mocked-provider-contract-tests.md).
 Provider tests use real adapters against per-test local wiremock servers;

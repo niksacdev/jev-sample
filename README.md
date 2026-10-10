@@ -18,7 +18,10 @@ optional OpenAI Decisions adapter implement the same port. Code supports only th
 synthetic-reference check, not arbitrary insurance judgments. One base plan is
 shared across selected providers; independent continuations can diverge.
 
-Configure `OPENAI_API_KEY` and an explicit `OPENAI_PLANNER_MODEL` locally to enable
+Configure one `OPENROUTER_API_KEY` locally (or enter it in setup) to enable the
+planner, Jev and the OpenAI comparison decider through OpenRouter (ADR 0020).
+OpenRouter uses prepaid credits; reported cost appears in Geek Mode. Alternatively,
+configure `OPENAI_API_KEY` and an explicit `OPENAI_PLANNER_MODEL` directly to enable
 planning and conversational replies. Configure `OPENAI_DECISION_MODEL` separately
 to enable the Decisions provider; no model name is silently selected. Account
 availability and successful live calls are **not verified**. The old
@@ -128,12 +131,11 @@ no hero/marketing blocks, and the claim test
 console immediately below the preview notice. Turn it off to restore white branding.
 **Submit a Claim** is the preview's customer action, not actual insurer submission.
 **Let's connect ZipClaim** collects missing connections directly in the chat:
-a masked **ZipClaim token**, masked OpenAI/Jev API keys, and an explicit
-**OpenAI model name** textbox. Already configured connections do not ask for keys
+a masked **ZipClaim token** and one masked **OpenRouter API key**. Already configured connections do not ask for keys
 again and cannot be replaced. Setup keeps credentials only in API memory until
 restart, never writes `.env`, and makes no inference or account-verification
 call. **Agree and save** incorporates the Data Protection acknowledgement, then
-automatically refreshes availability. Submission stays disabled until both OpenAI
+automatically refreshes availability. Submission stays disabled until both the planner
 and Jev are configured and acknowledgement is completed. The claim draft is preserved.
 Use **Refresh availability** to recover from a lost setup response or another
 operator tab. A failed refresh never unlocks submission; retry the availability

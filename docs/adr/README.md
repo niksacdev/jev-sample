@@ -24,6 +24,7 @@ Read relevant accepted records before changing their affected behavior.
 | [0017](0017-zipclaim-persona-journeys.md) | Accepted | ZipClaim original artwork and persona-aligned primary AI-native journey with protected-state isolation |
 | [0018](0018-live-instrumentation-and-session-preview-agreement.md) | Accepted | Bounded authenticated live terminal instrumentation, testing-focused Geek Mode and session-scoped preview agreement |
 | [0019](0019-guided-memory-only-planner-setup.md) | Accepted | Authenticated memory-only planner setup and guided recovery without losing drafts or repeating inference |
+| [0020](0020-openrouter-gateway.md) | Accepted | One OpenRouter key serves the planner, Jev and the LLM comparison decider, with cost recorded |
 
 Use sequential IDs and descriptive names. Include date, status, context, decision,
 alternatives, consequences, and verification/follow-up. Statuses are Proposed,

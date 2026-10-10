@@ -16,7 +16,7 @@ export type OperatorRunDetail = { run: OperatorRun, provider_exchange: ProviderE
 export type LiveLog = { sequence: number, occurred_at_ms: number, level: string, fields: { [key in string]: string }, };
 export type ProviderId = "code" | "jev" | "openai";
 export type WorkflowSubmission = { message: string, providers: Array<ProviderId>, client_request_id: string, };
-export type PlannerSetup = { api_key: string, model: string, jev_api_key: string, };
+export type PlannerSetup = { openrouter_api_key: string, };
 export type WorkflowResume = { run_id: string, expected_plan_id: string, expected_task_id: string, client_request_id: string, message: string, employee_review: boolean, };
 export type PlannerOption = { available: boolean, model: string | null, };
 export type DecisionProviderOption = { id: ProviderId, available: boolean, model: string | null, capability: string, };
@@ -27,7 +27,11 @@ export type WorkflowTaskKind = "tool" | "decision";
 export type WorkflowTask = { id: string, kind: WorkflowTaskKind, name: string, depends_on: Array<string>, state: string, };
 export type WorkflowPlan = { plan_id: string, tasks: Array<WorkflowTask>, };
 export type WorkflowEvent = { sequence: number, comparison_id: string, run_id: string, task_id: string | null, provider: ProviderId | null, model: string | null, actor: string, plan_id: string | null, policy_version: string, schema_version: string, stage: string, outcome: string, occurred_at_ms: number, recorded_at_ms: number | null, };
-export type WorkflowUsage = { input_tokens: number | null, output_tokens: number | null, attempts: number, };
+export type WorkflowUsage = { input_tokens: number | null, output_tokens: number | null, attempts: number, 
+/**
+ * Gateway-reported spend (OpenRouter `usage.cost`); `None` when the route does not report it.
+ */
+cost_usd: number | null, };
 export type WorkflowRun = { run_id: string, plan_id: string, provider: ProviderId, model: string | null, state: WorkflowState, reply: string, tasks: Array<WorkflowTask>, event_trace: Array<WorkflowEvent>, usage: WorkflowUsage, elapsed_ms: number, failure_code: string | null, };
 export type WorkflowComparison = { comparison_id: string, input_key: string, base_plan: WorkflowPlan, runs: Array<WorkflowRun>, mode: string, complete: boolean, planner_model: string | null, planner_usage: WorkflowUsage, failure_code: string | null, };
 export type WorkflowDecisionRecord = { run_id: string, plan_id: string, decision_input_key: string, question_id: string, question_version: string, provider: ProviderId, model: string | null, policy_version: string, result: string, confidence_semantics: string | null, usage: WorkflowUsage, elapsed_ms: number, complete: boolean, task_id: string, attempt: number, context_json: string, question_json: string, };

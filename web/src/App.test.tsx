@@ -40,7 +40,7 @@ test("customer defaults to the AI-native journey and distinguishes unconfigured 
   render(<App />);
   expect(screen.getByRole("heading", { name: "What can we help you move forward?" })).toBeTruthy();
   await screen.findByRole("region", { name: "Set up ZipClaim" });
-  expect(screen.queryByText(/Not configured. Set OPENAI_API_KEY/)).toBeNull();
+  expect(screen.queryByText(/Not configured. Set OPENROUTER_API_KEY/)).toBeNull();
   expect(screen.getByText("Autonomous", { exact: true })).toBeTruthy();
   expect(screen.getByText("Human in the Loop", { exact: true })).toBeTruthy();
   expect(screen.getByRole("img", { name: "Spy goggles off" })).toBeTruthy();
@@ -54,7 +54,7 @@ test("customer defaults to the AI-native journey and distinguishes unconfigured 
   expect(screen.queryByRole("img", { name: "ZipClaim ASCII logo" })).toBeNull();
   expect(screen.getByRole("link", { name: "ZipClaim home" }).querySelector("img")?.getAttribute("src")).toBe("/zipclaim-icon.png");
   expect(screen.getByRole("heading", { name: "Runtime configuration" })).toBeTruthy();
-  expect(screen.getByLabelText("Runtime configuration output").textContent).toContain("Not configured. Set OPENAI_API_KEY");
+  expect(screen.getByLabelText("Runtime configuration output").textContent).toContain("Not configured. Set OPENROUTER_API_KEY");
   expect(screen.getByRole("button", { name: "Submit a Claim" }).hasAttribute("disabled")).toBe(true);
   expect(screen.queryByRole("button", { name: "Assess request" })).toBeNull();
   expect(screen.queryByLabelText("Workflow ZipClaim token")).toBeNull();
